@@ -11,6 +11,7 @@ export const createProduct = async (data: {
   userId: string;
   categoryId: string;
   supplierId: string;
+  createdAt: Date;
 }) => {
   return prisma.product.create({
     data,
@@ -20,10 +21,6 @@ export const createProduct = async (data: {
 export const getProductsByUser = async (userId: string) => {
   return prisma.product.findMany({
     where: { userId },
-    include: {
-      category: true,
-      supplier: true,
-    },
   });
 };
 
