@@ -1,4 +1,4 @@
-# Stockly - Stock Inventory Management System Next.js Web Application
+# Stockly Inventory Management System - Next.js, Prisma, MongoDB Project
 
 ![Screenshot 2025-04-12 at 02 20 06](https://github.com/user-attachments/assets/7495dcfb-c7cb-44e6-a1ef-d82930a8ada7)
 ![Screenshot 2025-04-12 at 02 20 13](https://github.com/user-attachments/assets/02410f03-c85e-404d-a0fb-f30920d18a58)
@@ -12,400 +12,211 @@
 
 ---
 
-## Project Overview
-
-Stockly is a React-based inventory management application built with Next.js. It is designed to help businesses efficiently manage their product inventory. The application includes features such as product listing, adding new products, editing existing products, filtering products, and more. It also incorporates robust security measures like **JWT-based authentication**, **password hashing**, and **middleware** for secure API interactions.
+Efficiently manage your product inventory with Stockly—a modern, secure, and responsive inventory management web application built with Next.js, React, Prisma, and MongoDB.
 
 - **Live-Demo:** [https://stockly-inventory.vercel.app/](https://stockly-inventory.vercel.app/)
 
 ---
 
-## Project Features
+## Project Overview
 
-- **Product Management:** List, add, edit, and delete products with details (name, SKU, status, quantity, price, supplier).
+Stockly is designed to help businesses and individuals efficiently manage their product inventory. It provides a robust, full-stack solution with secure authentication, CRUD operations, filtering, sorting, and a beautiful UI powered by shadcn/ui and Tailwind CSS. The project is open source and intended for learning, extension, and real-world use.
+
+---
+
+## Features
+
+- **Product Management:** List, add, edit, and delete products with details (name, SKU, status, quantity, price, supplier, category).
 - **Filtering & Sorting:** Filter by status, category, supplier; search by name/SKU; sort by name, price, quantity.
-- **Authentication:** Secure login/registration with JWT, password hashing (bcrypt), session management.
+- **Category & Supplier Management:** Manage product categories and suppliers with CRUD operations.
+- **Authentication:** Secure login/registration with JWT, password hashing (bcrypt), session management via cookies.
 - **Responsive Design:** Works seamlessly on desktops, tablets, and mobile devices.
 - **API Integration:** RESTful APIs for products, categories, suppliers, and authentication.
 - **Database:** MongoDB with Prisma ORM for schema management and queries.
 - **Security:** JWT-based authentication, password hashing, middleware for route protection.
-
----
-
-## Table of Contents
-
-1. [Project Overview](#project-overview)
-2. [Project Features](#project-features)
-3. [Technology Stack](#technology-stack)
-4. [Project Structure](#project-structure)
-5. [API Endpoints](#api-endpoints)
-6. [Authentication & Security](#authentication--security)
-7. [How It Works](#how-it-works)
-8. [How to Run the Project](#how-to-run-the-project)
-9. [Component Reusability & Examples](#component-reusability--examples)
-10. [Keywords](#keywords)
-11. [Conclusion](#conclusion)
-12. [Happy Coding! 🎉](#happy-coding-)
-
----
-
-## Detailed Features
-
-### 1. Product Management
-
-- **Product Listing**: View a list of all products with details such as name, SKU, status, quantity in stock, price, and supplier.
-- **Add Product**: Add new products to the inventory with details such as name, SKU, status, quantity, price, and supplier.
-- **Edit Product**: Edit existing product details.
-- **Delete Product**: Remove products from the inventory.
-
-### 2. Filtering and Sorting
-
-- **Filter Products**: Filter products based on status, category, and supplier.
-- **Search Products**: Search for products by name or SKU.
-- **Sort Products**: Sort products by attributes like name, price, or quantity.
-
-### 3. Authentication
-
-- **User Login and Registration**: Secure user authentication using **JWT (JSON Web Tokens)**.
-- **Password Hashing**: Passwords are hashed using **bcrypt** for secure storage.
-- **Session Management**: Tokens are stored securely in cookies for session management.
-
-### 4. Responsive Design
-
-- The application is fully responsive and works seamlessly on devices of all screen sizes, including desktops, tablets, and mobile phones.
-
-### 5. API Integration
-
-- **RESTful APIs**: The backend is built with Next.js API routes, providing endpoints for managing products, users, and authentication.
-- **Middleware**: Middleware is used to validate tokens and protect sensitive routes.
-
-### 6. Database
-
-- **MongoDB**: The application uses MongoDB as the database to store product and user information.
-- **Prisma ORM**: Prisma is used as the ORM for database schema management and queries.
+- **Reusable Components:** Built with shadcn/ui and custom hooks for easy reuse and extension.
 
 ---
 
 ## Technology Stack
 
-- **Frontend:** Next.js, React, Tailwind CSS
+- **Frontend:** Next.js 15, React, TypeScript, Tailwind CSS, shadcn/ui
 - **Backend:** Next.js API routes, Prisma ORM
-- **Database:** MongoDB
-- **Authentication:** JWT, bcrypt
-- **UI Components:** Custom and reusable components (see `/components/ui`)
+- **Database:** MongoDB (via Prisma)
+- **Authentication:** Custom JWT, bcrypt
 - **State Management:** React Context, custom hooks
-- **Other:** Toast notifications, global loading, responsive fonts
+- **Other:** Axios, js-cookie
 
 ---
 
-## Project Structure
-
-```bash
-stockly
-├── app
-│   ├── AppHeader
-│   │   └── AppHeader.tsx
-│   ├── AppTable
-│   │   ├── AppTable.tsx
-│   │   ├── ProductDialog
-│   │   │   ├── ProductDialog.tsx
-│   │   │   ├── _components
-│   │   │   │   ├── ProductName.tsx
-│   │   │   │   ├── Price.tsx
-│   │   │   │   ├── ProductCategory.tsx
-│   │   │   │   ├── Quantity.tsx
-│   │   │   │   ├── SKU.tsx
-│   │   │   │   ├── Status.tsx
-│   │   │   │   └── Supplier.tsx
-│   │   ├── dropdowns
-│   │   │   ├── StatusDropDown.tsx
-│   │   │   └── CategoryDropDown.tsx
-│   ├── DeleteDialog
-│   │   └── DeleteDialog.tsx
-│   ├── Products
-│   │   ├── ProductTable.tsx
-│   │   └── columns.tsx
-│   ├── authContext.tsx
-│   ├── login
-│   │   └── page.tsx
-│   ├── register
-│   │   └── page.tsx
-│   ├── page.tsx
-├── components
-│   └── ui
-│       ├── badge.tsx
-│       ├── button.tsx
-│       ├── card.tsx
-│       ├── dropdown-menu.tsx
-│       ├── input.tsx
-│       ├── label.tsx
-│       ├── popover.tsx
-│       ├── select.tsx
-│       ├── separator.tsx
-│       ├── table.tsx
-│       └── textarea.tsx
-├── public
-├── styles
-│   └── globals.css
-├── .gitignore
-├── package.json
-├── README.md
-└── tsconfig.json
-```
-
----
-
-## How It Works
-
-### 1. Authentication
-
-- **Registration**: Users register by providing their email and password. The password is hashed using **bcrypt** before being stored in the database.
-- **Login**: Users log in with their email and password. A **JWT** is generated upon successful login and stored in a secure cookie.
-- **Token Validation**: Middleware validates the JWT for protected routes to ensure only authenticated users can access them.
-
-### 2. Product Management
-
-- **Add Product**: Users can add products by filling out a form with details like name, SKU, category, supplier, price, and quantity.
-- **Edit Product**: Users can edit product details through a dialog form.
-- **Delete Product**: Users can delete products, which removes them from the database.
-
-### 3. Filtering and Sorting
-
-- **Category Filter**: Products can be filtered by category using a dropdown menu.
-- **Status Filter**: Products can be filtered by their stock status (e.g., Available, Stock Low, Stock Out).
-- **Supplier Filter**: Products can be filtered by supplier.
-- **Search**: Users can search for products by name or SKU.
-
-### 4. Database Schema
-
-The database schema is managed using **Prisma** and stored in **MongoDB**. Below is an example of the schema:
-
-### schema.prisma
-
-```prisma
-datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
-}
-
-model User {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String     @unique
-  password  String
-  createdAt DateTime   @default(now())
-  products  Product[]
-  categories Category[]
-  suppliers Supplier[]
-  sessions  Session[]
-}
-
-model Product {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  sku         String     @unique
-  price       Float
-  quantity    Int
-  status      String
-  createdAt   DateTime   @default(now())
-  userId      String     @db.ObjectId
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categoryId  String     @db.ObjectId
-  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  supplierId  String     @db.ObjectId
-  supplier    Supplier   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-}
-
-model Category {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  userId    String     @db.ObjectId
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products  Product[]
-}
-
-model Supplier {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  userId    String     @db.ObjectId
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products  Product[]
-}
-
-model Session {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String   @db.ObjectId
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expires      DateTime
-  sessionToken String   @unique
-}
-
-model VerificationToken {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  identifier String
-  token      String   @unique
-  expires    DateTime
-}
-```
-
----
-
-## Authentication & Security
-
-### 1. Password Hashing
-
-- Passwords are hashed using **bcrypt** before being stored in the database. This ensures that even if the database is compromised, passwords remain secure.
-
-### 2. JWT Authentication
-
-- **Token Generation**: Upon login, a JWT is generated and sent to the client.
-- **Token Storage**: The token is stored in a secure, HTTP-only cookie to prevent XSS attacks.
-- **Token Validation**: Middleware validates the token for protected routes.
-
-### 3. Middleware
-
-- Middleware is used to protect sensitive API routes by validating the JWT and ensuring the user is authenticated.
-
----
-
-## How to Run the Project
+## Getting Started
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/stockly.git
-cd stockly
+git clone https://github.com/arnobt78/Stock-Inventory-Managment--NextJS.git
+cd Stock-Inventory-Managment--NextJS
 ```
 
 ### 2. Install Dependencies
 
 ```bash
 npm install
-```
-
-### Note
-
-If you get error installing any npm dependency, it might be due to using Next.js 15 and the latest version of React and tanstack/table together. Tp avoid that, run:
-
-```bash
-npm install --force
+# or
+pnpm install
+# or
+yarn install
 ```
 
 ### 3. Set Up Environment Variables
 
-Create a `.env` file in the root directory and add the following environment variables:
+Create a `.env` file in the root directory with the following variables:
 
 ```env
-DATABASE_URL=mongodb+srv://<username>:<password>@cluster.mongodb.net/stockly
-JWT_SECRET=your_jwt_secret
+DATABASE_URL=your_mongodb_connection_string
+JWT_SECRET=your_super_secret_jwt_key
 ```
 
-### 4. Run the Development Server
+- **DATABASE_URL:** Get your MongoDB connection string from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) or your own MongoDB server.
+- **JWT_SECRET:** Generate a strong random string (e.g., using [1Password password generator](https://1password.com/password-generator/)).
+
+**Never commit your .env file or secrets to version control!**
+
+---
+
+## Project Structure
 
 ```bash
-npm run dev
+├── app/
+│   ├── layout.tsx           # Root layout and metadata
+│   ├── page.tsx             # Home page
+│   ├── login/               # Login page
+│   ├── register/            # Registration page
+│   ├── Products/            # Product table, columns, dropdowns
+│   ├── AppHeader/           # Header and theme toggle
+│   ├── AppTable/            # Main product table and dialogs
+│   ├── fonts/               # Custom fonts
+│   └── ...
+├── components/
+│   ├── ui/                  # shadcn/ui components (button, card, dialog, etc.)
+│   ├── GlobalLoading.tsx    # Global loading indicator
+│   └── ...
+├── hooks/                   # Custom React hooks
+├── lib/                     # Utility functions
+├── middleware/              # Custom API middleware
+├── pages/
+│   └── api/                 # API routes (auth, products, categories, suppliers)
+├── prisma/
+│   ├── schema.prisma        # Prisma schema
+│   ├── client.ts            # Prisma client
+│   └── ...
+├── public/                  # Static assets (icons, images)
+├── types/                   # TypeScript type definitions
+├── utils/                   # Auth, axios instance, etc.
+├── .env                     # Environment variables (not committed)
+├── README.md                # Project documentation
+└── ...
 ```
-
-### 5. Open the Application
-
-Open your browser and navigate to `http://localhost:3000`
 
 ---
 
 ## API Endpoints
 
-### Authentication
+All API endpoints are under `/api/` and require authentication (except login/register).
 
-- **POST /api/auth/register**: Register a new user.
-- **POST /api/auth/login**: Log in a user and return a JWT.
-- **GET /api/auth/me**: Get the authenticated user's details.
+### Auth
+
+- `POST /api/auth/login` — Login with email and password
+- `POST /api/auth/register` — Register a new user
+- `POST /api/auth/logout` — Logout (clears session)
+- `GET /api/auth/session` — Get current user session
 
 ### Products
 
-- **GET /api/products**: Get a list of all products.
-- **POST /api/products**: Add a new product.
-- **PUT /api/products/:id**: Update an existing product.
-- **DELETE /api/products/:id**: Delete a product.
+- `GET /api/products` — List all products for the user
+- `POST /api/products` — Add a new product
+- `PUT /api/products` — Update a product
+- `DELETE /api/products` — Delete a product
 
-### Category
+### Categories
 
-- **GET /api/categories**: Get a list of all categories.
-- **POST /api/categories**: Add a new categories.
-- **PUT /api/categories/:id**: Update an existing categories.
-- **DELETE /api/categories/:id**: Delete a categories.
+- `GET /api/categories` — List all categories
+- `POST /api/categories` — Add a new category
+- `PUT /api/categories` — Update a category
+- `DELETE /api/categories` — Delete a category
 
-### Supplier
+### Suppliers
 
-- **GET /api/suppliers**: Get a list of all suppliers.
-- **POST /api/suppliers**: Add a new suppliers.
-- **PUT /api/suppliers/:id**: Update an existing suppliers.
-- **DELETE /api/suppliers/:id**: Delete a suppliers.
+- `GET /api/suppliers` — List all suppliers
+- `POST /api/suppliers` — Add a new supplier
+- `PUT /api/suppliers` — Update a supplier
+- `DELETE /api/suppliers` — Delete a supplier
 
 ---
 
-## Component Reusability & Examples
+## How It Works
 
-Stockly is built with reusable React components. Here’s how to use and extend them in your own projects:
+1. **Authentication:**
 
-### Example: Using a UI Button
+- Users register and login with email/password.
+- Passwords are hashed with bcrypt.
+- On login, a JWT is issued and stored in a secure cookie (`session_id`).
+- All protected API routes check the JWT for authentication.
+
+2. **Product Management:**
+
+- Authenticated users can add, edit, delete, and view products.
+- Products are linked to categories and suppliers.
+- Filtering, searching, and sorting are available in the UI.
+
+3. **Category & Supplier Management:**
+
+- Users can manage categories and suppliers for their products.
+
+4. **UI & Components:**
+
+- Built with shadcn/ui and Tailwind CSS for a modern, responsive look.
+- All UI elements are reusable and customizable.
+
+---
+
+## Reusable Components & Usage
+
+### Example: Using a Button from shadcn/ui
 
 ```tsx
 import { Button } from "@/components/ui/button";
 
 export default function MyComponent() {
-  return <Button onClick={() => alert("Clicked!")}>Click Me</Button>;
+  return <Button variant="primary">Click Me</Button>;
 }
 ```
 
-### Example: Product Dialog
+### Example: Product Table
 
 ```tsx
-import AddProductDialog from "@/app/AppTable/ProductDialog/AddProductDialog";
+import { ProductTable } from "@/app/Products/ProductTable";
 
-export default function AddProduct() {
-  return <AddProductDialog />;
+export default function ProductsPage() {
+  return <ProductTable />;
 }
 ```
 
-### Example: Toast Notifications
+### Custom Hooks
 
-```tsx
-import { useToast } from "@/hooks/use-toast";
-
-const { toast } = useToast();
-toast({ title: "Product added!", description: "Your product was added successfully." });
-```
-
-### Example: Table Component
-
-```tsx
-import { Table } from "@/components/ui/table";
-
-<Table>
-  {/* Table rows and cells */}
-</Table>
-```
-
-### Extending Components
-
-All UI components are designed for easy extension. You can copy, modify, or import them into other Next.js/React projects.
+Use `useProductStore`, `useAuth`, and other hooks for state management and authentication.
 
 ---
 
 ## Keywords
 
-Stockly, Inventory Management, Next.js, React, Prisma, MongoDB, Product Listing, Authentication, JWT, CRUD, Responsive Web App, Arnob Mahmud, UI Components, API, Security, Middleware, Filtering, Sorting, Reusable Components, Open Source, Full Stack, Modern Web App
+Stockly, Inventory Management, Next.js, React, Prisma, MongoDB, Product Management, JWT, Authentication, CRUD, Responsive Web App, shadcn/ui, Tailwind CSS, Arnob Mahmud
 
 ---
 
 ## Conclusion
 
-Stockly is a robust, modern inventory management system built for learning, sharing, and real-world use. It demonstrates best practices in full-stack development, authentication, API design, and UI/UX. Feel free to use, extend, and contribute to this project!
+Stockly is a full-featured, modern inventory management system built for learning, extension, and real-world use. Its modular architecture, secure authentication, and beautiful UI make it a great starting point for your own projects or for contributing to open source.
 
 ---
 
