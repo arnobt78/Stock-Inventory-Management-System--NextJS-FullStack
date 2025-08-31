@@ -1,6 +1,6 @@
-import { create } from "zustand";
+import { Category, Product, Supplier } from "@/app/types";
 import axiosInstance from "@/utils/axiosInstance";
-import { Product, Supplier, Category } from "@/app/types";
+import { create } from "zustand";
 
 // Structure of the overall state
 interface ProductState {
@@ -59,23 +59,32 @@ export const useProductStore = create<ProductState>((set) => ({
     set({ allProducts });
   },
 
-  // Load all products
+  // Load all products with caching
   loadProducts: async () => {
-    set({ isLoading: true }); // Set loading to true
+    set({ isLoading: true });
     try {
       const response = await axiosInstance.get("/products");
-      set((_) => ({
-        allProducts: response.data || [],
-      }));
-      // Debug log - only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Updated State with Products:", response.data);
+      const products = response.data || [];
+
+      // Optimize by ensuring we don't set the same data
+      set((state) => {
+        // Only update if the data is actually different
+        if (JSON.stringify(state.allProducts) !== JSON.stringify(products)) {
+          return { allProducts: products };
+        }
+        return state;
+      });
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("Updated State with Products:", products);
       }
     } catch (error) {
-      console.error("Error loading products:", error);
-      set({ allProducts: [] }); // Set empty array on error
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error loading products:", error);
+      }
+      set({ allProducts: [] });
     } finally {
-      set({ isLoading: false }); // Set loading to false
+      set({ isLoading: false });
     }
   },
 
@@ -87,7 +96,7 @@ export const useProductStore = create<ProductState>((set) => ({
 
       const newProduct = response.data;
       // Debug log - only log in development
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === "development") {
         console.log("Product added successfully:", newProduct);
       }
       set((state) => ({
@@ -117,7 +126,7 @@ export const useProductStore = create<ProductState>((set) => ({
       }));
 
       // Debug log - only log in development
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === "development") {
         console.log("Product updated successfully:", newProduct);
       }
       return { success: true };
@@ -161,7 +170,7 @@ export const useProductStore = create<ProductState>((set) => ({
       const response = await axiosInstance.get("/categories");
       set({ categories: response.data });
       // Debug log - only log in development
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === "development") {
         console.log("Categories loaded successfully:", response.data);
       }
     } catch (error) {
@@ -197,7 +206,7 @@ export const useProductStore = create<ProductState>((set) => ({
       const response = await axiosInstance.get("/suppliers");
       set({ suppliers: response.data });
       // Debug log - only log in development
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === "development") {
         console.log("Suppliers loaded successfully:", response.data);
       }
     } catch (error) {

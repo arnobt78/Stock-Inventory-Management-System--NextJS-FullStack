@@ -1,15 +1,14 @@
 
-import React, { Suspense } from "react";
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { Poppins } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "./ThemeProvider";
+import GlobalLoading from "@/components/GlobalLoading";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "./authContext";
+import { Poppins } from "next/font/google";
+import localFont from "next/font/local";
+import React, { Suspense } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import GlobalLoading from "@/components/GlobalLoading";
+import { AuthProvider } from "./authContext";
+import "./globals.css";
+import { ThemeProvider } from "./ThemeProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -55,9 +54,9 @@ export const metadata = {
   ],
   icons: {
     icon: "/favicon.ico",
-    apple: "/vercel.svg",
+    apple: "/favicon.ico",
     other: [
-      { rel: "icon", url: "/next.svg" },
+      { rel: "icon", url: "/favicon.ico" },
     ],
   },
   openGraph: {

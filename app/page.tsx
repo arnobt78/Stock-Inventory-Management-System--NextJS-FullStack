@@ -1,11 +1,11 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import Loading from "../components/Loading";
+import { useAuth } from "./authContext";
 import Home from "./Home";
 import Login from "./login/page";
-import { useAuth } from "./authContext";
-import Loading from "../components/Loading";
 
 interface PageProps {
   params: Promise<{ [key: string]: any }>;
@@ -14,7 +14,7 @@ interface PageProps {
 
 const PageContent: React.FC = () => {
   const router = useRouter();
-  const { isLoggedIn } = useAuth(); // Use isLoggedIn from useAuth
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -22,11 +22,15 @@ const PageContent: React.FC = () => {
     }
   }, [isLoggedIn, router]);
 
-  if (isLoggedIn) {
-    return <Home />;
-  }
+  // Memoize the component to prevent unnecessary re-renders
+  const content = useMemo(() => {
+    if (isLoggedIn) {
+      return <Home />;
+    }
+    return <Login />;
+  }, [isLoggedIn]);
 
-  return <Login />;
+  return content;
 };
 
 const Page: React.FC<PageProps> = ({ params, searchParams }) => {
@@ -45,7 +49,9 @@ const Page: React.FC<PageProps> = ({ params, searchParams }) => {
         setResolvedParams(resolvedParamsData);
         setResolvedSearchParams(resolvedSearchParamsData);
       } catch (error) {
-        console.error("Error resolving params:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error resolving params:", error);
+        }
         setResolvedParams({});
         setResolvedSearchParams({});
       }
@@ -53,7 +59,12 @@ const Page: React.FC<PageProps> = ({ params, searchParams }) => {
     resolveParams();
   }, [params, searchParams]);
 
-  if (!resolvedParams || !resolvedSearchParams) {
+  // Memoize the loading state check
+  const isLoading = useMemo(() => {
+    return !resolvedParams || !resolvedSearchParams;
+  }, [resolvedParams, resolvedSearchParams]);
+
+  if (isLoading) {
     return <Loading />;
   }
 

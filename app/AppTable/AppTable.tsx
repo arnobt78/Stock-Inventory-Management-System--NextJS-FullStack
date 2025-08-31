@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProductTable } from "../Products/ProductTable";
-import { columns } from "../Products/columns";
-import { useProductStore } from "../useProductStore";
-import { useAuth } from "../authContext";
 import { useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import FiltersAndActions from "../FiltersAndActions";
 import { PaginationType } from "../Products/PaginationSelection";
+import { ProductTable } from "../Products/ProductTable";
+import { columns } from "../Products/columns";
+import { useAuth } from "../authContext";
+import { useProductStore } from "../useProductStore";
 //import { ColumnFiltersState } from "@tanstack/react-table";
 
-export default function AppTable() {
+const AppTable = React.memo(() => {
   const { allProducts, loadProducts, isLoading } = useProductStore();
   const { isLoggedIn, user } = useAuth();
   const router = useRouter();
@@ -28,14 +28,21 @@ export default function AppTable() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
 
+  // Memoize the loadProducts callback to prevent unnecessary re-renders
+  const handleLoadProducts = useCallback(() => {
+    if (isLoggedIn) {
+      loadProducts();
+    }
+  }, [isLoggedIn, loadProducts]);
+
   // Load products if the user is logged in
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login");
     } else {
-      loadProducts();
+      handleLoadProducts();
     }
-  }, [isLoggedIn, loadProducts, router]);
+  }, [isLoggedIn, handleLoadProducts, router]);
 
   useEffect(() => {
     // Debug log for products - only log in development
@@ -43,6 +50,9 @@ export default function AppTable() {
       console.log("All Products in AppTable:", allProducts);
     }
   }, [allProducts]);
+
+  // Memoize the product count
+  const productCount = useMemo(() => allProducts.length, [allProducts]);
 
   if (!isLoggedIn || !user) {
     return null;
@@ -55,7 +65,7 @@ export default function AppTable() {
         <div className="flex flex-col items-center sm:items-start">
           <CardTitle className="font-bold text-[23px]">Products</CardTitle>
           <p className="text-sm text-slate-600">
-            {allProducts.length} products
+            {productCount} products
           </p>
         </div>
       </CardHeader>
@@ -64,7 +74,7 @@ export default function AppTable() {
         {/* Filters and Actions */}
         <FiltersAndActions
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm} // Update search term
+          setSearchTerm={setSearchTerm}
           pagination={pagination}
           setPagination={setPagination}
           allProducts={allProducts}
@@ -79,13 +89,13 @@ export default function AppTable() {
 
         {/* Product Table */}
         <ProductTable
-          data={allProducts || []} // Pass all products with fallback to empty array
-          columns={columns} // Pass table columns
+          data={allProducts || []}
+          columns={columns}
           userId={user.id}
           isLoading={isLoading}
-          searchTerm={searchTerm} // Pass search term
-          pagination={pagination} // Pass pagination state
-          setPagination={setPagination} // Allow ProductTable to update pagination
+          searchTerm={searchTerm}
+          pagination={pagination}
+          setPagination={setPagination}
           selectedCategory={selectedCategory}
           selectedStatuses={selectedStatuses}
           selectedSuppliers={selectedSuppliers}
@@ -93,4 +103,8 @@ export default function AppTable() {
       </CardContent>
     </Card>
   );
-}
+});
+
+AppTable.displayName = 'AppTable';
+
+export default AppTable;

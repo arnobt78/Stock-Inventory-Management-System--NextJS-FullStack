@@ -1,11 +1,11 @@
 "use client";
 
+import { Card } from "@/components/ui/card";
 import React from "react";
 import AppHeader from "./AppHeader/AppHeader";
-import { Card } from "@/components/ui/card";
 import AppTable from "./AppTable/AppTable";
 
-export default function Home() {
+const Home = React.memo(() => {
   return (
     <div className="poppins w-full min-h-screen bg-gray-50 dark:bg-[#121212]">
       {/* Responsive Card */}
@@ -20,4 +20,8 @@ export default function Home() {
       </Card>
     </div>
   );
-}
+});
+
+Home.displayName = 'Home';
+
+export default Home;

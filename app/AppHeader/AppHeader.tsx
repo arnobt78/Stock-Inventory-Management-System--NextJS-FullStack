@@ -1,45 +1,47 @@
 "use client";
 
-import React, { useState } from "react";
-import { AiFillProduct } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "./ModeToggle";
-import { useAuth } from "../authContext";
+import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast"; // Import toast hook
+import { useState } from "react";
+import { AiFillProduct } from "react-icons/ai";
+import { FiActivity, FiFileText, FiHome } from "react-icons/fi"; // Import icons for new nav items
+import { useAuth } from "../authContext";
+import { ModeToggle } from "./ModeToggle";
 
 export default function AppHeader() {
   const { logout, user } = useAuth();
   const router = useRouter();
-  const { toast } = useToast(); // Use toast hook
-  const [isLoggingOut, setIsLoggingOut] = useState(false); // Add loading state
+  const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    setIsLoggingOut(true); // Start loading
+    setIsLoggingOut(true);
 
     try {
       await logout();
 
-      // Show success toast
       toast({
         title: "Logout Successful!",
         description: "You have been logged out successfully.",
       });
 
-      // Redirect to login page after a short delay
       setTimeout(() => {
         router.push("/login");
       }, 1500);
     } catch (error) {
-      // Show error toast
       toast({
         title: "Logout Failed",
         description: "Failed to logout. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsLoggingOut(false); // Stop loading
+      setIsLoggingOut(false);
     }
+  };
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
   };
 
   return (
@@ -47,7 +49,8 @@ export default function AppHeader() {
       {/* Logo and Welcome Section */}
       <div className="flex items-center gap-4">
         <div
-          className={`flex aspect-square size-10 items-center justify-center rounded-lg bg-primary-dark text-primary-foreground`}
+          className={`flex aspect-square size-10 items-center justify-center rounded-lg bg-primary-dark text-primary-foreground cursor-pointer`}
+          onClick={() => handleNavigation("/")}
         >
           <AiFillProduct className="text-3xl" />
         </div>
@@ -57,8 +60,35 @@ export default function AppHeader() {
         </div>
       </div>
 
-      {/* Theme Toggle and Logout Button */}
-      <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+      {/* Navigation Links */}
+      <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleNavigation("/")}
+          className="text-primary-foreground hover:bg-primary-dark"
+        >
+          <FiHome className="mr-2 h-4 w-4" />
+          Dashboard
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleNavigation("/api-docs")}
+          className="text-primary-foreground hover:bg-primary-dark"
+        >
+          <FiFileText className="mr-2 h-4 w-4" />
+          API Docs
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleNavigation("/api-status")}
+          className="text-primary-foreground hover:bg-primary-dark"
+        >
+          <FiActivity className="mr-2 h-4 w-4" />
+          API Status
+        </Button>
         <ModeToggle />
         <Button
           onClick={handleLogout}

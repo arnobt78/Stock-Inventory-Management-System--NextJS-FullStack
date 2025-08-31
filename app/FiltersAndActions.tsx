@@ -2,21 +2,25 @@
 "use client";
 
 //import React, { useEffect } from "react";
+import { Product } from "@/app/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import Papa from 'papaparse';
+import { FiFileText, FiGrid } from "react-icons/fi";
+import { IoClose } from "react-icons/io5";
+import * as XLSX from 'xlsx';
 import { CategoryDropDown } from "./AppTable/dropdowns/CategoryDropDown";
 import { StatusDropDown } from "./AppTable/dropdowns/StatusDropDown";
 import { SuppliersDropDown } from "./AppTable/dropdowns/SupplierDropDown";
 import AddCategoryDialog from "./AppTable/ProductDialog/AddCategoryDialog";
-import AddSupplierDialog from "./AppTable/ProductDialog/AddSupplierDialog";
 import AddProductDialog from "./AppTable/ProductDialog/AddProductDialog";
-import { Product } from "@/app/types";
-import { Input } from "@/components/ui/input";
+import AddSupplierDialog from "./AppTable/ProductDialog/AddSupplierDialog";
 import PaginationSelection, {
   PaginationType,
 } from "./Products/PaginationSelection";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { IoClose } from "react-icons/io5";
 
 type FiltersAndActionsProps = {
   allProducts: Product[];
@@ -49,6 +53,133 @@ export default function FiltersAndActions({
   setPagination,
   userId,
 }: FiltersAndActionsProps) {
+  const { toast } = useToast();
+
+  // Filter products based on current filters
+  const getFilteredProducts = () => {
+    return allProducts.filter((product) => {
+      const searchMatch = !searchTerm ||
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      const categoryMatch =
+        selectedCategory.length === 0 ||
+        selectedCategory.includes(product.categoryId ?? "");
+      const supplierMatch =
+        selectedSuppliers.length === 0 ||
+        selectedSuppliers.includes(product.supplierId ?? "");
+      const statusMatch =
+        selectedStatuses.length === 0 ||
+        selectedStatuses.includes(product.status ?? "");
+      return searchMatch && categoryMatch && supplierMatch && statusMatch;
+    });
+  };
+
+  const exportToCSV = () => {
+    try {
+      const filteredProducts = getFilteredProducts();
+
+      if (filteredProducts.length === 0) {
+        toast({
+          title: "No Data to Export",
+          description: "There are no products to export with the current filters.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const csvData = filteredProducts.map(product => ({
+        'Product Name': product.name,
+        'SKU': product.sku,
+        'Price': `$${product.price.toFixed(2)}`,
+        'Quantity': product.quantity,
+        'Status': product.status,
+        'Category': product.category || 'Unknown',
+        'Supplier': product.supplier || 'Unknown',
+        'Created Date': new Date(product.createdAt).toLocaleDateString(),
+      }));
+
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `stockly-products-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "CSV Export Successful!",
+        description: `${filteredProducts.length} products exported to CSV file.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export products to CSV. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      const filteredProducts = getFilteredProducts();
+
+      if (filteredProducts.length === 0) {
+        toast({
+          title: "No Data to Export",
+          description: "There are no products to export with the current filters.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const excelData = filteredProducts.map(product => ({
+        'Product Name': product.name,
+        'SKU': product.sku,
+        'Price': product.price,
+        'Quantity': product.quantity,
+        'Status': product.status,
+        'Category': product.category || 'Unknown',
+        'Supplier': product.supplier || 'Unknown',
+        'Created Date': new Date(product.createdAt).toLocaleDateString(),
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Products');
+
+      // Auto-size columns
+      const colWidths = [
+        { wch: 20 }, // Product Name
+        { wch: 15 }, // SKU
+        { wch: 10 }, // Price
+        { wch: 10 }, // Quantity
+        { wch: 12 }, // Status
+        { wch: 15 }, // Category
+        { wch: 15 }, // Supplier
+        { wch: 12 }, // Created Date
+      ];
+      ws['!cols'] = colWidths;
+
+      XLSX.writeFile(wb, `stockly-products-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+      toast({
+        title: "Excel Export Successful!",
+        description: `${filteredProducts.length} products exported to Excel file.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export products to Excel. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredProducts = getFilteredProducts();
+
   return (
     <div className="flex flex-col gap-4 mb-6">
       {/* Search Bar */}
@@ -82,6 +213,33 @@ export default function FiltersAndActions({
         selectedSuppliers={selectedSuppliers}
         setSelectedSuppliers={setSelectedSuppliers}
       />
+
+      {/* Export Section */}
+      <div className="flex justify-center">
+        <div className="flex items-center gap-2 bg-muted p-2 rounded-lg">
+          <span className="text-sm font-medium text-muted-foreground">
+            Export {filteredProducts.length} products:
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToCSV}
+            className="flex items-center gap-2"
+          >
+            <FiFileText className="h-4 w-4" />
+            CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToExcel}
+            className="flex items-center gap-2"
+          >
+            <FiGrid className="h-4 w-4" />
+            Excel
+          </Button>
+        </div>
+      </div>
 
       {/* Large Screen Layout */}
       <div className="hidden lg:flex justify-between items-center gap-4">
