@@ -24,203 +24,988 @@ Stockly is designed to help businesses and individuals efficiently manage their 
 
 ---
 
-## Features
+## 🚀 Features
 
-- **Product Management:** List, add, edit, and delete products with details (name, SKU, status, quantity, price, supplier, category).
-- **Filtering & Sorting:** Filter by status, category, supplier; search by name/SKU; sort by name, price, quantity.
-- **Category & Supplier Management:** Manage product categories and suppliers with CRUD operations.
-- **Authentication:** Secure login/registration with JWT, password hashing (bcrypt), session management via cookies.
-- **Responsive Design:** Works seamlessly on desktops, tablets, and mobile devices.
-- **API Integration:** RESTful APIs for products, categories, suppliers, and authentication.
-- **Database:** MongoDB with Prisma ORM for schema management and queries.
-- **Security:** JWT-based authentication, password hashing, middleware for route protection.
-- **Reusable Components:** Built with shadcn/ui and custom hooks for easy reuse and extension.
+### Core Functionality
+
+- **Product Management**: Complete CRUD operations for products with SKU tracking
+- **Category Management**: Organize products with custom categories
+- **Supplier Management**: Track and manage product suppliers
+- **Real-time Search**: Instant filtering by product name or SKU
+- **Advanced Filtering**: Filter by category, supplier, and status
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
+- **Dark/Light Theme**: Toggle between themes with system preference detection
+
+### Authentication & Security
+
+- **JWT Authentication**: Secure token-based authentication
+- **User Registration**: Secure account creation with password hashing
+- **Session Management**: Persistent login sessions with automatic token refresh
+- **Protected Routes**: Automatic redirection for unauthenticated users
+- **Password Security**: bcryptjs hashing for secure password storage
+
+### User Experience
+
+- **Loading States**: Visual feedback during all operations
+- **Toast Notifications**: Success/error messages for all user actions
+- **Form Validation**: Client-side validation with error handling
+- **Accessibility**: ARIA-compliant components for screen readers
+- **Keyboard Navigation**: Full keyboard accessibility support
 
 ---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
-- **Frontend:** Next.js 15, React, TypeScript, Tailwind CSS, shadcn/ui
-- **Backend:** Next.js API routes, Prisma ORM
-- **Database:** MongoDB (via Prisma)
-- **Authentication:** Custom JWT, bcrypt
-- **State Management:** React Context, custom hooks
-- **Other:** Axios, js-cookie
+### Frontend
+
+- **Next.js 15.0.3**: React framework with App Router
+- **React 19**: Latest React with concurrent features
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first CSS framework
+- **Shadcn/ui**: Modern component library
+- **Zustand**: Lightweight state management
+- **React Hook Form**: Form handling with validation
+- **React Table**: Advanced table functionality
+
+### Backend
+
+- **Next.js API Routes**: Server-side API endpoints
+- **Prisma ORM**: Type-safe database operations
+- **MongoDB**: NoSQL database
+- **JWT**: JSON Web Token authentication
+- **bcryptjs**: Password hashing
+- **Axios**: HTTP client for API requests
+
+### Development Tools
+
+- **ESLint**: Code linting and formatting
+- **PostCSS**: CSS processing
+- **Autoprefixer**: CSS vendor prefixing
+- **TypeScript**: Static type checking
 
 ---
 
-## Getting Started
-
-### 1. Clone the Repository
+## 📁 Project Structure
 
 ```bash
-git clone https://github.com/arnobt78/Stock-Inventory-Managment--NextJS.git
-cd Stock-Inventory-Managment--NextJS
+stockly/
+├── app/                          # Next.js App Router
+│   ├── AppHeader/                # Application header component
+│   │   ├── AppHeader.tsx         # Main header with theme toggle
+│   │   └── ModeToggle.tsx       # Dark/light theme toggle
+│   ├── AppTable/                 # Main table component
+│   │   ├── AppTable.tsx          # Main table wrapper
+│   │   ├── dropdowns/            # Filter dropdowns
+│   │   │   ├── CategoryDropDown.tsx
+│   │   │   ├── StatusDropDown.tsx
+│   │   │   └── SupplierDropDown.tsx
+│   │   └── ProductDialog/        # Product management dialogs
+│   │       ├── AddProductDialog.tsx
+│   │       ├── AddCategoryDialog.tsx
+│   │       ├── AddSupplierDialog.tsx
+│   │       └── _components/      # Dialog sub-components
+│   ├── Products/                 # Product-related components
+│   │   ├── ProductTable.tsx      # Main product table
+│   │   ├── columns.tsx           # Table column definitions
+│   │   ├── ProductsDropDown.tsx  # Product action dropdown
+│   │   └── PaginationSelection.tsx
+│   ├── login/                    # Authentication pages
+│   │   └── page.tsx
+│   ├── register/
+│   │   └── page.tsx
+│   ├── logout/
+│   │   └── page.tsx
+│   ├── authContext.tsx           # Authentication context
+│   ├── useProductStore.ts        # Zustand store for state management
+│   ├── types.ts                  # TypeScript type definitions
+│   ├── layout.tsx                # Root layout
+│   ├── page.tsx                  # Main page
+│   └── Home.tsx                  # Home component
+├── components/                   # Reusable UI components
+│   ├── ui/                       # Shadcn/ui components
+│   │   ├── button.tsx
+│   │   ├── dialog.tsx
+│   │   ├── input.tsx
+│   │   ├── table.tsx
+│   │   ├── toast.tsx
+│   │   └── ...                   # Other UI components
+│   ├── GlobalLoading.tsx         # Global loading component
+│   ├── Loading.tsx               # Loading spinner
+│   └── Skeleton.tsx              # Skeleton loading
+├── pages/                        # API routes
+│   └── api/
+│       ├── auth/                 # Authentication endpoints
+│       │   ├── login.ts
+│       │   ├── register.ts
+│       │   ├── logout.ts
+│       │   └── session.ts
+│       ├── products/             # Product management
+│       │   └── index.ts
+│       ├── categories/           # Category management
+│       │   └── index.ts
+│       └── suppliers/            # Supplier management
+│           └── index.ts
+├── prisma/                       # Database schema and client
+│   ├── schema.prisma             # Database schema
+│   ├── client.ts                 # Prisma client
+│   ├── product.ts                # Product operations
+│   ├── category.ts               # Category operations
+│   └── supplier.ts               # Supplier operations
+├── utils/                        # Utility functions
+│   ├── auth.ts                   # Authentication utilities
+│   └── axiosInstance.ts          # Axios configuration
+├── hooks/                        # Custom React hooks
+│   └── use-toast.ts              # Toast hook
+├── middleware/                   # Next.js middleware
+│   └── authMiddleware.ts         # Authentication middleware
+└── public/                       # Static assets
+    ├── favicon.ico
+    └── ...                       # Other static files
 ```
 
-### 2. Install Dependencies
+---
 
-```bash
-npm install
-# or
-pnpm install
-# or
-yarn install
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js**: Version 18 or higher
+- **npm** or **yarn**: Package manager
+- **MongoDB**: Database (local or cloud instance)
+- **Git**: Version control
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/your-username/stockly.git
+   cd stockly
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Environment Setup**
+
+   Create a `.env` file in the root directory:
+
+   ```env
+   # Database Configuration
+   # DATABASE_URL="mongodb://localhost:27017/stockly"
+   # or for MongoDB Atlas:
+   DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/stockly?retryWrites=true&w=majority"
+
+   # JWT Configuration
+   JWT_SECRET="your-super-secret-jwt-key-here"
+   # JWT_EXPIRES_IN="1h"
+
+   # Application Configuration (Optional)
+   # NEXTAUTH_URL="http://localhost:3000"
+   # NEXTAUTH_SECRET="your-nextauth-secret"
+   ```
+
+4. **Database Setup**
+
+   ```bash
+   # Generate Prisma client
+   npx prisma generate
+
+   # Push schema to database
+   npx prisma db push
+
+   # (Optional) View database in Prisma Studio
+   npx prisma studio
+   ```
+
+5. **Run the development server**
+
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+6. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🔧 Environment Variables
+
+### Required Variables
+
+| Variable         | Description               | Example                             |
+| ---------------- | ------------------------- | ----------------------------------- |
+| `DATABASE_URL`   | MongoDB connection string | `mongodb://localhost:27017/stockly` |
+| `JWT_SECRET`     | Secret key for JWT tokens | `your-super-secret-jwt-key-here`    |
+| `JWT_EXPIRES_IN` | JWT token expiration time | `1h`                                |
+
+### Optional Variables
+
+| Variable          | Description        | Default                 |
+| ----------------- | ------------------ | ----------------------- |
+| `NEXTAUTH_URL`    | NextAuth.js URL    | `http://localhost:3000` |
+| `NEXTAUTH_SECRET` | NextAuth.js secret | Auto-generated          |
+
+### MongoDB Atlas Setup
+
+1. Create a MongoDB Atlas account
+2. Create a new cluster
+3. Get your connection string
+4. Replace `username`, `password`, and `cluster` with your values
+5. Add the connection string to your `.env` file
+
+---
+
+## 📊 Database Schema
+
+### User Model
+
+```prisma
+model User {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime  @db.Date
+  email     String    @unique
+  name      String
+  password  String
+  updatedAt DateTime? @db.Date
+  username  String?   @unique
+}
 ```
 
-### 3. Set Up Environment Variables
+### Product Model
 
-Create a `.env` file in the root directory with the following variables:
+```prisma
+model Product {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId String   @db.ObjectId
+  createdAt  DateTime @db.Date
+  name       String
+  price      Float
+  quantity   BigInt
+  sku        String   @unique
+  status     String
+  supplierId String   @db.ObjectId
+  userId     String   @db.ObjectId
+}
+```
+
+### Category Model
+
+```prisma
+model Category {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  userId String @db.ObjectId
+}
+```
+
+### Supplier Model
+
+```prisma
+model Supplier {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  userId String @db.ObjectId
+}
+```
+
+---
+
+## 🔌 API Endpoints
+
+### Authentication Endpoints
+
+#### POST `/api/auth/register`
+
+Register a new user account.
+
+```typescript
+// Request Body
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+
+// Response
+{
+  "success": true,
+  "message": "User registered successfully"
+}
+```
+
+#### POST `/api/auth/login`
+
+Authenticate user and get JWT token.
+
+```typescript
+// Request Body
+{
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+
+// Response
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+#### POST `/api/auth/logout`
+
+Logout user and invalidate session.
+
+```typescript
+// Response
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+#### GET `/api/auth/session`
+
+Get current user session information.
+
+```typescript
+// Response
+{
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### Product Management Endpoints
+
+#### GET `/api/products`
+
+Get all products for the authenticated user.
+
+```typescript
+// Response
+[
+  {
+    id: "507f1f77bcf86cd799439011",
+    name: "Laptop",
+    sku: "LAP001",
+    price: 999.99,
+    quantity: 10,
+    status: "Available",
+    category: "Electronics",
+    supplier: "TechCorp",
+    createdAt: "2024-01-01T00:00:00.000Z",
+  },
+];
+```
+
+#### POST `/api/products`
+
+Create a new product.
+
+```typescript
+// Request Body
+{
+  "name": "Laptop",
+  "sku": "LAP001",
+  "price": 999.99,
+  "quantity": 10,
+  "status": "Available",
+  "categoryId": "507f1f77bcf86cd799439011",
+  "supplierId": "507f1f77bcf86cd799439012"
+}
+
+// Response
+{
+  "id": "507f1f77bcf86cd799439013",
+  "name": "Laptop",
+  "sku": "LAP001",
+  "price": 999.99,
+  "quantity": 10,
+  "status": "Available",
+  "category": "Electronics",
+  "supplier": "TechCorp",
+  "createdAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+#### PUT `/api/products`
+
+Update an existing product.
+
+```typescript
+// Request Body
+{
+  "id": "507f1f77bcf86cd799439013",
+  "name": "Updated Laptop",
+  "sku": "LAP001",
+  "price": 1099.99,
+  "quantity": 15,
+  "status": "Available",
+  "categoryId": "507f1f77bcf86cd799439011",
+  "supplierId": "507f1f77bcf86cd799439012"
+}
+```
+
+#### DELETE `/api/products`
+
+Delete a product.
+
+```typescript
+// Request Body
+{
+  "id": "507f1f77bcf86cd799439013"
+}
+
+// Response
+204 No Content
+```
+
+### Category Management Endpoints
+
+#### GET `/api/categories`
+
+Get all categories for the authenticated user.
+
+#### POST `/api/categories`
+
+Create a new category.
+
+#### PUT `/api/categories`
+
+Update an existing category.
+
+#### DELETE `/api/categories`
+
+Delete a category.
+
+### Supplier Management Endpoints
+
+#### GET `/api/suppliers`
+
+Get all suppliers for the authenticated user.
+
+#### POST `/api/suppliers`
+
+Create a new supplier.
+
+#### PUT `/api/suppliers`
+
+Update an existing supplier.
+
+#### DELETE `/api/suppliers`
+
+Delete a supplier.
+
+---
+
+## 🎨 Component Architecture
+
+### State Management with Zustand
+
+The application uses Zustand for state management, providing a simple and efficient way to manage global state.
+
+```typescript
+// Example: Product Store
+interface ProductState {
+  allProducts: Product[];
+  categories: Category[];
+  suppliers: Supplier[];
+  isLoading: boolean;
+  loadProducts: () => Promise<void>;
+  addProduct: (product: Product) => Promise<{ success: boolean }>;
+  updateProduct: (product: Product) => Promise<{ success: boolean }>;
+  deleteProduct: (id: string) => Promise<{ success: boolean }>;
+}
+
+export const useProductStore = create<ProductState>((set) => ({
+  allProducts: [],
+  categories: [],
+  suppliers: [],
+  isLoading: false,
+
+  loadProducts: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axiosInstance.get("/products");
+      set({ allProducts: response.data || [] });
+    } catch (error) {
+      console.error("Error loading products:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  // ... other methods
+}));
+```
+
+### Authentication Context
+
+The authentication context provides user state and authentication methods throughout the application.
+
+```typescript
+// Example: Auth Context Usage
+const { isLoggedIn, user, login, logout } = useAuth();
+
+// Protected route example
+useEffect(() => {
+  if (!isLoggedIn) {
+    router.push("/login");
+  }
+}, [isLoggedIn, router]);
+```
+
+### Reusable Components
+
+#### Dialog Components
+
+All dialogs follow a consistent pattern with proper accessibility attributes:
+
+```typescript
+// Example: Product Dialog
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogContent aria-describedby="product-dialog-description">
+    <DialogHeader>
+      <DialogTitle>Add Product</DialogTitle>
+    </DialogHeader>
+    <DialogDescription id="product-dialog-description">
+      Fill in the product details below.
+    </DialogDescription>
+    {/* Form content */}
+  </DialogContent>
+</Dialog>
+```
+
+#### Table Components
+
+The product table uses React Table for advanced functionality:
+
+```typescript
+// Example: Table Column Definition
+const columns: ColumnDef<Product>[] = [
+  {
+    accessorKey: "name",
+    header: "Product Name",
+    cell: ({ row }) => <div>{row.getValue("name")}</div>,
+  },
+  {
+    accessorKey: "sku",
+    header: "SKU",
+  },
+  // ... other columns
+];
+```
+
+---
+
+## 🔒 Security Features
+
+### JWT Authentication
+
+- Secure token-based authentication
+- Automatic token refresh
+- Protected API routes
+- Session management
+
+### Password Security
+
+- bcryptjs hashing for passwords
+- Secure password validation
+- No plain text password storage
+
+### API Security
+
+- Request validation
+- Error handling without sensitive data exposure
+- CORS protection
+- Rate limiting (can be implemented)
+
+### Data Validation
+
+- Client-side form validation
+- Server-side data validation
+- TypeScript type safety
+- Prisma schema validation
+
+---
+
+## 🎯 Key Features Implementation
+
+### Real-time Search
+
+The search functionality filters products instantly as users type:
+
+```typescript
+// Search implementation in ProductTable.tsx
+const filteredData = useMemo(() => {
+  return data.filter((product) => {
+    const searchMatch = searchTerm
+      ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
+
+    return searchMatch && categoryFilter && supplierFilter && statusFilter;
+  });
+}, [data, searchTerm, categoryFilter, supplierFilter, statusFilter]);
+```
+
+### Toast Notifications
+
+Consistent user feedback with toast notifications:
+
+```typescript
+// Example: Success toast
+toast({
+  title: "Success!",
+  description: "Product created successfully.",
+  variant: "default",
+});
+
+// Example: Error toast
+toast({
+  title: "Error",
+  description: "Failed to create product. Please try again.",
+  variant: "destructive",
+});
+```
+
+### Loading States
+
+Visual feedback during async operations:
+
+```typescript
+// Example: Button loading state
+<Button disabled={isLoading}>
+  {isLoading ? "Creating..." : "Create Product"}
+</Button>
+```
+
+### Theme Toggle
+
+Dark/light theme with system preference detection:
+
+```typescript
+// Theme toggle implementation
+const { theme, setTheme } = useTheme();
+
+const toggleTheme = () => {
+  setTheme(theme === "dark" ? "light" : "dark");
+};
+```
+
+---
+
+## 🚀 Deployment
+
+### Vercel Deployment (Recommended)
+
+1. **Connect your GitHub repository to Vercel**
+2. **Set environment variables in Vercel dashboard**
+3. **Deploy automatically on push to main branch**
+
+### Environment Variables for Production
 
 ```env
-DATABASE_URL=your_mongodb_connection_string
-JWT_SECRET=your_super_secret_jwt_key
+DATABASE_URL="your-production-mongodb-url"
+JWT_SECRET="your-production-jwt-secret"
 ```
 
-- **DATABASE_URL:** Get your MongoDB connection string from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) or your own MongoDB server.
-- **JWT_SECRET:** Generate a strong random string (e.g., using [1Password password generator](https://1password.com/password-generator/)).
-
-**Never commit your .env file or secrets to version control!**
-
----
-
-## Project Structure
+### Build Commands
 
 ```bash
-├── app/
-│   ├── layout.tsx           # Root layout and metadata
-│   ├── page.tsx             # Home page
-│   ├── login/               # Login page
-│   ├── register/            # Registration page
-│   ├── Products/            # Product table, columns, dropdowns
-│   ├── AppHeader/           # Header and theme toggle
-│   ├── AppTable/            # Main product table and dialogs
-│   ├── fonts/               # Custom fonts
-│   └── ...
-├── components/
-│   ├── ui/                  # shadcn/ui components (button, card, dialog, etc.)
-│   ├── GlobalLoading.tsx    # Global loading indicator
-│   └── ...
-├── hooks/                   # Custom React hooks
-├── lib/                     # Utility functions
-├── middleware/              # Custom API middleware
-├── pages/
-│   └── api/                 # API routes (auth, products, categories, suppliers)
-├── prisma/
-│   ├── schema.prisma        # Prisma schema
-│   ├── client.ts            # Prisma client
-│   └── ...
-├── public/                  # Static assets (icons, images)
-├── types/                   # TypeScript type definitions
-├── utils/                   # Auth, axios instance, etc.
-├── .env                     # Environment variables (not committed)
-├── README.md                # Project documentation
-└── ...
+# Build the application
+npm run build
+
+# Start production server
+npm start
+
+# Run linting
+npm run lint
 ```
 
 ---
 
-## API Endpoints
+## 🧪 Testing
 
-All API endpoints are under `/api/` and require authentication (except login/register).
+### Manual Testing Checklist
 
-### Auth
+- [ ] User registration and login
+- [ ] Product CRUD operations
+- [ ] Category management
+- [ ] Supplier management
+- [ ] Search and filtering
+- [ ] Theme toggle
+- [ ] Responsive design
+- [ ] Form validation
+- [ ] Error handling
+- [ ] Loading states
 
-- `POST /api/auth/login` — Login with email and password
-- `POST /api/auth/register` — Register a new user
-- `POST /api/auth/logout` — Logout (clears session)
-- `GET /api/auth/session` — Get current user session
+### Automated Testing (Future Enhancement)
 
-### Products
+```bash
+# Install testing dependencies
+npm install --save-dev jest @testing-library/react @testing-library/jest-dom
 
-- `GET /api/products` — List all products for the user
-- `POST /api/products` — Add a new product
-- `PUT /api/products` — Update a product
-- `DELETE /api/products` — Delete a product
+# Run tests
+npm test
 
-### Categories
-
-- `GET /api/categories` — List all categories
-- `POST /api/categories` — Add a new category
-- `PUT /api/categories` — Update a category
-- `DELETE /api/categories` — Delete a category
-
-### Suppliers
-
-- `GET /api/suppliers` — List all suppliers
-- `POST /api/suppliers` — Add a new supplier
-- `PUT /api/suppliers` — Update a supplier
-- `DELETE /api/suppliers` — Delete a supplier
-
----
-
-## How It Works
-
-1. **Authentication:**
-
-- Users register and login with email/password.
-- Passwords are hashed with bcrypt.
-- On login, a JWT is issued and stored in a secure cookie (`session_id`).
-- All protected API routes check the JWT for authentication.
-
-2. **Product Management:**
-
-- Authenticated users can add, edit, delete, and view products.
-- Products are linked to categories and suppliers.
-- Filtering, searching, and sorting are available in the UI.
-
-3. **Category & Supplier Management:**
-
-- Users can manage categories and suppliers for their products.
-
-4. **UI & Components:**
-
-- Built with shadcn/ui and Tailwind CSS for a modern, responsive look.
-- All UI elements are reusable and customizable.
-
----
-
-## Reusable Components & Usage
-
-### Example: Using a Button from shadcn/ui
-
-```tsx
-import { Button } from "@/components/ui/button";
-
-export default function MyComponent() {
-  return <Button variant="primary">Click Me</Button>;
-}
+# Run tests with coverage
+npm test -- --coverage
 ```
 
-### Example: Product Table
+---
 
-```tsx
-import { ProductTable } from "@/app/Products/ProductTable";
+## 🔧 Customization
 
-export default function ProductsPage() {
-  return <ProductTable />;
-}
+### Adding New Features
+
+1. **Create new API endpoints** in `pages/api/`
+2. **Add new Prisma models** in `schema.prisma`
+3. **Create new components** in `components/`
+4. **Update state management** in `useProductStore.ts`
+5. **Add new routes** in `app/`
+
+### Styling Customization
+
+The application uses Tailwind CSS with custom design tokens:
+
+```typescript
+// tailwind.config.ts
+export default {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        // ... other custom colors
+      },
+    },
+  },
+};
 ```
 
-### Custom Hooks
+### Component Customization
 
-Use `useProductStore`, `useAuth`, and other hooks for state management and authentication.
+All UI components are built with Shadcn/ui and can be customized:
 
----
-
-## Keywords
-
-Stockly, Inventory Management, Next.js, React, Prisma, MongoDB, Product Management, JWT, Authentication, CRUD, Responsive Web App, shadcn/ui, Tailwind CSS, Arnob Mahmud
-
----
-
-## Conclusion
-
-Stockly is a full-featured, modern inventory management system built for learning, extension, and real-world use. Its modular architecture, secure authentication, and beautiful UI make it a great starting point for your own projects or for contributing to open source.
+```bash
+# Add new Shadcn/ui components
+npx shadcn@latest add [component-name]
+```
 
 ---
 
-## Happy Coding! 🎉
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Database Connection Issues
+
+```bash
+# Check database connection
+npx prisma db pull
+
+# Reset database (development only)
+npx prisma db push --force-reset
+```
+
+#### Build Errors
+
+```bash
+# Clear Next.js cache
+rm -rf .next
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### Authentication Issues
+
+- Check JWT_SECRET environment variable
+- Verify database connection
+- Check user credentials in database
+
+#### Performance Issues
+
+- Enable Next.js production mode
+- Optimize images and assets
+- Use proper caching strategies
+
+---
+
+## 📚 Learning Resources
+
+### Next.js
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [App Router Guide](https://nextjs.org/docs/app)
+- [API Routes](https://nextjs.org/docs/api-routes/introduction)
+
+### React
+
+- [React Documentation](https://react.dev/)
+- [React Hooks](https://react.dev/reference/react)
+- [React Patterns](https://reactpatterns.com/)
+
+### Prisma
+
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Prisma with MongoDB](https://www.prisma.io/docs/concepts/database-connectors/mongodb)
+- [Prisma Client](https://www.prisma.io/docs/concepts/components/prisma-client)
+
+### Zustand
+
+- [Zustand Documentation](https://github.com/pmndrs/zustand)
+- [Zustand Best Practices](https://github.com/pmndrs/zustand#best-practices)
+
+### Tailwind CSS
+
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Tailwind CSS Components](https://tailwindui.com/)
+
+---
+
+## 🤝 Contributing
+
+### Development Workflow
+
+1. **Fork the repository**
+2. **Create a feature branch**
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Make your changes**
+4. **Test thoroughly**
+5. **Commit your changes**
+
+   ```bash
+   git commit -m "feat: add new feature"
+   ```
+
+6. **Push to your fork**
+
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+7. **Create a pull request**
+
+### Code Style Guidelines
+
+- Use TypeScript for type safety
+- Follow ESLint rules
+- Write meaningful commit messages
+- Add comments for complex logic
+- Test your changes
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Next.js Team** for the amazing framework
+- **Vercel** for hosting and deployment
+- **Prisma Team** for the excellent ORM
+- **Shadcn/ui** for the beautiful components
+- **Tailwind CSS** for the utility-first CSS framework
+
+---
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+
+1. **Check the troubleshooting section**
+2. **Search existing issues**
+3. **Create a new issue** with detailed information
+4. **Contact the maintainer**
+
+---
+
+## 🎯 Roadmap
+
+### Planned Features
+
+- [ ] User roles and permissions
+- [ ] Advanced reporting and analytics
+- [ ] Bulk import/export functionality
+- [ ] Email notifications
+- [ ] Mobile app
+- [ ] API rate limiting
+- [ ] Advanced search filters
+- [ ] Product images
+- [ ] Inventory alerts
+- [ ] Audit logs
+
+### Performance Improvements
+
+- [ ] Database indexing optimization
+- [ ] Caching strategies
+- [ ] Code splitting
+- [ ] Image optimization
+- [ ] Bundle size optimization
+
+---
+
+## 📊 Project Statistics
+
+- **Lines of Code**: ~5,000+
+- **Components**: 20+
+- **API Endpoints**: 12+
+- **Database Models**: 4
+- **Dependencies**: 30+
+
+---
+
+## 🏆 Features Summary
+
+| Feature              | Status      | Description                            |
+| -------------------- | ----------- | -------------------------------------- |
+| User Authentication  | ✅ Complete | JWT-based auth with registration/login |
+| Product Management   | ✅ Complete | Full CRUD with search and filtering    |
+| Category Management  | ✅ Complete | Create, edit, delete categories        |
+| Supplier Management  | ✅ Complete | Manage product suppliers               |
+| Responsive Design    | ✅ Complete | Mobile-first design                    |
+| Dark/Light Theme     | ✅ Complete | Theme toggle with system preference    |
+| Real-time Search     | ✅ Complete | Instant product filtering              |
+| Toast Notifications  | ✅ Complete | User feedback system                   |
+| Loading States       | ✅ Complete | Visual feedback during operations      |
+| Form Validation      | ✅ Complete | Client and server-side validation      |
+| Accessibility        | ✅ Complete | ARIA-compliant components              |
+| TypeScript           | ✅ Complete | Full type safety                       |
+| Database Integration | ✅ Complete | MongoDB with Prisma ORM                |
+| API Security         | ✅ Complete | Protected routes and validation        |
+
+---
+
+## 🎉 Happy Coding! 🎉
 
 Feel free to use this project repository and extend this project further!
 
@@ -229,5 +1014,3 @@ If you have any questions or want to share your work, reach out via GitHub or my
 **Enjoy building and learning!** 🚀
 
 Thank you! 😊
-
----
