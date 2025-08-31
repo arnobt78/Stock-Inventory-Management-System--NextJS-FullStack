@@ -9,5 +9,5 @@ export function useAppTheme() {
     setTheme(currentTheme);
   }, []);
 
-  return theme === "light" ? "bg-white" : "bg-gray-800";
+  return theme === "light" ? "bg-white" : "bg-gray-600";
 }

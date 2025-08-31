@@ -26,16 +26,15 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({ column, label }) => {
     isSorted === "asc"
       ? IoMdArrowUp
       : isSorted === "desc"
-      ? IoMdArrowDown
-      : ArrowUpDown;
+        ? IoMdArrowDown
+        : ArrowUpDown;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="" asChild>
         <div
-          className={`flex items-start py-[14px] select-none cursor-pointer p-2 gap-1 ${
-            isSorted && "text-primary"
-          }`}
+          className={`flex items-start py-[14px] select-none cursor-pointer p-2 gap-1 ${isSorted && "text-primary"
+            }`}
           aria-label={`Sort by ${label}`}
         >
           {label}
@@ -142,15 +141,6 @@ export const columns: ColumnDef<Product>[] = [
       return <span>{categoryName || "Unknown"}</span>;
     },
   },
-  // {
-  //   accessorKey: "categoryId",
-  //   header: "Category ID",
-  //   cell: ({ getValue }) => {
-  //     const categoryId = getValue<string | undefined>();
-  //     return <span>{categoryId || "Unknown"}</span>;
-  //   },
-  //   enableColumnFilter: false, // Hide this column from the UI
-  // },
   {
     accessorKey: "supplier",
     header: "Supplier",
@@ -159,15 +149,6 @@ export const columns: ColumnDef<Product>[] = [
       return <span>{supplierName || "Unknown"}</span>;
     },
   },
-  // {
-  //   accessorKey: "supplierId",
-  //   header: "Supplier ID",
-  //   cell: ({ getValue }) => {
-  //     const supplierId = getValue<string | undefined>();
-  //     return <span>{supplierId || "Unknown"}</span>;
-  //   },
-  //   enableColumnFilter: false, // Hide this column from the UI
-  // },
   {
     id: "actions",
     cell: ({ row }) => {
@@ -176,4 +157,7 @@ export const columns: ColumnDef<Product>[] = [
   },
 ];
 
-console.log("Columns passed to useReactTable:", columns);
+// Debug log for columns - only log in development
+if (process.env.NODE_ENV === 'development') {
+  console.log("Columns passed to useReactTable:", columns);
+}

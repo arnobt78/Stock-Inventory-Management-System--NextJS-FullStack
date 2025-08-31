@@ -1,8 +1,0 @@
-{
-  "build": {
-    "env": {
-      "DATABASE_URL": "mongodb+srv://arnobt78:arnobt78@clusterstockly.ztxew.mongodb.net/stockly?retryWrites=true&w=majority&appName=ClusterStockly",
-      "JWT_SECRET": "8ce1fc68a8ae4b47f05edabb48fb5e913a53a22b589a60b40882872b9a13be14d76f640b9b7440891570fee4aff75a81654fd9310b1c637d3228c6d7492d25d048f2b8f47be578dfa6ccb5f3aea825fbb0ea81661dfe6af6cca2d7252353087a232952e4b205fb572daaf52e7428c17f437a9c86a9d3df133b7c987b6b9a62888f43f741503217508171ea98c6ce74e977a3101449ffa706fd2a70165403d3ae882b3784c7b5c281cc0c351a87750561a171d46a35f4fd8ec54de3c21fcf0379cbce33b6a4871f6e363c6b35e1d5461a923ab7bbd3809eaf679ec8f5e3ba4edfd92af32dc9cbc4ace03ca44c30e1eee1d94d30cbfeea68f6b508c8b9d6756f26"
-    }
-  }
-}

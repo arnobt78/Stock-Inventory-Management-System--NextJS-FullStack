@@ -1,68 +1,106 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+model Category {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  userId String @db.ObjectId
 }
 
-model User {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String     @unique
-  password  String
-  createdAt DateTime   @default(now())
-  products  Product[]
-  categories Category[]
-  suppliers Supplier[]
-  sessions  Session[]
+model Department {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model Invoice {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  invoiceNumber Json?  @unique
+  /// Field referred in an index, but found no data to define the type.
+  orderId       Json?  @unique
+}
+
+model Order {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  orderNumber Json?  @unique
+}
+
+model OrderItem {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model Permission {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  resource Json?
+  /// Field referred in an index, but found no data to define the type.
+  userId   Json?
+
+  @@unique([userId, resource])
 }
 
 model Product {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  sku         String     @unique
-  price       Float
-  quantity    Int
-  status      String
-  createdAt   DateTime   @default(now())
-  userId      String     @db.ObjectId
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categoryId  String     @db.ObjectId
-  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  supplierId  String     @db.ObjectId
-  supplier    Supplier   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-}
-
-model Category {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  userId    String     @db.ObjectId
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products  Product[]
-}
-
-model Supplier {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  userId    String     @db.ObjectId
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products  Product[]
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId String   @db.ObjectId
+  createdAt  DateTime @db.Date
+  name       String
+  price      Float
+  quantity   BigInt
+  sku        String   @unique
+  status     String
+  supplierId String   @db.ObjectId
+  userId     String   @db.ObjectId
 }
 
 model Session {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String   @db.ObjectId
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expires      DateTime
-  sessionToken String   @unique
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  sessionToken Json?  @unique
+}
+
+model StockAlert {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model StockAllocation {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  departmentId Json?
+  /// Field referred in an index, but found no data to define the type.
+  productId    Json?
+
+  @@unique([productId, departmentId])
+}
+
+model Supplier {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  userId String @db.ObjectId
+}
+
+model User {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime  @db.Date
+  email     String    @unique
+  name      String
+  password  String
+  updatedAt DateTime? @db.Date
+  username  String?   @unique
+}
+
+model UserAction {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model VerificationToken {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  identifier String
-  token      String   @unique
-  expires    DateTime
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  token Json?  @unique
 }

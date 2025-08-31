@@ -56,10 +56,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const checkSession = async () => {
       const sessionId = Cookies.get("session_id");
-      console.log("Session ID from cookies:", sessionId);
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Session ID from cookies:", sessionId);
+      }
       if (sessionId) {
         const session = await getSessionClient();
-        console.log("Session from getSessionClient:", session);
+        // Debug log - only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Session from getSessionClient:", session);
+        }
         if (session) {
           setIsLoggedIn(true);
           setUser({
@@ -67,7 +73,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             name: session.name,
             email: session.email,
           });
-          console.log("User from session:", session);
+          // Debug log - only log in development
+          if (process.env.NODE_ENV === 'development') {
+            console.log("User from session:", session);
+          }
           // Set necessary attributes in local storage
           localStorage.setItem("isAuth", "true");
           localStorage.setItem("isLoggedIn", "true");
@@ -99,13 +108,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email: result.userEmail,
       });
       Cookies.set("session_id", result.sessionId);
-      console.log("Login successful, session ID set:", result.sessionId);
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Login successful, session ID set:", result.sessionId);
 
-      // Debug log to verify cookie
-      console.log(
-        "Session ID from Cookies after login:",
-        Cookies.get("session_id")
-      );
+        // Debug log to verify cookie
+        console.log(
+          "Session ID from Cookies after login:",
+          Cookies.get("session_id")
+        );
+      }
 
       // Set necessary attributes in local storage
       localStorage.setItem("isAuth", "true");
@@ -122,7 +134,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await axiosInstance.post("/auth/logout");
       clearAuthData();
-      console.log("Logout successful, session ID removed");
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Logout successful, session ID removed");
+      }
     } catch (error) {
       console.error("Error logging out:", error);
       throw error;

@@ -65,11 +65,15 @@ export const useProductStore = create<ProductState>((set) => ({
     try {
       const response = await axiosInstance.get("/products");
       set((_) => ({
-        allProducts: response.data,
+        allProducts: response.data || [],
       }));
-      console.log("Updated State with Products:", response.data);
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Updated State with Products:", response.data);
+      }
     } catch (error) {
       console.error("Error loading products:", error);
+      set({ allProducts: [] }); // Set empty array on error
     } finally {
       set({ isLoading: false }); // Set loading to false
     }
@@ -82,7 +86,10 @@ export const useProductStore = create<ProductState>((set) => ({
       const response = await axiosInstance.post("/products", product);
 
       const newProduct = response.data;
-      console.log("Product added successfully:", newProduct); // Debug log
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Product added successfully:", newProduct);
+      }
       set((state) => ({
         allProducts: [...state.allProducts, newProduct],
       }));
@@ -97,6 +104,7 @@ export const useProductStore = create<ProductState>((set) => ({
 
   // Update an existing product
   updateProduct: async (updatedProduct: Product) => {
+    set({ isLoading: true });
     try {
       const response = await axiosInstance.put("/products", updatedProduct); // Send the `id` in the request body
 
@@ -108,16 +116,22 @@ export const useProductStore = create<ProductState>((set) => ({
         ),
       }));
 
-      console.log("Product updated successfully:", newProduct);
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Product updated successfully:", newProduct);
+      }
       return { success: true };
     } catch (error) {
       console.error("Error updating product:", error);
       return { success: false };
+    } finally {
+      set({ isLoading: false });
     }
   },
 
   // Delete a product
   deleteProduct: async (productId: string) => {
+    set({ isLoading: true });
     try {
       const response = await axiosInstance.delete("/products", {
         data: { id: productId }, // Send the ID in the request body
@@ -136,6 +150,8 @@ export const useProductStore = create<ProductState>((set) => ({
     } catch (error) {
       console.error("Error deleting product:", error);
       return { success: false };
+    } finally {
+      set({ isLoading: false });
     }
   },
 
@@ -144,7 +160,10 @@ export const useProductStore = create<ProductState>((set) => ({
     try {
       const response = await axiosInstance.get("/categories");
       set({ categories: response.data });
-      console.log("Categories loaded successfully:", response.data);
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Categories loaded successfully:", response.data);
+      }
     } catch (error) {
       console.error("Error loading categories:", error);
     }
@@ -177,7 +196,10 @@ export const useProductStore = create<ProductState>((set) => ({
     try {
       const response = await axiosInstance.get("/suppliers");
       set({ suppliers: response.data });
-      console.log("Suppliers loaded successfully:", response.data);
+      // Debug log - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Suppliers loaded successfully:", response.data);
+      }
     } catch (error) {
       console.error("Error loading suppliers:", error);
     }

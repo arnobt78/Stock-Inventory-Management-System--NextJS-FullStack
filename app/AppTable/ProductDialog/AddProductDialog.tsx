@@ -49,10 +49,12 @@ interface ProductFormData {
 
 interface AddProductDialogProps {
   allProducts: Product[];
+  userId: string;
 }
 
 export default function AddProductDialog({
   allProducts,
+  userId,
 }: AddProductDialogProps) {
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(ProductSchema),
@@ -129,24 +131,30 @@ export default function AddProductDialog({
           status,
           categoryId: selectedCategory,
           createdAt: new Date(),
-          userId: "",
+          userId: userId,
         };
 
         const result = await addProduct(newProduct);
 
-        if (result) {
+        if (result.success) {
           toast({
-            title: "Success",
-            description: "Product added successfully!",
+            title: "Product Created Successfully!",
+            description: `"${data.productName}" has been added to your inventory.`,
           });
           dialogCloseRef.current?.click();
           loadProducts();
           setOpenProductDialog(false);
+        } else {
+          toast({
+            title: "Creation Failed",
+            description: "Failed to create the product. Please try again.",
+            variant: "destructive",
+          });
         }
       } else {
         const productToUpdate: Product = {
           id: selectedProduct.id,
-          createdAt: selectedProduct.createdAt,
+          createdAt: new Date(selectedProduct.createdAt), // Convert string to Date
           supplierId: selectedSupplier,
           name: data.productName,
           price: data.price,
@@ -160,22 +168,24 @@ export default function AddProductDialog({
         const result = await updateProduct(productToUpdate);
         if (result.success) {
           toast({
-            title: "Success",
-            description: "Product updated successfully!",
+            title: "Product Updated Successfully!",
+            description: `"${data.productName}" has been updated in your inventory.`,
           });
           loadProducts();
           setOpenProductDialog(false);
         } else {
           toast({
-            title: "Error",
-            description: "Something went wrong while updating the product.",
+            title: "Update Failed",
+            description: "Failed to update the product. Please try again.",
+            variant: "destructive",
           });
         }
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
+        title: "Operation Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false); // Stop loading
@@ -195,10 +205,10 @@ export default function AddProductDialog({
           <DialogTitle className="text-[22px]">
             {selectedProduct ? "Update Product" : "Add Product"}
           </DialogTitle>
-          <DialogDescription id="dialog-description">
-            Enter the details of the product below.
-          </DialogDescription>
         </DialogHeader>
+        <DialogDescription id="dialog-description">
+          Enter the details of the product below.
+        </DialogDescription>
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -214,7 +224,7 @@ export default function AddProductDialog({
                   id="category"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-md focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mt-1 h-11 block w-full rounded-md border-gray-300 shadow-md focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
                   <option value="">Select Category</option>
                   {categories.map((category) => (
@@ -232,7 +242,7 @@ export default function AddProductDialog({
                   id="supplier"
                   value={selectedSupplier}
                   onChange={(e) => setSelectedSupplier(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-md focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mt-1 h-11 block w-full rounded-md border-gray-300 shadow-md focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
                   <option value="">Select Supplier</option>
                   {suppliers.map((supplier) => (
@@ -261,8 +271,8 @@ export default function AddProductDialog({
                 {isSubmitting
                   ? "Loading..."
                   : selectedProduct
-                  ? "Update Product"
-                  : "Add Product"}
+                    ? "Update Product"
+                    : "Add Product"}
               </Button>
             </DialogFooter>
           </form>

@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import { getSessionServer } from "@/utils/auth";
+import { MongoClient } from "mongodb";
 
 const prisma = new PrismaClient();
 
@@ -31,22 +32,45 @@ export default async function handler(
           return res.status(400).json({ error: "SKU must be unique" });
         }
 
+        // Use Prisma for product creation to ensure consistency
         const product = await prisma.product.create({
           data: {
             name,
             sku,
             price,
-            quantity,
+            quantity: BigInt(quantity) as any,
             status,
             userId,
             categoryId,
             supplierId,
+            createdAt: new Date(),
           },
         });
-
-        res.status(201).json(product);
+        
+        // Fetch category and supplier data for the response
+        const category = await prisma.category.findUnique({
+          where: { id: categoryId },
+        });
+        const supplier = await prisma.supplier.findUnique({
+          where: { id: supplierId },
+        });
+        
+        // Return the created product data with category and supplier names
+        res.status(201).json({
+          id: product.id,
+          name: product.name,
+          sku: product.sku,
+          price: product.price,
+          quantity: Number(product.quantity),
+          status: product.status,
+          userId: product.userId,
+          categoryId: product.categoryId,
+          supplierId: product.supplierId,
+          createdAt: product.createdAt.toISOString(),
+          category: category?.name || "Unknown",
+          supplier: supplier?.name || "Unknown",
+        });
       } catch (error) {
-        console.error("Error creating product:", error);
         res.status(500).json({ error: "Failed to create product" });
       }
       break;
@@ -55,25 +79,35 @@ export default async function handler(
       try {
         const products = await prisma.product.findMany({
           where: { userId },
-          include: {
-            category: true, // Include category relation
-            supplier: true, // Include supplier relation
-          },
         });
 
-        // Transform category and supplier to strings
-        const transformedProducts = products.map((product) => ({
-          ...product,
-          createdAt: product.createdAt.toISOString(), // Convert `createdAt` to ISO string
-          category: product.category?.name || "Unknown", // Transform category to string
-          supplier: product.supplier?.name || "Unknown", // Transform supplier to string
-        }));
+        // Debug log - only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Raw products from database:", products);
+        }
 
-        console.log("Transformed Products:", transformedProducts); // Debugging log
+        // Fetch category and supplier data separately
+        const transformedProducts = await Promise.all(
+          products.map(async (product) => {
+            const category = await prisma.category.findUnique({
+              where: { id: product.categoryId },
+            });
+            const supplier = await prisma.supplier.findUnique({
+              where: { id: product.supplierId },
+            });
+
+            return {
+              ...product,
+              quantity: Number(product.quantity), // Convert BigInt to Number
+              createdAt: product.createdAt.toISOString(), // Convert `createdAt` to ISO string
+              category: category?.name || "Unknown", // Transform category to string
+              supplier: supplier?.name || "Unknown", // Transform supplier to string
+            };
+          })
+        );
 
         res.status(200).json(transformedProducts);
       } catch (error) {
-        console.error("Error fetching products:", error);
         res.status(500).json({ error: "Failed to fetch products" });
       }
       break;
@@ -97,16 +131,37 @@ export default async function handler(
             name,
             sku,
             price,
-            quantity,
+            quantity: BigInt(quantity) as any, // Convert to BigInt for database
             status,
             categoryId,
             supplierId,
           },
         });
 
-        res.status(200).json(updatedProduct);
+        // Fetch category and supplier data for the response
+        const category = await prisma.category.findUnique({
+          where: { id: categoryId },
+        });
+        const supplier = await prisma.supplier.findUnique({
+          where: { id: supplierId },
+        });
+
+        // Return the updated product data with category and supplier names
+        res.status(200).json({
+          id: updatedProduct.id,
+          name: updatedProduct.name,
+          sku: updatedProduct.sku,
+          price: updatedProduct.price,
+          quantity: Number(updatedProduct.quantity), // Convert BigInt to Number
+          status: updatedProduct.status,
+          userId: updatedProduct.userId,
+          categoryId: updatedProduct.categoryId,
+          supplierId: updatedProduct.supplierId,
+          createdAt: updatedProduct.createdAt.toISOString(),
+          category: category?.name || "Unknown",
+          supplier: supplier?.name || "Unknown",
+        });
       } catch (error) {
-        console.error("Error updating product:", error);
         res.status(500).json({ error: "Failed to update product" });
       }
       break;
@@ -121,7 +176,6 @@ export default async function handler(
 
         res.status(204).end();
       } catch (error) {
-        console.error("Error deleting product:", error);
         res.status(500).json({ error: "Failed to delete product" });
       }
       break;

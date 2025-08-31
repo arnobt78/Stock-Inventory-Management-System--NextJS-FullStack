@@ -38,7 +38,10 @@ export default function AppTable() {
   }, [isLoggedIn, loadProducts, router]);
 
   useEffect(() => {
-    console.log("All Products in AppTable:", allProducts);
+    // Debug log for products - only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log("All Products in AppTable:", allProducts);
+    }
   }, [allProducts]);
 
   if (!isLoggedIn || !user) {
@@ -60,6 +63,7 @@ export default function AppTable() {
       <CardContent>
         {/* Filters and Actions */}
         <FiltersAndActions
+          searchTerm={searchTerm}
           setSearchTerm={setSearchTerm} // Update search term
           pagination={pagination}
           setPagination={setPagination}
@@ -70,11 +74,12 @@ export default function AppTable() {
           setSelectedStatuses={setSelectedStatuses}
           selectedSuppliers={selectedSuppliers}
           setSelectedSuppliers={setSelectedSuppliers}
+          userId={user.id}
         />
 
         {/* Product Table */}
         <ProductTable
-          data={allProducts} // Pass all products
+          data={allProducts || []} // Pass all products with fallback to empty array
           columns={columns} // Pass table columns
           userId={user.id}
           isLoading={isLoading}

@@ -24,6 +24,8 @@ export default function AddSupplierDialog() {
   const [editingSupplier, setEditingSupplier] = useState<string | null>(null);
   const [newSupplierName, setNewSupplierName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // Button loading state
+  const [isEditing, setIsEditing] = useState(false); // Loading state for edit
+  const [isDeleting, setIsDeleting] = useState(false); // Loading state for delete
   const {
     suppliers,
     addSupplier,
@@ -45,6 +47,7 @@ export default function AddSupplierDialog() {
       toast({
         title: "Error",
         description: "Supplier name cannot be empty",
+        variant: "destructive",
       });
       return;
     }
@@ -64,14 +67,15 @@ export default function AddSupplierDialog() {
       addSupplier(newSupplier);
       setSupplierName("");
       toast({
-        title: "Success",
-        description: "Supplier added successfully!",
+        title: "Supplier Created Successfully!",
+        description: `"${supplierName}" has been added to your suppliers.`,
       });
     } catch (error) {
       console.error("Error adding supplier:", error);
       toast({
-        title: "Error",
-        description: "Failed to add supplier.",
+        title: "Creation Failed",
+        description: "Failed to create the supplier. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false); // Stop loading
@@ -83,11 +87,12 @@ export default function AddSupplierDialog() {
       toast({
         title: "Error",
         description: "Supplier name cannot be empty",
+        variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true); // Start loading
+    setIsEditing(true); // Start loading
     try {
       const response = await axiosInstance.put("/suppliers", {
         id: supplierId,
@@ -103,22 +108,28 @@ export default function AddSupplierDialog() {
       setEditingSupplier(null);
       setNewSupplierName("");
       toast({
-        title: "Success",
-        description: "Supplier edited successfully!",
+        title: "Supplier Updated Successfully!",
+        description: `"${newSupplierName}" has been updated in your suppliers.`,
       });
     } catch (error) {
       console.error("Error editing supplier:", error);
       toast({
-        title: "Error",
-        description: "Failed to edit supplier.",
+        title: "Update Failed",
+        description: "Failed to update the supplier. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false); // Stop loading
+      setIsEditing(false); // Stop loading
     }
   };
 
   const handleDeleteSupplier = async (supplierId: string) => {
-    setIsSubmitting(true); // Start loading
+    setIsDeleting(true); // Start loading
+
+    // Find the supplier name before deleting for the toast message
+    const supplierToDelete = suppliers.find(sup => sup.id === supplierId);
+    const supplierName = supplierToDelete?.name || "Unknown Supplier";
+
     try {
       const response = await axiosInstance.delete("/suppliers", {
         data: { id: supplierId },
@@ -130,17 +141,18 @@ export default function AddSupplierDialog() {
 
       deleteSupplier(supplierId);
       toast({
-        title: "Success",
-        description: "Supplier deleted successfully!",
+        title: "Supplier Deleted Successfully!",
+        description: `"${supplierName}" has been permanently deleted.`,
       });
     } catch (error) {
       console.error("Error deleting supplier:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete supplier.",
+        title: "Delete Failed",
+        description: "Failed to delete the supplier. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false); // Stop loading
+      setIsDeleting(false); // Stop loading
     }
   };
 
@@ -153,13 +165,16 @@ export default function AddSupplierDialog() {
       <DialogTrigger asChild>
         <Button className="h-10 font-semibold">+Add Supplier</Button>
       </DialogTrigger>
-      <DialogContent className="p-4 sm:p-7 sm:px-8 poppins max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="p-4 sm:p-7 sm:px-8 poppins max-h-[90vh] overflow-y-auto"
+        aria-describedby="supplier-dialog-description"
+      >
         <DialogHeader>
           <DialogTitle className="text-[22px]">Add Supplier</DialogTitle>
-          <DialogDescription>
-            Enter the name of the new supplier
-          </DialogDescription>
         </DialogHeader>
+        <DialogDescription id="supplier-dialog-description">
+          Enter the name of the new supplier
+        </DialogDescription>
         <Input
           value={supplierName}
           onChange={(e) => setSupplierName(e.target.value)}
@@ -178,9 +193,9 @@ export default function AddSupplierDialog() {
           <Button
             onClick={handleAddSupplier}
             className="h-11 w-full sm:w-auto px-11"
-            isLoading={isSubmitting} // Button loading effect
+            disabled={isSubmitting} // Button loading effect
           >
-            {isSubmitting ? "Loading..." : "Add Supplier"}
+            {isSubmitting ? "Creating..." : "Add Supplier"}
           </Button>
         </DialogFooter>
         <div className="mt-4">
@@ -203,9 +218,9 @@ export default function AddSupplierDialog() {
                       <Button
                         onClick={() => handleEditSupplier(supplier.id)}
                         className="h-8 w-full"
-                        isLoading={isSubmitting}
+                        disabled={isEditing}
                       >
-                        Save
+                        {isEditing ? "Saving..." : "Save"}
                       </Button>
                       <Button
                         onClick={() => setEditingSupplier(null)}
@@ -231,9 +246,9 @@ export default function AddSupplierDialog() {
                       <Button
                         onClick={() => handleDeleteSupplier(supplier.id)}
                         className="h-8 w-full"
-                        isLoading={isSubmitting}
+                        disabled={isDeleting}
                       >
-                        <FaTrash />
+                        {isDeleting ? "Deleting..." : <FaTrash />}
                       </Button>
                     </div>
                   </div>

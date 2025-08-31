@@ -24,6 +24,8 @@ export default function AddCategoryDialog() {
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // Button loading state
+  const [isEditing, setIsEditing] = useState(false); // Loading state for edit
+  const [isDeleting, setIsDeleting] = useState(false); // Loading state for delete
   const {
     categories,
     addCategory,
@@ -45,6 +47,7 @@ export default function AddCategoryDialog() {
       toast({
         title: "Error",
         description: "Category name cannot be empty",
+        variant: "destructive",
       });
       return;
     }
@@ -64,14 +67,15 @@ export default function AddCategoryDialog() {
       addCategory(newCategory);
       setCategoryName("");
       toast({
-        title: "Success",
-        description: "Category added successfully!",
+        title: "Category Created Successfully!",
+        description: `"${categoryName}" has been added to your categories.`,
       });
     } catch (error) {
       console.error("Error adding category:", error);
       toast({
-        title: "Error",
-        description: "Failed to add category.",
+        title: "Creation Failed",
+        description: "Failed to create the category. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false); // Stop loading
@@ -83,11 +87,12 @@ export default function AddCategoryDialog() {
       toast({
         title: "Error",
         description: "Category name cannot be empty",
+        variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true); // Start loading
+    setIsEditing(true); // Start loading
     try {
       const response = await axiosInstance.put("/categories", {
         id: categoryId,
@@ -103,22 +108,28 @@ export default function AddCategoryDialog() {
       setEditingCategory(null);
       setNewCategoryName("");
       toast({
-        title: "Success",
-        description: "Category edited successfully!",
+        title: "Category Updated Successfully!",
+        description: `"${newCategoryName}" has been updated in your categories.`,
       });
     } catch (error) {
       console.error("Error editing category:", error);
       toast({
-        title: "Error",
-        description: "Failed to edit category.",
+        title: "Update Failed",
+        description: "Failed to update the category. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false); // Stop loading
+      setIsEditing(false); // Stop loading
     }
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
-    setIsSubmitting(true); // Start loading
+    setIsDeleting(true); // Start loading
+
+    // Find the category name before deleting for the toast message
+    const categoryToDelete = categories.find(cat => cat.id === categoryId);
+    const categoryName = categoryToDelete?.name || "Unknown Category";
+
     try {
       const response = await axiosInstance.delete("/categories", {
         data: { id: categoryId },
@@ -130,17 +141,18 @@ export default function AddCategoryDialog() {
 
       deleteCategory(categoryId);
       toast({
-        title: "Success",
-        description: "Category deleted successfully!",
+        title: "Category Deleted Successfully!",
+        description: `"${categoryName}" has been permanently deleted.`,
       });
     } catch (error) {
       console.error("Error deleting category:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete category.",
+        title: "Delete Failed",
+        description: "Failed to delete the category. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false); // Stop loading
+      setIsDeleting(false); // Stop loading
     }
   };
 
@@ -153,13 +165,16 @@ export default function AddCategoryDialog() {
       <DialogTrigger asChild>
         <Button className="h-10 font-semibold">+Add Category</Button>
       </DialogTrigger>
-      <DialogContent className="p-4 sm:p-7 sm:px-8 poppins max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="p-4 sm:p-7 sm:px-8 poppins max-h-[90vh] overflow-y-auto"
+        aria-describedby="category-dialog-description"
+      >
         <DialogHeader>
           <DialogTitle className="text-[22px]">Add Category</DialogTitle>
-          <DialogDescription>
-            Enter the name of the new category
-          </DialogDescription>
         </DialogHeader>
+        <DialogDescription id="category-dialog-description">
+          Enter the name of the new category
+        </DialogDescription>
         <Input
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
@@ -178,9 +193,9 @@ export default function AddCategoryDialog() {
           <Button
             onClick={handleAddCategory}
             className="h-11 w-full sm:w-auto px-11"
-            isLoading={isSubmitting} // Button loading effect
+            disabled={isSubmitting} // Button loading effect
           >
-            {isSubmitting ? "Loading..." : "Add Category"}
+            {isSubmitting ? "Creating..." : "Add Category"}
           </Button>
         </DialogFooter>
         <div className="mt-4">
@@ -203,9 +218,9 @@ export default function AddCategoryDialog() {
                       <Button
                         onClick={() => handleEditCategory(category.id)}
                         className="h-8 w-full"
-                        isLoading={isSubmitting}
+                        disabled={isEditing}
                       >
-                        Save
+                        {isEditing ? "Saving..." : "Save"}
                       </Button>
                       <Button
                         onClick={() => setEditingCategory(null)}
@@ -231,9 +246,9 @@ export default function AddCategoryDialog() {
                       <Button
                         onClick={() => handleDeleteCategory(category.id)}
                         className="h-8 w-full"
-                        isLoading={isSubmitting}
+                        disabled={isDeleting}
                       >
-                        <FaTrash />
+                        {isDeleting ? "Deleting..." : <FaTrash />}
                       </Button>
                     </div>
                   </div>

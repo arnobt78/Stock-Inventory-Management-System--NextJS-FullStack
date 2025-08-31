@@ -1,22 +1,44 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { AiFillProduct } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { useAuth } from "../authContext";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast"; // Import toast hook
 
 export default function AppHeader() {
   const { logout, user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast(); // Use toast hook
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // Add loading state
 
   const handleLogout = async () => {
+    setIsLoggingOut(true); // Start loading
+
     try {
       await logout();
-      router.push("/login");
+
+      // Show success toast
+      toast({
+        title: "Logout Successful!",
+        description: "You have been logged out successfully.",
+      });
+
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
     } catch (error) {
-      console.error("Failed to logout:", error);
+      // Show error toast
+      toast({
+        title: "Logout Failed",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingOut(false); // Stop loading
     }
   };
 
@@ -40,9 +62,10 @@ export default function AppHeader() {
         <ModeToggle />
         <Button
           onClick={handleLogout}
+          disabled={isLoggingOut}
           className="h-10 px-6 bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl hover:bg-secondary-dark transition-all"
         >
-          Logout
+          {isLoggingOut ? "Logging Out..." : "Logout"}
         </Button>
       </div>
     </div>

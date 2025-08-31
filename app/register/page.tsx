@@ -7,21 +7,20 @@ import { Button } from "@/components/ui/button";
 import axiosInstance from "@/utils/axiosInstance"; // Import axiosInstance
 import Link from "next/link"; // Import Link from next/link
 import Loading from "@/components/Loading"; // Import Loading component
+import { useToast } from "@/hooks/use-toast"; // Import toast hook
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Add loading state
   const router = useRouter();
+  const { toast } = useToast(); // Use toast hook
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
-    setIsError(false);
     setIsLoading(true); // Start loading
+
     try {
       const response = await axiosInstance.post("/auth/register", {
         name,
@@ -29,44 +28,43 @@ export default function Register() {
         password,
       });
 
-      if (response.status !== 200) {
-        const data = response.data;
-        throw new Error(data.error);
-      }
+      if (response.status === 201) {
+        // Show success toast
+        toast({
+          title: "Account Created Successfully!",
+          description: "Your account has been created. Redirecting to login page...",
+        });
 
-      setMessage("Registration successful! Redirecting to login...");
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-    } catch (error) {
-      setIsError(true);
-      if (error instanceof Error) {
-        setMessage(error.message);
+        // Clear form
+        setName("");
+        setEmail("");
+        setPassword("");
+
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          router.push("/login");
+        }, 1500);
       } else {
-        setMessage("An unknown error occurred.");
+        throw new Error("Registration failed");
       }
+    } catch (error) {
+      // Show error toast
+      toast({
+        title: "Registration Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false); // Stop loading
     }
   };
 
-  if (isLoading) {
-    return <Loading />; // Show loading animation during registration
-  }
+
 
   return (
     <div className="flex justify-center items-center h-screen">
       <form onSubmit={handleSubmit} className="w-full max-w-md p-8 space-y-4">
         <h2 className="text-2xl font-bold">Register</h2>
-        {message && (
-          <p
-            className={`text-center ${
-              isError ? "text-red-500" : "text-green-500"
-            }`}
-          >
-            {message}
-          </p>
-        )}
         <Input
           type="text"
           value={name}
@@ -88,8 +86,8 @@ export default function Register() {
           placeholder="Password"
           required
         />
-        <Button type="submit" className="w-full">
-          Register
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Creating Account..." : "Register"}
         </Button>
         <div className="text-center">
           <p>

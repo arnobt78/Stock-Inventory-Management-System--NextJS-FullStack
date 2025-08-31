@@ -8,6 +8,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast"; // Import toast hook
+import { useState } from "react"; // Import useState for loading states
 
 interface ProductsDropDownProps {
   row: {
@@ -24,11 +26,16 @@ export default function ProductsDropDown({ row }: ProductsDropDownProps) {
     loadProducts,
   } = useProductStore();
   const router = useRouter();
+  const { toast } = useToast(); // Use toast hook
+  const [isCopying, setIsCopying] = useState(false); // Loading state for copy
+  const [isDeleting, setIsDeleting] = useState(false); // Loading state for delete
 
-  console.log("Row Original:", row.original);
+  // Debug log removed to prevent payload errors
 
   // Handle Copy Product
   const handleCopyProduct = async () => {
+    setIsCopying(true); // Start loading
+
     try {
       const uniqueSku = `${row.original.sku}-${Date.now()}`;
 
@@ -42,18 +49,35 @@ export default function ProductsDropDown({ row }: ProductsDropDownProps) {
         supplier: row.original.supplier || "Unknown",
       };
 
-      console.log("Product to Copy:", productToCopy);
+      // Debug log removed to prevent payload errors
 
       const result = await addProduct(productToCopy);
       if (result.success) {
-        console.log("Product copied successfully!");
+        // Show success toast
+        toast({
+          title: "Product Copied Successfully!",
+          description: `"${row.original.name}" has been copied with a new SKU.`,
+        });
+
         await loadProducts();
         router.refresh();
       } else {
-        console.error("Failed to copy product.");
+        // Show error toast
+        toast({
+          title: "Copy Failed",
+          description: "Failed to copy the product. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error copying product:", error);
+      // Show error toast
+      toast({
+        title: "Copy Failed",
+        description: "An unexpected error occurred while copying the product.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCopying(false); // Stop loading
     }
   };
 
@@ -69,16 +93,35 @@ export default function ProductsDropDown({ row }: ProductsDropDownProps) {
 
   // Handle Delete Product
   const handleDeleteProduct = async () => {
+    setIsDeleting(true); // Start loading
+
     try {
       const result = await deleteProduct(row.original.id);
       if (result.success) {
-        console.log("Product deleted successfully!");
+        // Show success toast
+        toast({
+          title: "Product Deleted Successfully!",
+          description: `"${row.original.name}" has been permanently deleted.`,
+        });
+
         router.refresh();
       } else {
-        console.error("Failed to delete product.");
+        // Show error toast
+        toast({
+          title: "Delete Failed",
+          description: "Failed to delete the product. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error deleting product:", error);
+      // Show error toast
+      toast({
+        title: "Delete Failed",
+        description: "An unexpected error occurred while deleting the product.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false); // Stop loading
     }
   };
 
@@ -102,10 +145,18 @@ export default function ProductsDropDown({ row }: ProductsDropDownProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleCopyProduct}>Copy</DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleCopyProduct}
+          disabled={isCopying}
+        >
+          {isCopying ? "Copying..." : "Copy"}
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleEditProduct}>Edit</DropdownMenuItem>
-        <DropdownMenuItem onClick={handleDeleteProduct}>
-          Delete
+        <DropdownMenuItem
+          onClick={handleDeleteProduct}
+          disabled={isDeleting}
+        >
+          {isDeleting ? "Deleting..." : "Delete"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
