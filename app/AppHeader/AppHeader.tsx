@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AiFillProduct } from "react-icons/ai";
-import { FiActivity, FiFileText, FiHome } from "react-icons/fi"; // Import icons for new nav items
+import { FiActivity, FiBarChart, FiFileText, FiHome } from "react-icons/fi"; // Import icons for new nav items
 import { useAuth } from "../authContext";
 import { ModeToggle } from "./ModeToggle";
 
@@ -74,6 +74,15 @@ export default function AppHeader() {
         <Button
           variant="ghost"
           size="sm"
+          onClick={() => handleNavigation("/analytics")}
+          className="text-primary-foreground hover:bg-primary-dark"
+        >
+          <FiBarChart className="mr-2 h-4 w-4" />
+          Analytics
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => handleNavigation("/api-docs")}
           className="text-primary-foreground hover:bg-primary-dark"
         >
@@ -89,6 +98,7 @@ export default function AppHeader() {
           <FiActivity className="mr-2 h-4 w-4" />
           API Status
         </Button>
+
         <ModeToggle />
         <Button
           onClick={handleLogout}

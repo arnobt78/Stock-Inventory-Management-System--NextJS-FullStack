@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { FiActivity, FiAlertCircle, FiCheckCircle, FiDatabase, FiPackage, FiRefreshCw, FiServer, FiUsers, FiXCircle } from "react-icons/fi";
+import AuthenticatedLayout from "../components/AuthenticatedLayout";
 
 interface EndpointStatus {
   name: string;
@@ -181,209 +182,213 @@ export default function ApiStatusPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center space-x-2">
-            <FiRefreshCw className="h-6 w-6 animate-spin" />
-            <span>Loading system status...</span>
+      <AuthenticatedLayout>
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-2">
+              <FiRefreshCw className="h-6 w-6 animate-spin" />
+              <span>Loading system status...</span>
+            </div>
           </div>
         </div>
-      </div>
+      </AuthenticatedLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-primary">API & Project Status</h1>
-          <p className="text-lg text-muted-foreground">
-            Real-time monitoring of Stockly&apos;s API endpoints and system health
-          </p>
-        </div>
-        <Button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center space-x-2"
-        >
-          <FiRefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-        </Button>
-      </div>
-
-      {systemStatus && (
-        <>
-          {/* System Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Project</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{systemStatus.project}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Environment</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold capitalize">{systemStatus.environment}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Current Time</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{systemStatus.currentTime}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Uptime</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{systemStatus.uptime}</div>
-              </CardContent>
-            </Card>
+    <AuthenticatedLayout>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-primary">API & Project Status</h1>
+            <p className="text-lg text-muted-foreground">
+              Real-time monitoring of Stockly&apos;s API endpoints and system health
+            </p>
           </div>
+          <Button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center space-x-2"
+          >
+            <FiRefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </Button>
+        </div>
 
-          {/* API Health Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FiActivity className="h-5 w-5" />
-                API Health
-              </CardTitle>
-              <CardDescription>
-                Overall health status of all API endpoints
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                {getStatusIcon(systemStatus.apiHealth)}
-                <Badge className={getStatusColor(systemStatus.apiHealth)}>
-                  API is {systemStatus.apiHealth.toLowerCase()}.
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+        {systemStatus && (
+          <>
+            {/* System Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Project</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{systemStatus.project}</div>
+                </CardContent>
+              </Card>
 
-          {/* Endpoints Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FiServer className="h-5 w-5" />
-                Endpoints
-              </CardTitle>
-              <CardDescription>
-                Individual endpoint health and response times
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {systemStatus.endpoints.map((endpoint, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(endpoint.status)}
-                      <div>
-                        <h4 className="font-semibold">{endpoint.name}</h4>
-                        <p className="text-sm text-muted-foreground">{endpoint.path}</p>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Environment</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold capitalize">{systemStatus.environment}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Current Time</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{systemStatus.currentTime}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Uptime</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{systemStatus.uptime}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* API Health Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FiActivity className="h-5 w-5" />
+                  API Health
+                </CardTitle>
+                <CardDescription>
+                  Overall health status of all API endpoints
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(systemStatus.apiHealth)}
+                  <Badge className={getStatusColor(systemStatus.apiHealth)}>
+                    API is {systemStatus.apiHealth.toLowerCase()}.
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Endpoints Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FiServer className="h-5 w-5" />
+                  Endpoints
+                </CardTitle>
+                <CardDescription>
+                  Individual endpoint health and response times
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {systemStatus.endpoints.map((endpoint, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(endpoint.status)}
+                        <div>
+                          <h4 className="font-semibold">{endpoint.name}</h4>
+                          <p className="text-sm text-muted-foreground">{endpoint.path}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Badge className={getStatusColor(endpoint.status)}>
+                          {endpoint.status}
+                        </Badge>
+                        {endpoint.responseTime && (
+                          <span className="text-sm text-muted-foreground">
+                            {endpoint.responseTime}ms
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <Badge className={getStatusColor(endpoint.status)}>
-                        {endpoint.status}
-                      </Badge>
-                      {endpoint.responseTime && (
-                        <span className="text-sm text-muted-foreground">
-                          {endpoint.responseTime}ms
-                        </span>
-                      )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* System Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FiDatabase className="h-5 w-5" />
+                    Database Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon("OK")}
+                      <span>MongoDB Connection</span>
+                      <Badge className="bg-green-100 text-green-800">Connected</Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon("OK")}
+                      <span>Prisma Client</span>
+                      <Badge className="bg-green-100 text-green-800">Ready</Badge>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
-          {/* System Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FiUsers className="h-5 w-5" />
+                    Authentication
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon("OK")}
+                      <span>JWT Service</span>
+                      <Badge className="bg-green-100 text-green-800">Active</Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon("OK")}
+                      <span>Session Management</span>
+                      <Badge className="bg-green-100 text-green-800">Working</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Deployment Info */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FiDatabase className="h-5 w-5" />
-                  Database Status
+                  <FiPackage className="h-5 w-5" />
+                  Deployment Information
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon("OK")}
-                    <span>MongoDB Connection</span>
-                    <Badge className="bg-green-100 text-green-800">Connected</Badge>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Deployment</h4>
+                    <p className="text-muted-foreground">{systemStatus.deployment}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon("OK")}
-                    <span>Prisma Client</span>
-                    <Badge className="bg-green-100 text-green-800">Ready</Badge>
+                  <div>
+                    <h4 className="font-semibold mb-2">Last checked</h4>
+                    <p className="text-muted-foreground">{systemStatus.lastChecked}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FiUsers className="h-5 w-5" />
-                  Authentication
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon("OK")}
-                    <span>JWT Service</span>
-                    <Badge className="bg-green-100 text-green-800">Active</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon("OK")}
-                    <span>Session Management</span>
-                    <Badge className="bg-green-100 text-green-800">Working</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Deployment Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FiPackage className="h-5 w-5" />
-                Deployment Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Deployment</h4>
-                  <p className="text-muted-foreground">{systemStatus.deployment}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Last checked</h4>
-                  <p className="text-muted-foreground">{systemStatus.lastChecked}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
-    </div>
+          </>
+        )}
+      </div>
+    </AuthenticatedLayout>
   );
 }

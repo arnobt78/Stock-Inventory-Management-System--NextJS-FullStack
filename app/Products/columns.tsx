@@ -1,19 +1,20 @@
 "use client";
 
-import { Column, ColumnDef } from "@tanstack/react-table";
 import { Product } from "@/app/types";
+import { Column, ColumnDef } from "@tanstack/react-table";
 //import { ReactNode } from "react";
 
 import ProductDropDown from "./ProductsDropDown";
 
-import { ArrowUpDown } from "lucide-react";
-import { IoMdArrowDown, IoMdArrowUp } from "react-icons/io";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { QRCodeHover } from "@/components/ui/qr-code-hover";
+import { AlertTriangle, ArrowUpDown } from "lucide-react";
+import { IoMdArrowDown, IoMdArrowUp } from "react-icons/io";
 
 type SortableHeaderProps = {
   column: Column<Product, unknown>;
@@ -98,7 +99,25 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "quantity",
     header: ({ column }) => <SortableHeader column={column} label="Quantity" />,
-    cell: ({ row }) => <span>{row.original.quantity}</span>,
+    cell: ({ row }) => {
+      const quantity = row.original.quantity;
+      const isLowStock = quantity > 0 && quantity < 10;
+      const isOutOfStock = quantity === 0;
+
+      return (
+        <div className="flex items-center gap-2">
+          <span className={isLowStock || isOutOfStock ? "font-semibold" : ""}>
+            {quantity}
+          </span>
+          {isLowStock && (
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+          )}
+          {isOutOfStock && (
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "price",
@@ -147,6 +166,31 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const supplierName = row.original.supplier; // Display supplier name
       return <span>{supplierName || "Unknown"}</span>;
+    },
+  },
+  {
+    id: "qrCode",
+    header: "QR Code",
+    cell: ({ row }) => {
+      const product = row.original;
+      const qrData = JSON.stringify({
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
+        quantity: product.quantity,
+        status: product.status,
+        category: product.category,
+        supplier: product.supplier,
+      });
+
+      return (
+        <QRCodeHover
+          data={qrData}
+          title={`${product.name} QR`}
+          size={200}
+        />
+      );
     },
   },
   {
