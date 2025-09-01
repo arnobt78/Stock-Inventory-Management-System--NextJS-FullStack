@@ -20,7 +20,7 @@ Efficiently manage your product inventory with Stockly—a modern, secure, and r
 
 ## Project Overview
 
-Stockly is designed to help businesses and individuals efficiently manage their product inventory. It provides a robust, full-stack solution with secure authentication, CRUD operations, filtering, sorting, and a beautiful UI powered by shadcn/ui and Tailwind CSS. The project is open source and intended for learning, extension, and real-world use.
+Stockly is designed to help businesses and individuals efficiently manage their product inventory. It provides a robust, full-stack solution with secure authentication, CRUD operations, filtering, sorting, analytics dashboard, QR code generation, data export capabilities, and a beautiful UI powered by shadcn/ui and Tailwind CSS. The project is open source and intended for learning, extension, and real-world use.
 
 ---
 
@@ -35,6 +35,18 @@ Stockly is designed to help businesses and individuals efficiently manage their 
 - **Advanced Filtering**: Filter by category, supplier, and status
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 - **Dark/Light Theme**: Toggle between themes with system preference detection
+
+### Advanced Features
+
+- **📊 Analytics Dashboard**: Comprehensive business insights with charts and metrics
+- **📈 Data Visualization**: Interactive charts showing inventory trends and statistics
+- **🔍 Advanced Search**: Enhanced search with multiple filter options
+- **📱 QR Code Generation**: Generate QR codes for products with click-to-view functionality
+- **📄 Data Export**: Export product data to CSV and Excel formats
+- **📚 API Documentation**: Built-in API documentation page with endpoint details
+- **🔧 API Status Monitor**: Real-time API health monitoring and status dashboard
+- **⚠️ Low Stock Alerts**: Visual alerts for products with low inventory
+- **📊 Performance Optimizations**: React memoization, lazy loading, and caching
 
 ### Authentication & Security
 
@@ -51,6 +63,7 @@ Stockly is designed to help businesses and individuals efficiently manage their 
 - **Form Validation**: Client-side validation with error handling
 - **Accessibility**: ARIA-compliant components for screen readers
 - **Keyboard Navigation**: Full keyboard accessibility support
+- **Consistent Navigation**: AppHeader displayed on all authenticated pages
 
 ---
 
@@ -66,6 +79,10 @@ Stockly is designed to help businesses and individuals efficiently manage their 
 - **Zustand**: Lightweight state management
 - **React Hook Form**: Form handling with validation
 - **React Table**: Advanced table functionality
+- **Recharts**: Data visualization and charting library
+- **QRCode**: QR code generation library
+- **Papaparse**: CSV parsing and generation
+- **XLSX**: Excel file generation
 
 ### Backend
 
@@ -109,6 +126,12 @@ stockly/
 │   │   ├── columns.tsx           # Table column definitions
 │   │   ├── ProductsDropDown.tsx  # Product action dropdown
 │   │   └── PaginationSelection.tsx
+│   ├── analytics/                # Analytics dashboard
+│   │   └── page.tsx              # Analytics page with charts
+│   ├── api-docs/                 # API documentation
+│   │   └── page.tsx              # API docs page
+│   ├── api-status/               # API status monitoring
+│   │   └── page.tsx              # API status page
 │   ├── login/                    # Authentication pages
 │   │   └── page.tsx
 │   ├── register/
@@ -128,7 +151,13 @@ stockly/
 │   │   ├── input.tsx
 │   │   ├── table.tsx
 │   │   ├── toast.tsx
-│   │   └── ...                   # Other UI components
+│   │   ├── qr-code.tsx           # QR code component
+│   │   ├── qr-code-hover.tsx     # QR code hover component
+│   │   ├── analytics-card.tsx    # Analytics metrics card
+│   │   ├── chart-card.tsx        # Chart wrapper component
+│   │   ├── advanced-search.tsx  # Advanced search component
+│   │   ├── forecasting-card.tsx  # Forecasting insights card
+│   │   └── progress.tsx          # Progress bar component
 │   ├── GlobalLoading.tsx         # Global loading component
 │   ├── Loading.tsx               # Loading spinner
 │   └── Skeleton.tsx              # Skeleton loading
@@ -158,6 +187,7 @@ stockly/
 │   └── use-toast.ts              # Toast hook
 ├── middleware/                   # Next.js middleware
 │   └── authMiddleware.ts         # Authentication middleware
+├── middleware.ts                 # Route protection middleware
 └── public/                       # Static assets
     ├── favicon.ico
     └── ...                       # Other static files
@@ -613,6 +643,32 @@ const columns: ColumnDef<Product>[] = [
 ];
 ```
 
+#### QR Code Component
+
+QR code generation with click-to-view functionality:
+
+```typescript
+// Example: QR Code Usage
+<QRCodeHover
+  value={`Product: ${product.name}\nSKU: ${product.sku}\nPrice: $${product.price}`}
+  title="View QR Code"
+/>
+```
+
+#### Analytics Components
+
+Reusable analytics cards and charts:
+
+```typescript
+// Example: Analytics Card
+<AnalyticsCard
+  title="Total Products"
+  value={totalProducts}
+  description="Total products in inventory"
+  icon={<Package className="h-4 w-4" />}
+/>
+```
+
 ---
 
 ## 🔒 Security Features
@@ -710,6 +766,46 @@ const toggleTheme = () => {
 };
 ```
 
+### Data Export
+
+CSV and Excel export functionality:
+
+```typescript
+// Example: Export to CSV
+const exportToCSV = () => {
+  const csv = Papa.unparse(filteredProducts);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "products.csv");
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+```
+
+### Analytics Dashboard
+
+Comprehensive business insights with charts:
+
+```typescript
+// Example: Analytics implementation
+const analyticsData = useMemo(() => {
+  return {
+    totalProducts: products.length,
+    totalValue: products.reduce(
+      (sum, p) => sum + p.price * Number(p.quantity),
+      0
+    ),
+    lowStockItems: products.filter((p) => Number(p.quantity) < 10).length,
+    categories: categoryStats,
+    monthlyTrends: monthlyData,
+  };
+}, [products]);
+```
+
 ---
 
 ## 🚀 Deployment
@@ -756,6 +852,11 @@ npm run lint
 - [ ] Form validation
 - [ ] Error handling
 - [ ] Loading states
+- [ ] Analytics dashboard
+- [ ] QR code generation
+- [ ] Data export (CSV/Excel)
+- [ ] API documentation page
+- [ ] API status monitoring
 
 ### Automated Testing (Future Enhancement)
 
@@ -851,6 +952,12 @@ npm install
 - Optimize images and assets
 - Use proper caching strategies
 
+#### QR Code Issues
+
+- Ensure QR code library is properly installed
+- Check for hydration mismatches in development
+- Verify client-side rendering for dynamic content
+
 ---
 
 ## 📚 Learning Resources
@@ -882,6 +989,15 @@ npm install
 
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [Tailwind CSS Components](https://tailwindui.com/)
+
+### Data Visualization
+
+- [Recharts Documentation](https://recharts.org/)
+- [Chart.js](https://www.chartjs.org/)
+
+### QR Code Generation
+
+- [QRCode Library](https://github.com/zpao/qrcode.react)
 
 ---
 
@@ -935,6 +1051,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Prisma Team** for the excellent ORM
 - **Shadcn/ui** for the beautiful components
 - **Tailwind CSS** for the utility-first CSS framework
+- **Recharts** for the data visualization library
 
 ---
 
@@ -963,6 +1080,10 @@ If you encounter any issues or have questions:
 - [ ] Product images
 - [ ] Inventory alerts
 - [ ] Audit logs
+- [ ] Real-time notifications
+- [ ] Advanced forecasting algorithms
+- [ ] Multi-language support
+- [ ] Advanced user preferences
 
 ### Performance Improvements
 
@@ -971,37 +1092,49 @@ If you encounter any issues or have questions:
 - [ ] Code splitting
 - [ ] Image optimization
 - [ ] Bundle size optimization
+- [ ] Server-side rendering improvements
+- [ ] Progressive Web App (PWA) features
 
 ---
 
 ## 📊 Project Statistics
 
-- **Lines of Code**: ~5,000+
-- **Components**: 20+
+- **Lines of Code**: ~8,000+
+- **Components**: 30+
 - **API Endpoints**: 12+
 - **Database Models**: 4
-- **Dependencies**: 30+
+- **Dependencies**: 40+
+- **Pages**: 8+
+- **Features**: 20+
 
 ---
 
 ## 🏆 Features Summary
 
-| Feature              | Status      | Description                            |
-| -------------------- | ----------- | -------------------------------------- |
-| User Authentication  | ✅ Complete | JWT-based auth with registration/login |
-| Product Management   | ✅ Complete | Full CRUD with search and filtering    |
-| Category Management  | ✅ Complete | Create, edit, delete categories        |
-| Supplier Management  | ✅ Complete | Manage product suppliers               |
-| Responsive Design    | ✅ Complete | Mobile-first design                    |
-| Dark/Light Theme     | ✅ Complete | Theme toggle with system preference    |
-| Real-time Search     | ✅ Complete | Instant product filtering              |
-| Toast Notifications  | ✅ Complete | User feedback system                   |
-| Loading States       | ✅ Complete | Visual feedback during operations      |
-| Form Validation      | ✅ Complete | Client and server-side validation      |
-| Accessibility        | ✅ Complete | ARIA-compliant components              |
-| TypeScript           | ✅ Complete | Full type safety                       |
-| Database Integration | ✅ Complete | MongoDB with Prisma ORM                |
-| API Security         | ✅ Complete | Protected routes and validation        |
+| Feature                   | Status      | Description                            |
+| ------------------------- | ----------- | -------------------------------------- |
+| User Authentication       | ✅ Complete | JWT-based auth with registration/login |
+| Product Management        | ✅ Complete | Full CRUD with search and filtering    |
+| Category Management       | ✅ Complete | Create, edit, delete categories        |
+| Supplier Management       | ✅ Complete | Manage product suppliers               |
+| Responsive Design         | ✅ Complete | Mobile-first design                    |
+| Dark/Light Theme          | ✅ Complete | Theme toggle with system preference    |
+| Real-time Search          | ✅ Complete | Instant product filtering              |
+| Toast Notifications       | ✅ Complete | User feedback system                   |
+| Loading States            | ✅ Complete | Visual feedback during operations      |
+| Form Validation           | ✅ Complete | Client and server-side validation      |
+| Accessibility             | ✅ Complete | ARIA-compliant components              |
+| TypeScript                | ✅ Complete | Full type safety                       |
+| Database Integration      | ✅ Complete | MongoDB with Prisma ORM                |
+| API Security              | ✅ Complete | Protected routes and validation        |
+| Analytics Dashboard       | ✅ Complete | Business insights with charts          |
+| QR Code Generation        | ✅ Complete | Product QR codes with click-to-view    |
+| Data Export               | ✅ Complete | CSV and Excel export functionality     |
+| API Documentation         | ✅ Complete | Built-in API docs page                 |
+| API Status Monitor        | ✅ Complete | Real-time API health monitoring        |
+| Performance Optimizations | ✅ Complete | React memoization and caching          |
+| Low Stock Alerts          | ✅ Complete | Visual alerts for low inventory        |
+| Advanced Search           | ✅ Complete | Enhanced search with multiple filters  |
 
 ---
 
