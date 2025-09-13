@@ -98,6 +98,7 @@ export default function AddProductDialog({
       setSelectedCategory(selectedProduct.categoryId || "");
       setSelectedSupplier(selectedProduct.supplierId || "");
     } else {
+      // Reset form to default values for adding a new product
       reset({
         productName: "",
         sku: "",
@@ -192,8 +193,19 @@ export default function AddProductDialog({
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      // When opening the dialog for adding a new product, clear any selected product
+      setSelectedProduct(null);
+    } else {
+      // When closing the dialog, also clear the selected product to ensure clean state
+      setSelectedProduct(null);
+    }
+    setOpenProductDialog(open);
+  };
+
   return (
-    <Dialog open={openProductDialog} onOpenChange={setOpenProductDialog}>
+    <Dialog open={openProductDialog} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="h-10 font-semibold">+Add Product</Button>
       </DialogTrigger>
@@ -271,8 +283,8 @@ export default function AddProductDialog({
                 {isSubmitting
                   ? "Loading..."
                   : selectedProduct
-                    ? "Update Product"
-                    : "Add Product"}
+                  ? "Update Product"
+                  : "Add Product"}
               </Button>
             </DialogFooter>
           </form>

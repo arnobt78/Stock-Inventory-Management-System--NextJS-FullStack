@@ -240,9 +240,6 @@ export default function BusinessInsightsPage() {
         quantity: Number(product.quantity),
       }));
 
-    // Debug logging for topProducts
-    console.log("Top Products by Value:", topProducts);
-
     // Low stock products (matching product table logic: quantity > 0 AND quantity <= 20)
     const lowStockProducts = allProducts
       .filter(
