@@ -74,11 +74,11 @@ export default function AppHeader() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => handleNavigation("/analytics")}
+          onClick={() => handleNavigation("/business-insights")}
           className="text-primary-foreground hover:bg-primary-dark"
         >
           <FiBarChart className="mr-2 h-4 w-4" />
-          Analytics
+          Business Insights
         </Button>
         <Button
           variant="ghost"

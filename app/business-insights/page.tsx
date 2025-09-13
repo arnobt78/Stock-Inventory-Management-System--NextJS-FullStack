@@ -47,12 +47,12 @@ import { useProductStore } from "../useProductStore";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
-export default function AnalyticsPage() {
+export default function BusinessInsightsPage() {
   const { allProducts } = useProductStore();
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Calculate analytics data
+  // Calculate analytics data with corrected calculations
   const analyticsData = useMemo(() => {
     if (!allProducts || allProducts.length === 0) {
       return {
@@ -68,70 +68,188 @@ export default function AnalyticsPage() {
         monthlyTrend: [],
         topProducts: [],
         lowStockProducts: [],
+        stockUtilization: 0,
+        valueDensity: 0,
+        stockCoverage: 0,
       };
     }
 
     const totalProducts = allProducts.length;
-    const totalValue = allProducts.reduce((sum, product) => sum + (product.price * product.quantity), 0);
-    const lowStockItems = allProducts.filter(product => product.quantity > 0 && product.quantity < 10).length;
-    const outOfStockItems = allProducts.filter(product => product.quantity === 0).length;
-    const averagePrice = totalProducts > 0 ? totalValue / allProducts.reduce((sum, product) => sum + product.quantity, 0) : 0;
-    const totalQuantity = allProducts.reduce((sum, product) => sum + product.quantity, 0);
 
-    // Category distribution
-    const categoryMap = new Map<string, number>();
-    allProducts.forEach(product => {
+    // CORRECTED: Total value calculation - sum of (price * quantity) for each product
+    const totalValue = allProducts.reduce((sum, product) => {
+      return sum + product.price * Number(product.quantity);
+    }, 0);
+
+    // CORRECTED: Low stock items - products with quantity > 0 AND quantity <= 20 (matching product table logic)
+    const lowStockItems = allProducts.filter(
+      (product) =>
+        Number(product.quantity) > 0 && Number(product.quantity) <= 20
+    ).length;
+
+    // CORRECTED: Out of stock items - products with quantity = 0
+    const outOfStockItems = allProducts.filter(
+      (product) => Number(product.quantity) === 0
+    ).length;
+
+    // CORRECTED: Total quantity - sum of all quantities
+    const totalQuantity = allProducts.reduce((sum, product) => {
+      return sum + Number(product.quantity);
+    }, 0);
+
+    // CORRECTED: Average price calculation - total value divided by total quantity
+    const averagePrice = totalQuantity > 0 ? totalValue / totalQuantity : 0;
+
+    // CORRECTED: Stock utilization - percentage of products that are not out of stock
+    const stockUtilization =
+      totalProducts > 0
+        ? ((totalProducts - outOfStockItems) / totalProducts) * 100
+        : 0;
+
+    // CORRECTED: Value density - total value divided by total products
+    const valueDensity = totalProducts > 0 ? totalValue / totalProducts : 0;
+
+    // CORRECTED: Stock coverage - average quantity per product
+    const stockCoverage = totalProducts > 0 ? totalQuantity / totalProducts : 0;
+
+    // Category distribution based on quantity (not just count)
+    const categoryMap = new Map<
+      string,
+      { count: number; quantity: number; value: number }
+    >();
+    allProducts.forEach((product) => {
       const category = product.category || "Unknown";
-      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+      const current = categoryMap.get(category) || {
+        count: 0,
+        quantity: 0,
+        value: 0,
+      };
+      categoryMap.set(category, {
+        count: current.count + 1,
+        quantity: current.quantity + Number(product.quantity),
+        value: current.value + product.price * Number(product.quantity),
+      });
     });
-    const categoryDistribution = Array.from(categoryMap.entries()).map(([name, value]) => ({ name, value }));
+
+    // Convert to percentage based on quantity
+    const categoryDistribution = Array.from(categoryMap.entries()).map(
+      ([name, data]) => ({
+        name,
+        value: data.quantity,
+        count: data.count,
+        totalValue: data.value,
+      })
+    );
 
     // Status distribution
     const statusMap = new Map<string, number>();
-    allProducts.forEach(product => {
+    allProducts.forEach((product) => {
       const status = product.status || "Unknown";
       statusMap.set(status, (statusMap.get(status) || 0) + 1);
     });
-    const statusDistribution = Array.from(statusMap.entries()).map(([name, value]) => ({ name, value }));
+    const statusDistribution = Array.from(statusMap.entries()).map(
+      ([name, value]) => ({ name, value })
+    );
 
     // Price range distribution
     const priceRanges = [
-      { name: "$0-$10", min: 0, max: 10 },
-      { name: "$10-$50", min: 10, max: 50 },
-      { name: "$50-$100", min: 50, max: 100 },
+      { name: "$0-$100", min: 0, max: 100 },
       { name: "$100-$500", min: 100, max: 500 },
-      { name: "$500+", min: 500, max: Infinity },
+      { name: "$500-$1000", min: 500, max: 1000 },
+      { name: "$1000-$2000", min: 1000, max: 2000 },
+      { name: "$2000+", min: 2000, max: Infinity },
     ];
 
-    const priceRangeDistribution = priceRanges.map(range => ({
+    const priceRangeDistribution = priceRanges.map((range, index) => ({
       name: range.name,
-      value: allProducts.filter(product => product.price >= range.min && product.price < range.max).length,
+      value: allProducts.filter((product) => {
+        if (range.name === "$2000+") {
+          // For $2000+ range, include products > $2000 (not including $2000)
+          return product.price > 2000;
+        } else if (range.name === "$1000-$2000") {
+          // For $1000-$2000 range, include products >= $1000 and <= $2000
+          return product.price >= range.min && product.price <= range.max;
+        } else {
+          // For other ranges, include products >= min and < max (exclusive upper bound)
+          return product.price >= range.min && product.price < range.max;
+        }
+      }).length,
     }));
 
-    // Monthly trend (simulated data)
-    const monthlyTrend = [
-      { month: "Jan", products: Math.floor(totalProducts * 0.8) },
-      { month: "Feb", products: Math.floor(totalProducts * 0.85) },
-      { month: "Mar", products: Math.floor(totalProducts * 0.9) },
-      { month: "Apr", products: Math.floor(totalProducts * 0.95) },
-      { month: "May", products: totalProducts },
-      { month: "Jun", products: Math.floor(totalProducts * 1.05) },
+    // CORRECTED: Monthly trend based on actual product creation dates
+    const monthlyTrend: Array<{
+      month: string;
+      products: number;
+      monthlyAdded: number;
+    }> = [];
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
+
+    // Group products by creation month using UTC to avoid timezone issues
+    const productsByMonth = new Map<string, number>();
+    allProducts.forEach((product) => {
+      const date = new Date(product.createdAt);
+      // Use UTC methods to ensure consistent month extraction
+      const monthKey = `${date.getUTCFullYear()}-${String(
+        date.getUTCMonth() + 1
+      ).padStart(2, "0")}`;
+      productsByMonth.set(monthKey, (productsByMonth.get(monthKey) || 0) + 1);
+    });
+
+    // Create trend data for the whole year
+    // Use the year from the first product's creation date to ensure correct year mapping
+    const dataYear =
+      allProducts.length > 0
+        ? new Date(allProducts[0].createdAt).getUTCFullYear()
+        : new Date().getUTCFullYear();
+    let cumulativeProducts = 0;
+
+    months.forEach((month, index) => {
+      const monthKey = `${dataYear}-${String(index + 1).padStart(2, "0")}`;
+      const productsThisMonth = productsByMonth.get(monthKey) || 0;
+      cumulativeProducts += productsThisMonth;
+
+      monthlyTrend.push({
+        month,
+        products: cumulativeProducts,
+        monthlyAdded: productsThisMonth,
+      });
+    });
 
     // Top products by value
     const topProducts = allProducts
-      .sort((a, b) => (b.price * b.quantity) - (a.price * a.quantity))
+      .sort(
+        (a, b) => b.price * Number(b.quantity) - a.price * Number(a.quantity)
+      )
       .slice(0, 5)
-      .map(product => ({
+      .map((product) => ({
         name: product.name,
-        value: product.price * product.quantity,
-        quantity: product.quantity,
+        value: product.price * Number(product.quantity),
+        quantity: Number(product.quantity),
       }));
 
-    // Low stock products
+    // Debug logging for topProducts
+    console.log("Top Products by Value:", topProducts);
+
+    // Low stock products (matching product table logic: quantity > 0 AND quantity <= 20)
     const lowStockProducts = allProducts
-      .filter(product => product.quantity > 0 && product.quantity < 10)
-      .sort((a, b) => a.quantity - b.quantity)
+      .filter(
+        (product) =>
+          Number(product.quantity) > 0 && Number(product.quantity) <= 20
+      )
+      .sort((a, b) => Number(a.quantity) - Number(b.quantity))
       .slice(0, 5);
 
     return {
@@ -141,6 +259,9 @@ export default function AnalyticsPage() {
       outOfStockItems,
       averagePrice,
       totalQuantity,
+      stockUtilization,
+      valueDensity,
+      stockCoverage,
       categoryDistribution,
       statusDistribution,
       priceRangeDistribution,
@@ -162,7 +283,9 @@ export default function AnalyticsPage() {
       <AuthenticatedLayout>
         <div className="container mx-auto p-6">
           <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Please log in to view analytics.</p>
+            <p className="text-muted-foreground">
+              Please log in to view business insights.
+            </p>
           </div>
         </div>
       </AuthenticatedLayout>
@@ -175,12 +298,17 @@ export default function AnalyticsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-primary">Analytics Dashboard</h1>
+            <h1 className="text-4xl font-bold text-primary">
+              Business Insights
+            </h1>
             <p className="text-lg text-muted-foreground">
               Comprehensive insights into your inventory performance
             </p>
           </div>
-          <Button onClick={handleExportAnalytics} className="flex items-center gap-2">
+          <Button
+            onClick={handleExportAnalytics}
+            className="flex items-center gap-2"
+          >
             <Download className="h-4 w-4" />
             Export Analytics
           </Button>
@@ -207,7 +335,7 @@ export default function AnalyticsPage() {
             value={analyticsData.lowStockItems}
             icon={AlertTriangle}
             iconColor="text-orange-600"
-            description="Items with quantity < 10"
+            description="Items with quantity <= 20"
           />
           <AnalyticsCard
             title="Out of Stock"
@@ -238,29 +366,44 @@ export default function AnalyticsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {analyticsData.categoryDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
+                      {analyticsData.categoryDistribution.map(
+                        (entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        )
+                      )}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartCard>
 
-              {/* Monthly Trend */}
-              <ChartCard title="Product Growth Trend" icon={TrendingUp}>
+              {/* Monthly Trend - Full Year */}
+              <ChartCard
+                title="Product Growth Trend (Full Year)"
+                icon={TrendingUp}
+              >
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={analyticsData.monthlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Area type="monotone" dataKey="products" stroke="#8884d8" fill="#8884d8" />
+                    <Area
+                      type="monotone"
+                      dataKey="products"
+                      stroke="#8884d8"
+                      fill="#8884d8"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </ChartCard>
@@ -302,25 +445,39 @@ export default function AnalyticsPage() {
               {/* Top Products by Value */}
               <ChartCard title="Top Products by Value" icon={TrendingUp}>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analyticsData.topProducts} layout="horizontal">
+                  <BarChart
+                    data={analyticsData.topProducts}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value) => [
+                        `$${value.toLocaleString()}`,
+                        "Value",
+                      ]}
+                      labelFormatter={(label) => `Product: ${label}`}
+                    />
                     <Bar dataKey="value" fill="#FFBB28" />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartCard>
 
-              {/* Average Price Trend */}
-              <ChartCard title="Average Price Trend" icon={TrendingDown}>
+              {/* Monthly Product Addition Trend */}
+              <ChartCard title="Monthly Product Addition" icon={TrendingDown}>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={analyticsData.monthlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Line type="monotone" dataKey="products" stroke="#FF8042" strokeWidth={2} />
+                    <Line
+                      type="monotone"
+                      dataKey="monthlyAdded"
+                      stroke="#FF8042"
+                      strokeWidth={2}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </ChartCard>
@@ -334,12 +491,19 @@ export default function AnalyticsPage() {
                 {analyticsData.lowStockProducts.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {analyticsData.lowStockProducts.map((product, index) => (
-                      <Card key={index} className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+                      <Card
+                        key={index}
+                        className="border-orange-200 bg-orange-50 dark:bg-orange-950/20"
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className="font-semibold text-sm">{product.name}</h4>
-                              <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+                              <h4 className="font-semibold text-sm">
+                                {product.name}
+                              </h4>
+                              <p className="text-xs text-muted-foreground">
+                                SKU: {product.sku}
+                              </p>
                             </div>
                             <Badge variant="destructive" className="text-xs">
                               {product.quantity} left
@@ -352,7 +516,9 @@ export default function AnalyticsPage() {
                 ) : (
                   <div className="text-center py-8">
                     <AlertTriangle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                    <p className="text-muted-foreground">No low stock alerts at the moment!</p>
+                    <p className="text-muted-foreground">
+                      No low stock alerts at the moment!
+                    </p>
                   </div>
                 )}
               </div>
@@ -372,18 +538,20 @@ export default function AnalyticsPage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Average Price</span>
-                <span className="font-semibold">${analyticsData.averagePrice.toFixed(2)}</span>
+                <span className="font-semibold">
+                  ${analyticsData.averagePrice.toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Total Quantity</span>
-                <span className="font-semibold">{analyticsData.totalQuantity.toLocaleString()}</span>
+                <span className="font-semibold">
+                  {analyticsData.totalQuantity.toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Stock Utilization</span>
                 <span className="font-semibold">
-                  {analyticsData.totalProducts > 0
-                    ? ((analyticsData.totalProducts - analyticsData.outOfStockItems) / analyticsData.totalProducts * 100).toFixed(1)
-                    : 0}%
+                  {analyticsData.stockUtilization.toFixed(1)}%
                 </span>
               </div>
             </CardContent>
@@ -399,24 +567,26 @@ export default function AnalyticsPage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Inventory Health</span>
-                <Badge variant={analyticsData.lowStockItems > 5 ? "destructive" : "default"}>
-                  {analyticsData.lowStockItems > 5 ? "Needs Attention" : "Healthy"}
+                <Badge
+                  variant={
+                    analyticsData.lowStockItems > 5 ? "destructive" : "default"
+                  }
+                >
+                  {analyticsData.lowStockItems > 5
+                    ? "Needs Attention"
+                    : "Healthy"}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Stock Coverage</span>
                 <span className="font-semibold">
-                  {analyticsData.totalProducts > 0
-                    ? (analyticsData.totalQuantity / analyticsData.totalProducts).toFixed(1)
-                    : 0} units avg
+                  {analyticsData.stockCoverage.toFixed(1)} units avg
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Value Density</span>
                 <span className="font-semibold">
-                  ${analyticsData.totalProducts > 0
-                    ? (analyticsData.totalValue / analyticsData.totalProducts).toFixed(2)
-                    : 0} per product
+                  ${analyticsData.valueDensity.toFixed(2)} per product
                 </span>
               </div>
             </CardContent>
@@ -431,7 +601,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <QRCodeComponent
-                data={`${window.location.origin}/analytics`}
+                data={`${window.location.origin}/business-insights`}
                 title="Dashboard QR"
                 size={120}
                 showDownload={false}
