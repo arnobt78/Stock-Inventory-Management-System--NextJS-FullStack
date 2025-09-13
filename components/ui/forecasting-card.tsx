@@ -42,6 +42,7 @@ interface ForecastData {
     month: string;
     demand: number;
     trend: "up" | "down" | "stable";
+    isFutureMonth: boolean;
   }>;
 }
 
@@ -165,6 +166,10 @@ export function ForecastingCard({ products, className }: ForecastingCardProps) {
         ? new Date(products[0].createdAt).getUTCFullYear()
         : new Date().getUTCFullYear();
 
+    const currentDate = new Date();
+    const currentMonth = currentDate.getUTCMonth() + 1; // 1-based month
+    const currentYear = currentDate.getUTCFullYear();
+
     const seasonalTrends = months.map((month, index) => {
       const monthKey = `${dataYear}-${String(index + 1).padStart(2, "0")}`;
       const productsThisMonth = productsByMonth.get(monthKey) || 0;
@@ -173,14 +178,28 @@ export function ForecastingCard({ products, className }: ForecastingCardProps) {
       const demand = productsThisMonth;
 
       let trend: "up" | "down" | "stable" = "stable";
-      if (index > 0) {
+
+      // Only calculate trends for months that have occurred (not future months)
+      const monthNumber = index + 1;
+      const isCurrentYear = dataYear === currentYear;
+      const isPastMonth = !isCurrentYear || monthNumber <= currentMonth;
+
+      if (isPastMonth && index > 0) {
         const prevMonthKey = `${dataYear}-${String(index).padStart(2, "0")}`;
         const prevDemand = productsByMonth.get(prevMonthKey) || 0;
-        if (demand > prevDemand) trend = "up";
-        else if (demand < prevDemand) trend = "down";
+
+        // Only calculate trend if both months have actual data or are both zero
+        if (demand > prevDemand) {
+          trend = "up";
+        } else if (demand < prevDemand && prevDemand > 0) {
+          // Only show "down" if previous month had actual demand
+          trend = "down";
+        } else {
+          trend = "stable";
+        }
       }
 
-      return { month, demand, trend };
+      return { month, demand, trend, isFutureMonth: !isPastMonth };
     });
 
     return {
@@ -220,7 +239,11 @@ export function ForecastingCard({ products, className }: ForecastingCardProps) {
     }
   };
 
-  const getTrendIcon = (trend: string) => {
+  const getTrendIcon = (trend: string, isFutureMonth: boolean = false) => {
+    if (isFutureMonth) {
+      return <Clock className="h-4 w-4 text-gray-400" />;
+    }
+
     switch (trend) {
       case "up":
         return <TrendingUp className="h-4 w-4 text-green-500" />;
@@ -335,11 +358,16 @@ export function ForecastingCard({ products, className }: ForecastingCardProps) {
           </h4>
           <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
             {forecastData.seasonalTrends.map((trend, index) => (
-              <div key={index} className="text-center p-2 border rounded">
+              <div
+                key={index}
+                className={`text-center p-2 border rounded ${
+                  trend.isFutureMonth ? "bg-gray-50 opacity-75" : ""
+                }`}
+              >
                 <div className="text-xs font-medium">{trend.month}</div>
                 <div className="text-lg font-bold">{trend.demand}</div>
                 <div className="flex justify-center mt-1">
-                  {getTrendIcon(trend.trend)}
+                  {getTrendIcon(trend.trend, trend.isFutureMonth)}
                 </div>
               </div>
             ))}
