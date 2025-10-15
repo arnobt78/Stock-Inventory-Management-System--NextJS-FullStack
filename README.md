@@ -1,4 +1,4 @@
-# Stock Inventory Management System - Next.js, Prisma, MongoDB FullStack Project (including Busniess-Insights Dashboard)
+# Stock Inventory Management System - Next.js, Prisma, MongoDB FullStack Project (including Business-Insights Dashboard)
 
 ![Screenshot 2025-09-01 at 16 22 30](https://github.com/user-attachments/assets/98e1bde0-f655-4d51-865e-a53bf79b227d)
 ![Screenshot 2025-09-01 at 16 22 53](https://github.com/user-attachments/assets/d3ce05ba-8b69-4cf2-a43c-c83440145168)
