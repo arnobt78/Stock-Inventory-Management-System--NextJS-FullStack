@@ -55,19 +55,9 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const prefetchedRef = useRef(false);
   const navigatingFromSubmitRef = useRef(false);
 
-  // Prefetch landing pages so post-login navigation is instant
-  useEffect(() => {
-    if (prefetchedRef.current) return;
-    prefetchedRef.current = true;
-    router.prefetch("/");
-    router.prefetch("/client");
-    router.prefetch("/supplier");
-  }, [router]);
-
-  // Redirect if already logged in (e.g. landed on /login with cookie). Skip when we're redirecting from form submit.
+  // Redirect if already logged in (e.g. landed on /login with cookie).
   useEffect(() => {
     if (isLoggedIn && !navigatingFromSubmitRef.current) {
       const dest =
@@ -76,9 +66,9 @@ export default function LoginPage() {
           : user?.role === "supplier"
             ? "/supplier"
             : "/";
-      router.replace(dest);
+      window.location.href = dest;
     }
-  }, [isLoggedIn, user, router]);
+  }, [isLoggedIn, user]);
 
   // Handle OAuth errors from callback
   useEffect(() => {
@@ -199,15 +189,16 @@ export default function LoginPage() {
       setPassword("");
       setSelectedRole("");
 
-      // Navigate directly to the correct page for the user's role.
-      // This avoids the slow chain: / → server checks role → redirect → /client or /supplier
+      // Full-page navigation to the correct dashboard for the user's role.
+      // window.location.href bypasses the Next.js RSC cache which can contain
+      // stale 307 redirects from before login, causing infinite redirect loops.
       const dest =
         userData.role === "client"
           ? "/client"
           : userData.role === "supplier"
             ? "/supplier"
             : "/";
-      router.replace(dest);
+      window.location.href = dest;
     } catch (error: unknown) {
       const axiosErr = error as { response?: { data?: { error?: string }; status?: number } };
       const serverMessage = axiosErr?.response?.data?.error;
@@ -440,7 +431,7 @@ export default function LoginPage() {
                   {isNavigatingToHome ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Redirecting…
+                      Loading Dashboard…
                     </>
                   ) : isLoading ? (
                     <>
