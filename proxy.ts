@@ -1,67 +1,29 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+/**
+ * Next.js 16 Proxy — lightweight cookie-existence check.
+ * Runs as a network boundary handler so unauthenticated visitors are
+ * redirected to /login instantly without starting a serverless function.
+ *
+ * NO fetch / API call / JWT verification here; server components and
+ * API routes handle full session validation.
+ */
 
-export async function proxy(request: NextRequest) {
-  // Get the pathname of the request
-  const path = request.nextUrl.pathname;
+import { NextRequest, NextResponse } from "next/server";
 
-  // Define public routes that don't require authentication
-  const publicRoutes = ["/login", "/register"];
+const PUBLIC = new Set(["/login", "/register"]);
 
-  // Skip middleware for public routes
-  if (publicRoutes.includes(path)) {
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (PUBLIC.has(pathname)) {
     return NextResponse.next();
   }
 
-  // Define protected routes that require authentication
-  const protectedRoutes = [
-    "/",
-    "/api-docs",
-    "/api-status",
-    "/business-insights",
-  ];
-
-  // Check if the current path is a protected route
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    route === "/" ? path === "/" : path.startsWith(route)
-  );
-
-  if (isProtectedRoute) {
-    // Get the session token from cookies
-    const sessionToken = request.cookies.get("session_id")?.value;
-
-    // If no session token, redirect to login
-    if (
-      !sessionToken ||
-      sessionToken === "null" ||
-      sessionToken === "undefined"
-    ) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", path);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // Validate session with auth API (server-side check)
-    try {
-      const authCheckUrl = new URL("/api/auth/session", request.url);
-      const response = await fetch(authCheckUrl, {
-        headers: {
-          Cookie: `session_id=${sessionToken}`,
-        },
-      });
-
-      // If session is invalid, redirect to login
-      if (!response.ok) {
-        const loginUrl = new URL("/login", request.url);
-        loginUrl.searchParams.set("redirect", path);
-        return NextResponse.redirect(loginUrl);
-      }
-    } catch (error) {
-      // If validation fails, redirect to login
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", path);
-      return NextResponse.redirect(loginUrl);
-    }
+  const session = request.cookies.get("session_id")?.value;
+  if (!session || session === "null" || session === "undefined") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
@@ -69,14 +31,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    "/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.woff|.*\\.woff2).*)",
   ],
 };

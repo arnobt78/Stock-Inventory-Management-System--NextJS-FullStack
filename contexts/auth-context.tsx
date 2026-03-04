@@ -44,10 +44,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoggedIn(false);
     setUser(null);
     Cookies.remove("session_id");
-    localStorage.setItem("isAuth", "false");
-    localStorage.setItem("isLoggedIn", "false");
-    localStorage.setItem("token", "");
-    localStorage.setItem("getSession", "");
+    localStorage.removeItem("isAuth");
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("token");
+    localStorage.removeItem("getSession");
+    localStorage.removeItem("prevUserId");
     queryClient.clear();
   }, [queryClient]);
 
@@ -83,11 +84,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const checkSession = useCallback(async () => {
     try {
-      setIsCheckingAuth(true);
+      // If localStorage already has a cached session (e.g. we just logged in),
+      // skip the blocking isCheckingAuth state so the UI renders instantly
+      // from cached data while we validate in the background.
+      const hasCachedSession = localStorage.getItem("isLoggedIn") === "true";
+      if (!hasCachedSession) {
+        setIsCheckingAuth(true);
+      }
+
       const session = await getSessionClient();
       if (session) {
-        // If the user identity changed (e.g. OAuth login after previous session),
-        // wipe cached queries so the new user sees only their own data.
         const prevId = localStorage.getItem("prevUserId");
         if (prevId && prevId !== session.id) {
           queryClient.clear();
