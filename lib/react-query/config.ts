@@ -12,9 +12,11 @@ import { QueryClient } from "@tanstack/react-query";
  */
 const defaultQueryOptions = {
   queries: {
-    // Stale time: 0 so data is always refetched on mount/refresh (no 5‑min wait).
-    // After refresh or invalidateQueries(), refetch runs immediately and UI updates.
-    staleTime: 0,
+    // 5 min staleTime: navigating between pages shows cached data instantly with
+    // fewer API calls. After any CRUD, invalidateAllRelatedQueries() marks queries
+    // stale and forces an immediate refetch for active queries, so UI always
+    // reflects mutations regardless of staleTime.
+    staleTime: 1000 * 60 * 5, // 5 minutes
     // Cache time: unused data stays in cache for 10 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
     // Retry failed requests 3 times
@@ -25,7 +27,6 @@ const defaultQueryOptions = {
     // Refetch on window focus so returning to the tab gets fresh data
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    // Always refetch when a query is used (component mount) so refresh shows fresh data
     refetchOnMount: true,
   },
   mutations: {

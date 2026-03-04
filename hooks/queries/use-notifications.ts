@@ -26,8 +26,8 @@ export function useNotifications(filters?: NotificationFilters) {
       const response = await apiClient.notifications.getAll(filters);
       return response.data;
     },
-    // Notifications change frequently, so shorter staleTime
-    staleTime: 0,
+    // Show cached data immediately when navigating; refetch in background
+    staleTime: 1000 * 30, // 30s - avoids 429 when switching pages quickly
     refetchInterval: 1000 * 60, // Refetch every minute for real-time feel
   });
 }
@@ -43,8 +43,8 @@ export function useUnreadNotificationCount() {
       const response = await apiClient.notifications.getUnreadCount();
       return response.data.count;
     },
-    // Unread count changes frequently, so shorter staleTime
-    staleTime: 0,
+    // Show cached count when navigating; refetch in background
+    staleTime: 1000 * 30, // 30s - avoids 429 when switching pages quickly
     refetchInterval: 1000 * 60, // Refetch every minute for real-time feel
   });
 }
@@ -61,7 +61,6 @@ export function useNotification(id: string) {
       return response.data;
     },
     enabled: !!id, // Only run query if ID is available
-    staleTime: 0,
   });
 }
 

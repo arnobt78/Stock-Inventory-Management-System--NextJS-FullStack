@@ -86,10 +86,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const checkSession = useCallback(async () => {
     try {
       setIsCheckingAuth(true);
-      // Delay to ensure cookie is available after OAuth redirect
-      // Increased delay to account for browser cookie propagation
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
       // Note: session_id cookie is httpOnly, so Cookies.get() won't work
       // We need to check session via API which will include the cookie automatically
       const session = await getSessionClient();

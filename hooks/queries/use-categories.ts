@@ -24,7 +24,6 @@ export function useCategories() {
       const response = await apiClient.categories.getAll();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so list updates immediately
   });
 }
 
@@ -39,7 +38,6 @@ export function useCategory(categoryId: string) {
       const response = await apiClient.categories.getById(categoryId);
       return response.data;
     },
-    staleTime: 0,
     // Only fetch if categoryId is provided
     enabled: !!categoryId,
   });

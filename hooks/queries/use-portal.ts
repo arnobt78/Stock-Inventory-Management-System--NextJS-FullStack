@@ -27,7 +27,6 @@ export function useSupplierPortalDashboard() {
       const response = await apiClient.portal.getSupplierDashboard();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so portal cards update immediately
     enabled: !!userId && user?.role === "supplier",
   });
 }
@@ -44,7 +43,6 @@ export function useClientPortalDashboard() {
       const response = await apiClient.portal.getClientDashboard();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so portal cards update immediately
     enabled: !!userId && user?.role === "client",
   });
 }
@@ -61,7 +59,6 @@ export function useClientCatalogOverview() {
       const response = await apiClient.portal.getClientCatalog();
       return response.data;
     },
-    staleTime: 0,
     enabled: !!userId && user?.role === "client",
   });
 }
@@ -76,7 +73,6 @@ export function useClientBrowseMeta() {
       const response = await apiClient.portal.getClientBrowseMeta();
       return response.data;
     },
-    staleTime: 0,
     enabled: true, // Client role check happens in component
   });
 }
@@ -95,7 +91,6 @@ export function useClientBrowseProducts(params: {
       const response = await apiClient.portal.getClientBrowseProducts(params);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!params.ownerId,
   });
 }

@@ -221,7 +221,7 @@ model User {
   password         String
   updatedAt        DateTime? @db.Date
   username         String?   @unique
-  googleId         String?   @unique // Google OAuth ID
+  googleId         String? // Google OAuth ID (uniqueness enforced in app logic; @unique removed to avoid non-sparse index blocking null values)
   image            String? // User profile image URL (from Google OAuth or other sources)
   // Role for access control: user, admin, supplier, client, retailer. Optional for backward compatibility; treat null as "user".
   role             String? // user | admin | supplier | client | retailer

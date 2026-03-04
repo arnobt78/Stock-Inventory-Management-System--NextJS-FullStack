@@ -13,6 +13,5 @@ export function useSupplierPortal() {
       const response = await apiClient.supplierPortal.getOverview();
       return response.data;
     },
-    staleTime: 0,
   });
 }

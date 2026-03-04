@@ -13,6 +13,5 @@ export function useClientPortal() {
       const response = await apiClient.clientPortal.getOverview();
       return response.data;
     },
-    staleTime: 0,
   });
 }

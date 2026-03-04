@@ -28,13 +28,11 @@ export async function POST(request: NextRequest) {
       { status: 200, headers: responseHeaders }
     );
 
-    // Clear session cookie. Use sameSite: "lax" when not secure (e.g. localhost)
-    // so the browser actually clears it; sameSite: "none" requires Secure and can
-    // prevent proper clear on dev, causing redirect loops after logout.
+    // Clear session cookie. Use sameSite "lax" so cookie clears reliably on same-origin (matches login).
     response.cookies.set("session_id", "", {
       httpOnly: true,
       secure: isSecure,
-      sameSite: isSecure ? "none" : "lax",
+      sameSite: "lax",
       path: "/",
       maxAge: 0,
     });

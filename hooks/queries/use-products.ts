@@ -25,7 +25,6 @@ export function useProducts() {
       const response = await apiClient.products.getAll();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so list updates immediately
   });
 }
 
@@ -40,7 +39,6 @@ export function useProduct(productId: string) {
       const response = await apiClient.products.getById(productId);
       return response.data;
     },
-    staleTime: 0,
     // Only fetch if productId is provided
     enabled: !!productId,
   });

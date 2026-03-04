@@ -29,7 +29,6 @@ export function useSupportTickets(view?: SupportTicketViewFilter) {
       );
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -40,7 +39,6 @@ export function useSupportTicket(id: string) {
       const response = await apiClient.supportTickets.getById(id);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!id,
   });
 }
@@ -116,7 +114,6 @@ export function useSupportTicketReplies(ticketId: string) {
       const response = await apiClient.supportTickets.getReplies(ticketId);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!ticketId,
   });
 }

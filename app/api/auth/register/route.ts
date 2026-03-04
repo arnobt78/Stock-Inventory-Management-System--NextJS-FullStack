@@ -12,10 +12,48 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/prisma/client";
 
 /**
+ * Attempt to insert a user document. If a non-sparse unique index on
+ * `googleId` blocks the insert (E11000 dup key: { googleId: null }),
+ * drop that index and retry once so the registration self-heals.
+ */
+async function insertUserWithRetry(
+  userCollection: ReturnType<ReturnType<MongoClient["db"]>["collection"]>,
+  doc: Record<string, unknown>,
+) {
+  try {
+    await userCollection.insertOne(doc);
+  } catch (err: unknown) {
+    const mongoErr = err as { code?: number; message?: string };
+    if (
+      mongoErr.code === 11000 &&
+      typeof mongoErr.message === "string" &&
+      mongoErr.message.includes("googleId")
+    ) {
+      logger.warn(
+        "Non-sparse googleId unique index detected — dropping and recreating as sparse",
+      );
+      try {
+        await userCollection.dropIndex("User_googleId_key");
+      } catch {
+        // Index may already have been dropped; ignore
+      }
+      await userCollection.createIndex(
+        { googleId: 1 },
+        { unique: true, sparse: true, name: "User_googleId_key" },
+      );
+      await userCollection.insertOne(doc);
+      return;
+    }
+    throw err;
+  }
+}
+
+/**
  * POST /api/auth/register
  * Register a new user
  */
 export async function POST(request: NextRequest) {
+  let mongoClient: MongoClient | null = null;
   try {
     const body = await request.json();
 
@@ -26,16 +64,15 @@ export async function POST(request: NextRequest) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
+        { error: "A user with this email already exists. Please sign in instead." },
+        { status: 409 }
       );
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Use MongoDB client directly to bypass Prisma constraints
-    const mongoClient = new MongoClient(process.env.DATABASE_URL!);
+    mongoClient = new MongoClient(process.env.DATABASE_URL!);
     await mongoClient.connect();
 
     const db = mongoClient.db();
@@ -46,14 +83,13 @@ export async function POST(request: NextRequest) {
     let username = baseUsername;
     let counter = 1;
 
-    // Check if username exists and generate a unique one
     while (await userCollection.findOne({ username })) {
       username = `${baseUsername}${counter}`;
       counter++;
     }
 
     // Insert user (new signups get admin role for full manipulation power)
-    await userCollection.insertOne({
+    await insertUserWithRetry(userCollection, {
       name,
       email,
       password: hashedPassword,
@@ -63,6 +99,7 @@ export async function POST(request: NextRequest) {
     });
 
     await mongoClient.close();
+    mongoClient = null;
 
     // Get the created user from Prisma
     const createdUser = await prisma.user.findUnique({
@@ -87,18 +124,23 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json(
-        { error: "Invalid registration data" },
+        { error: "Invalid registration data. Please check your inputs." },
         { status: 400 }
       );
     }
 
     logger.error("Registration error:", error);
+
+    const message =
+      error instanceof Error ? error.message : "An unknown error occurred";
+
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "An unknown error occurred",
-      },
+      { error: `Registration failed: ${message}` },
       { status: 500 }
     );
+  } finally {
+    if (mongoClient) {
+      try { await mongoClient.close(); } catch { /* ignore */ }
+    }
   }
 }

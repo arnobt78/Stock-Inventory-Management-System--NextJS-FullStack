@@ -27,7 +27,6 @@ export function useInvoices(filters?: InvoiceFilters) {
       const response = await apiClient.invoices.getAll(filters);
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so list updates immediately
   });
 }
 
@@ -42,7 +41,6 @@ export function useClientInvoices() {
       const response = await apiClient.admin.getClientInvoices();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -58,7 +56,6 @@ export function useInvoice(id: string) {
       return response.data;
     },
     enabled: !!id, // Only run query if ID is available
-    staleTime: 0,
   });
 }
 

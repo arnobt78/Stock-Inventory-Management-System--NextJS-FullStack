@@ -13,6 +13,5 @@ export function useAdminCounts() {
       const response = await apiClient.admin.getCounts();
       return response.data;
     },
-    staleTime: 0,
   });
 }

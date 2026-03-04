@@ -198,13 +198,14 @@ export default function LoginPage() {
       setPassword("");
       setSelectedRole("");
 
-      // Navigate immediately so RSC fetch starts right away
+      // Navigate so RSC fetch has cookie attached
       router.replace("/");
-    } catch (error) {
-      // Show error toast
+    } catch (error: unknown) {
+      const axiosErr = error as { response?: { data?: { error?: string }; status?: number } };
+      const serverMessage = axiosErr?.response?.data?.error;
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: serverMessage || "Invalid email or password. Please try again.",
         variant: "destructive",
       });
     } finally {

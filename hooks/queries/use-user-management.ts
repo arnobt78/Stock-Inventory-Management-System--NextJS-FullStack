@@ -19,7 +19,6 @@ export function useUsers() {
       const response = await apiClient.users.getAll();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -30,7 +29,6 @@ export function useUser(id: string) {
       const response = await apiClient.users.getById(id);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!id,
   });
 }

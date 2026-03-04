@@ -23,7 +23,6 @@ export function useSystemConfigs() {
       const response = await apiClient.systemConfig.getAll();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/activity so config updates immediately
   });
 }
 

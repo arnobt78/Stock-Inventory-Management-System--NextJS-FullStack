@@ -17,7 +17,6 @@ export function useForecastingSummary() {
       const response = await apiClient.forecasting.getSummary();
       return response.data;
     },
-    staleTime: 0,
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }

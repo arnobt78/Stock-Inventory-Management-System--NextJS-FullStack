@@ -17,7 +17,6 @@ export function useHistory() {
       const response = await apiClient.importHistory.getAll();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -33,7 +32,6 @@ export function useHistoryItem(id: string) {
       const response = await apiClient.importHistory.getById(id);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!id,
   });
 }

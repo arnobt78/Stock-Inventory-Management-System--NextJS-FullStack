@@ -23,7 +23,6 @@ export function useEmailPreferences() {
       const response = await apiClient.user.getEmailPreferences();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 

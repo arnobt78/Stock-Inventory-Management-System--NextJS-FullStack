@@ -92,12 +92,12 @@ export default function RegisterPage() {
       } else {
         throw new Error("Registration failed");
       }
-    } catch (error) {
-      // Show error toast
+    } catch (error: unknown) {
+      const axiosErr = error as { response?: { data?: { error?: string }; status?: number } };
+      const serverMessage = axiosErr?.response?.data?.error;
       toast({
         title: "Registration Failed",
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred.",
+        description: serverMessage || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -18,16 +18,16 @@ const CACHE_TTL = 300; // 5 minutes
 
 export async function GET(request: NextRequest) {
   try {
-    const rateLimitResponse = await withRateLimit(
-      request,
-      defaultRateLimits.standard,
-    );
-    if (rateLimitResponse) return rateLimitResponse;
-
     const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const rateLimitResponse = await withRateLimit(
+      request,
+      defaultRateLimits.standard,
+      session.id,
+    );
+    if (rateLimitResponse) return rateLimitResponse;
 
     if (session.role !== "client") {
       return NextResponse.json(

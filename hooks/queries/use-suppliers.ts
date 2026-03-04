@@ -24,7 +24,6 @@ export function useSuppliers() {
       const response = await apiClient.suppliers.getAll();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so list updates immediately
   });
 }
 
@@ -39,7 +38,6 @@ export function useSupplier(supplierId: string) {
       const response = await apiClient.suppliers.getById(supplierId);
       return response.data;
     },
-    staleTime: 0,
     // Only fetch if supplierId is provided
     enabled: !!supplierId,
   });

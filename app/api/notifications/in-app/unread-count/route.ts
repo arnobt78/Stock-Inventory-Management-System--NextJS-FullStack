@@ -17,18 +17,17 @@ import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
  */
 export async function GET(request: NextRequest) {
   try {
-    // Rate limiting check
-    const rateLimitResponse = await withRateLimit(
-      request,
-      defaultRateLimits.standard
-    );
-    if (rateLimitResponse) {
-      return rateLimitResponse;
-    }
-
     const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const rateLimitResponse = await withRateLimit(
+      request,
+      defaultRateLimits.standard,
+      session.id
+    );
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const userId = session.id;

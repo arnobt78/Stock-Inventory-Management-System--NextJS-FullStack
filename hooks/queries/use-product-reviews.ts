@@ -20,7 +20,6 @@ export function useProductReviews() {
       const response = await apiClient.productReviews.getAll();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -31,7 +30,6 @@ export function useProductReview(id: string) {
       const response = await apiClient.productReviews.getById(id);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!id,
   });
 }
@@ -50,7 +48,6 @@ export function useReviewsByProduct(
       );
       return response.data;
     },
-    staleTime: 0,
     enabled: !!productId,
   });
 }
@@ -65,7 +62,6 @@ export function useReviewEligibility(productId: string, orderId?: string) {
       );
       return response.data;
     },
-    staleTime: 0,
     enabled: !!productId,
   });
 }

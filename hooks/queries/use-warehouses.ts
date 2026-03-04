@@ -23,7 +23,6 @@ export function useWarehouses() {
       const response = await apiClient.warehouses.getAll();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -37,7 +36,6 @@ export function useWarehouse(warehouseId: string) {
       const response = await apiClient.warehouses.getById(warehouseId);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!warehouseId,
   });
 }

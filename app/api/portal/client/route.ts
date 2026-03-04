@@ -17,16 +17,16 @@ import type { ClientPortalDashboard } from "@/types";
  */
 export async function GET(request: NextRequest) {
   try {
-    const rateLimitResponse = await withRateLimit(
-      request,
-      defaultRateLimits.standard,
-    );
-    if (rateLimitResponse) return rateLimitResponse;
-
     const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const rateLimitResponse = await withRateLimit(
+      request,
+      defaultRateLimits.standard,
+      session.id,
+    );
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Only client role can fetch their own portal dashboard (avoid admin data leaking into client view)
     if (session.role !== "client") {

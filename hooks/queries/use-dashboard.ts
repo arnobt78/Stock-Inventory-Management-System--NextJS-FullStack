@@ -18,7 +18,6 @@ export function useDashboard() {
       const response = await apiClient.dashboard.getOverview();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so cards update immediately
     enabled: !!userId,
   });
 }

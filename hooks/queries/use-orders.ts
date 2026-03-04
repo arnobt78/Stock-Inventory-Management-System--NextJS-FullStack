@@ -20,7 +20,6 @@ export function useOrders() {
       const response = await apiClient.orders.getAll();
       return response.data;
     },
-    staleTime: 0, // Refetch on mount/refresh so list updates immediately
   });
 }
 
@@ -35,7 +34,6 @@ export function useClientOrders() {
       const response = await apiClient.admin.getClientOrders();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -52,7 +50,6 @@ export function useOrder(orderId: string) {
       const response = await apiClient.orders.getById(orderId);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!orderId, // Only fetch if orderId is provided
   });
 }

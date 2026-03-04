@@ -37,6 +37,5 @@ export function useAuditLogs(
       const response = await apiClient.auditLogs.getAll(filters);
       return response.data;
     },
-    staleTime: 0,
   });
 }

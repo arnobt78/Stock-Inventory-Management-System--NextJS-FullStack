@@ -30,10 +30,11 @@ export interface ApiRateLimitConfig {
  */
 export const defaultRateLimits = {
   /**
-   * Standard API rate limit (100 requests per minute)
+   * Standard API rate limit (600 requests per minute per user/IP).
+   * Each page navigation fires ~4-5 API calls; fast clicking 10+ pages should never 429.
    */
   standard: {
-    limit: 100,
+    limit: 600,
     window: 60,
     getIdentifier: (request: NextRequest) => {
       // Try to get user ID from session, fallback to IP
@@ -73,14 +74,19 @@ export const defaultRateLimits = {
  *
  * @param request - Next.js request object
  * @param config - Rate limit configuration
+ * @param overrideIdentifier - Optional: use this instead of getIdentifier (e.g. session user id) for per-user limits
  * @returns Promise<NextResponse | null> - Error response if rate limited, null if allowed
  */
 export async function withRateLimit(
   request: NextRequest,
-  config: ApiRateLimitConfig
+  config: ApiRateLimitConfig,
+  overrideIdentifier?: string
 ): Promise<NextResponse | null> {
   try {
-    const identifier = config.getIdentifier(request);
+    const identifier =
+      overrideIdentifier != null
+        ? `user:${overrideIdentifier}`
+        : config.getIdentifier(request);
     const result = await checkRateLimit({
       limit: config.limit,
       window: config.window,

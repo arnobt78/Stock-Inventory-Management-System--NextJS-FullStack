@@ -22,7 +22,6 @@ export function useStockAllocations() {
       const response = await apiClient.stockAllocations.getAll();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -36,7 +35,6 @@ export function useWarehouseStockSummary() {
       const response = await apiClient.stockAllocations.getSummary();
       return response.data;
     },
-    staleTime: 0,
   });
 }
 
@@ -51,7 +49,6 @@ export function useStockByWarehouse(warehouseId: string) {
         await apiClient.stockAllocations.getByWarehouse(warehouseId);
       return response.data;
     },
-    staleTime: 0,
     enabled: !!warehouseId,
   });
 }

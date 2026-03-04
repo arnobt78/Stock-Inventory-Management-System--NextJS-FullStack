@@ -98,11 +98,11 @@ export async function POST(request: NextRequest) {
       { status: 200, headers: responseHeaders },
     );
 
-    // Set cookie
+    // Set cookie. Use sameSite "lax" for same-origin (app and API on same domain); "none" can delay cookie on first navigation on some hosts.
     response.cookies.set("session_id", token, {
       httpOnly: true,
       secure: isSecure,
-      sameSite: "none",
+      sameSite: "lax",
       maxAge: 60 * 60 * 1000, // 1 hour
       path: "/",
     });
