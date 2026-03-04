@@ -1,0 +1,831 @@
+/**
+ * Products API Route Handler
+ * GET: list products (admin by userId, supplier by supplierId); uses Redis cache; supplier response includes productOwnerName.
+ * POST: create product (with optional QR/image); PATCH/DELETE in [id] route.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { getSessionFromRequest } from "@/utils/auth";
+import { logger } from "@/lib/logger";
+import {
+  generateAndUploadQRCode,
+  deleteQRCodeFromImageKit,
+  deleteProductImageFromImageKit,
+} from "@/lib/imagekit";
+import { prisma } from "@/prisma/client";
+import { getSupplierByUserId } from "@/prisma/supplier";
+import { checkAndSendStockAlerts } from "@/lib/email/notifications";
+import { getCache, setCache, invalidateCache, cacheKeys } from "@/lib/cache";
+import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
+import { createAuditLog } from "@/prisma/audit-log";
+// NOTE: Performance tracking wrapper is available but deferred until after all features are implemented
+// import { withPerformanceTracking } from "@/lib/api/performance-wrapper";
+
+/**
+ * GET /api/products
+ * Fetch all products for the authenticated user
+ * Uses Redis caching for improved performance
+ *
+ * TODO (Future): Wrap with withPerformanceTracking() after all features are implemented
+ * Example: export const GET = withPerformanceTracking(async (request) => { ... })
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Rate limiting check
+    const rateLimitResponse = await withRateLimit(
+      request,
+      defaultRateLimits.standard,
+    );
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
+    const session = await getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const isSupplier = session.role === "supplier";
+    let cacheKey: string;
+    let productWhere: { userId: string } | { supplierId: string };
+
+    if (isSupplier) {
+      const supplier = await getSupplierByUserId(session.id);
+      if (!supplier) {
+        return NextResponse.json([]);
+      }
+      // Include withOwnerNames so cached response includes productOwnerName (avoids stale cache without it)
+      cacheKey = cacheKeys.products.list({
+        supplierId: supplier.id,
+        withOwnerNames: true,
+      });
+      productWhere = { supplierId: supplier.id };
+    } else {
+      cacheKey = cacheKeys.products.list({ userId: session.id });
+      productWhere = { userId: session.id };
+    }
+
+    // Try to get from cache first
+    const cachedProducts = await getCache<unknown[]>(cacheKey);
+    if (cachedProducts) {
+      logger.info(`✅ Cache hit for products: ${cacheKey}`);
+      return NextResponse.json(cachedProducts);
+    }
+
+    // Cache miss: fetch from database
+    logger.info(
+      `❌ Cache miss for products: ${cacheKey} - fetching from database`,
+    );
+
+    // Fetch products (by userId for admin, by supplierId for supplier)
+    const products = await prisma.product.findMany({
+      where: productWhere,
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Fetch all categories and suppliers once
+    const categoryIds = [...new Set(products.map((p) => p.categoryId))];
+    const supplierIds = [...new Set(products.map((p) => p.supplierId))];
+
+    const categorySupplierPromise = Promise.all([
+      prisma.category.findMany({
+        where: { id: { in: categoryIds } },
+        select: { id: true, name: true },
+      }),
+      prisma.supplier.findMany({
+        where: { id: { in: supplierIds } },
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    // For supplier view: fetch product owner (user) names for "Product Owner" column
+    const ownerPromise = isSupplier
+      ? prisma.user.findMany({
+          where: {
+            id: { in: [...new Set(products.map((p) => p.userId))] },
+          },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]);
+
+    const [[categories, suppliers], ownerUsers] = await Promise.all([
+      categorySupplierPromise,
+      ownerPromise,
+    ]);
+
+    const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
+    const supplierMap = new Map(suppliers.map((s) => [s.id, s.name]));
+    const ownerNameMap = new Map(
+      ownerUsers.map((u) => [u.id, u.name ?? u.id]),
+    );
+
+    // Transform products with lookups
+    const transformedProducts = products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      price: Number(product.price),
+      quantity: Number(product.quantity),
+      reservedQuantity: Number(product.reservedQuantity ?? 0),
+      status: product.status,
+      categoryId: product.categoryId,
+      supplierId: product.supplierId,
+      category: categoryMap.get(product.categoryId) || "Unknown",
+      supplier: supplierMap.get(product.supplierId) || "Unknown",
+      userId: product.userId,
+      createdBy: product.createdBy,
+      updatedBy: product.updatedBy || null,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt?.toISOString() || null,
+      qrCodeUrl: product.qrCodeUrl || null,
+      imageUrl: product.imageUrl || null,
+      imageFileId: product.imageFileId || null,
+      expirationDate: product.expirationDate?.toISOString() || null,
+      ...(isSupplier && {
+        productOwnerName: ownerNameMap.get(product.userId) ?? null,
+      }),
+    }));
+
+    // Cache the result for 5 minutes
+    await setCache(cacheKey, transformedProducts, 300);
+
+    return NextResponse.json(transformedProducts);
+  } catch (error) {
+    logger.error("Error fetching products:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch products" },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * POST /api/products
+ * Create a new product
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.role === "supplier") {
+      return NextResponse.json(
+        { error: "Suppliers cannot create products; only admins can." },
+        { status: 403 },
+      );
+    }
+
+    const userId = session.id;
+    const body = await request.json();
+    const {
+      name,
+      sku,
+      price,
+      quantity,
+      status,
+      categoryId,
+      supplierId,
+      imageUrl,
+      imageFileId,
+      expirationDate,
+    } = body;
+
+    // Validate required fields
+    if (!name || !sku || price === undefined || quantity === undefined) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
+    }
+
+    // Check if SKU already exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { sku },
+    });
+
+    if (existingProduct) {
+      return NextResponse.json(
+        { error: "SKU must be unique" },
+        { status: 400 },
+      );
+    }
+
+    // Create product with audit fields
+    const product = await prisma.product.create({
+      data: {
+        name,
+        sku,
+        price,
+        quantity: BigInt(quantity) as any,
+        status,
+        userId,
+        createdBy: userId, // Set createdBy same as userId
+        categoryId,
+        supplierId,
+        imageUrl: imageUrl || null,
+        imageFileId: imageFileId || null,
+        expirationDate: expirationDate ? new Date(expirationDate) : null,
+        createdAt: new Date(),
+        updatedAt: null, // Set to null on creation - will be set when updated
+      },
+    });
+
+    createAuditLog({
+      userId,
+      action: "create",
+      entityType: "product",
+      entityId: product.id,
+      details: { productName: product.name, sku: product.sku },
+    }).catch(() => {});
+
+    // Fetch category and supplier data for the response
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+    const supplier = await prisma.supplier.findUnique({
+      where: { id: supplierId },
+    });
+
+    // Generate QR code and upload to ImageKit (async, don't block response)
+    generateAndUploadQRCode(
+      JSON.stringify({
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+      }),
+      `product-${product.sku}`,
+      200,
+      "/stock-inventory/qr-codes/",
+    )
+      .then(async (qrCodeData) => {
+        // Update product with QR code URL and fileId
+        await prisma.product.update({
+          where: { id: product.id },
+          data: {
+            qrCodeUrl: qrCodeData.url,
+            qrCodeFileId: qrCodeData.fileId,
+          },
+        });
+      })
+      .catch((error) => {
+        // Log error but don't fail the request
+        logger.error("Failed to generate QR code for new product:", error);
+      });
+
+    // Check stock level and send email alerts if needed (async, don't block response)
+    // Fetch user email for notifications
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+
+    checkAndSendStockAlerts(
+      {
+        name: product.name,
+        quantity: Number(product.quantity),
+        sku: product.sku,
+        category: category?.name,
+      },
+      undefined, // No previous quantity for new products
+      user?.email || undefined,
+      user?.name || undefined,
+      userId, // Pass userId to check email preferences
+    ).catch((error) => {
+      // Log error but don't fail the request
+      logger.error(
+        "Failed to check and send stock alerts for new product:",
+        error,
+      );
+    });
+
+    // Global invalidation: products affect categories, suppliers, dashboard
+    const { invalidateOnProductChange } = await import("@/lib/cache");
+    await invalidateOnProductChange().catch((error) => {
+      logger.error("Failed to invalidate cache after product creation:", error);
+    });
+
+    // Transform product to match expected format
+    const transformedProduct = {
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      price: Number(product.price),
+      quantity: Number(product.quantity),
+      status: product.status,
+      categoryId: product.categoryId,
+      supplierId: product.supplierId,
+      category: category?.name || "Unknown",
+      supplier: supplier?.name || "Unknown",
+      userId: product.userId,
+      createdBy: product.createdBy,
+      updatedBy: product.updatedBy || null,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt?.toISOString() || null,
+      qrCodeUrl: product.qrCodeUrl || null,
+    };
+
+    return NextResponse.json(transformedProduct, { status: 201 });
+  } catch (error) {
+    logger.error("Error creating product:", error);
+    return NextResponse.json(
+      { error: "Failed to create product" },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * PUT /api/products
+ * Update an existing product
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.role === "supplier") {
+      return NextResponse.json(
+        { error: "Suppliers cannot update products; only admins can." },
+        { status: 403 },
+      );
+    }
+
+    const userId = session.id;
+    const body = await request.json();
+    const {
+      id,
+      name,
+      sku,
+      price,
+      quantity,
+      status,
+      categoryId,
+      supplierId,
+      imageUrl,
+      imageFileId,
+      expirationDate,
+    } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Product ID is required" },
+        { status: 400 },
+      );
+    }
+
+    // Verify product belongs to user
+    const existingProduct = await prisma.product.findFirst({
+      where: { id, userId },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json(
+        { error: "Product not found or unauthorized" },
+        { status: 404 },
+      );
+    }
+
+    // Check if SKU is being changed and if new SKU already exists
+    if (sku && sku !== existingProduct.sku) {
+      const skuExists = await prisma.product.findUnique({
+        where: { sku },
+      });
+
+      if (skuExists) {
+        return NextResponse.json(
+          { error: "SKU must be unique" },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Handle image deletion if imageUrl is being cleared
+    const oldImageFileId = existingProduct.imageFileId;
+    if (imageUrl === "" && oldImageFileId) {
+      // Delete old image from ImageKit (async, don't block)
+      deleteProductImageFromImageKit(oldImageFileId).catch((error) => {
+        logger.error("Failed to delete old product image:", error);
+      });
+    }
+
+    // Update product with audit fields
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(sku && { sku }),
+        ...(price !== undefined && { price }),
+        ...(quantity !== undefined && { quantity: BigInt(quantity) as any }),
+        ...(status && { status }),
+        ...(categoryId && { categoryId }),
+        ...(supplierId && { supplierId }),
+        ...(imageUrl !== undefined && {
+          imageUrl: imageUrl === "" ? null : imageUrl,
+        }),
+        ...(imageFileId !== undefined && {
+          imageFileId: imageFileId === "" ? null : imageFileId,
+        }),
+        ...(expirationDate !== undefined && {
+          expirationDate:
+            expirationDate === "" || expirationDate === null
+              ? null
+              : new Date(expirationDate),
+        }),
+        updatedBy: session.id, // Track who updated the product
+        updatedAt: new Date(), // Update timestamp
+      },
+    });
+
+    const fieldsUpdated: string[] = [];
+    if (name && name !== existingProduct.name) fieldsUpdated.push("Name");
+    if (sku && sku !== existingProduct.sku) fieldsUpdated.push("SKU");
+    if (price !== undefined && Number(existingProduct.price) !== price) fieldsUpdated.push("Price");
+    if (quantity !== undefined && existingProduct.quantity !== BigInt(quantity)) fieldsUpdated.push("Quantity");
+    if (status && status !== existingProduct.status) fieldsUpdated.push("Status");
+    if (categoryId && categoryId !== existingProduct.categoryId) fieldsUpdated.push("Category");
+    if (supplierId && supplierId !== existingProduct.supplierId) fieldsUpdated.push("Supplier");
+    if (imageUrl !== undefined) fieldsUpdated.push("Image");
+    if (expirationDate !== undefined) fieldsUpdated.push("Expiration Date");
+
+    createAuditLog({
+      userId: session.id,
+      action: "update",
+      entityType: "product",
+      entityId: product.id,
+      details: {
+        productName: product.name,
+        ...(fieldsUpdated.length > 0 && { fieldsUpdated }),
+      },
+    }).catch(() => {});
+
+    // Fetch category and supplier data for the response
+    const category = await prisma.category.findUnique({
+      where: { id: product.categoryId },
+    });
+    const supplier = await prisma.supplier.findUnique({
+      where: { id: product.supplierId },
+    });
+
+    // Regenerate QR code if SKU or name changed (async, don't block response)
+    if (sku || name) {
+      // Get the old fileId before updating product
+      const oldFileId = product.qrCodeFileId;
+
+      generateAndUploadQRCode(
+        JSON.stringify({
+          productId: product.id,
+          sku: product.sku,
+          name: product.name,
+        }),
+        `product-${product.sku}`,
+        200,
+        "/stock-inventory/qr-codes/",
+      )
+        .then(async (qrCodeData) => {
+          // Update product with new QR code URL and fileId
+          await prisma.product.update({
+            where: { id: product.id },
+            data: {
+              qrCodeUrl: qrCodeData.url,
+              qrCodeFileId: qrCodeData.fileId,
+            },
+          });
+
+          // Delete old QR code from ImageKit if it exists
+          if (oldFileId) {
+            try {
+              await deleteQRCodeFromImageKit(oldFileId);
+              logger.debug(
+                `Deleted old QR code file from ImageKit: ${oldFileId}`,
+              );
+            } catch (deleteError) {
+              // Log error but don't fail - old file cleanup is not critical
+              logger.error(
+                `Failed to delete old QR code from ImageKit: ${oldFileId}`,
+                deleteError,
+              );
+            }
+          }
+        })
+        .catch((error) => {
+          // Log error but don't fail the request
+          logger.error(
+            "Failed to regenerate QR code for updated product:",
+            error,
+          );
+        });
+    }
+
+    // Check stock level and send email alerts if needed (async, don't block response)
+    // Only check if quantity changed and product is low stock or out of stock
+    const previousQuantity = Number(existingProduct.quantity);
+    const currentQuantity = Number(product.quantity);
+    if (previousQuantity !== currentQuantity) {
+      // Fetch user email for notifications
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, name: true },
+      });
+
+      checkAndSendStockAlerts(
+        {
+          name: product.name,
+          quantity: currentQuantity,
+          sku: product.sku,
+          category: category?.name,
+        },
+        previousQuantity, // Pass previous quantity to avoid duplicate alerts
+        user?.email || undefined,
+        user?.name || undefined,
+        userId, // Pass userId to check email preferences
+      ).catch((error) => {
+        // Log error but don't fail the request
+        logger.error(
+          "Failed to check and send stock alerts for updated product:",
+          error,
+        );
+      });
+    }
+
+    // Global invalidation: products affect categories, suppliers, dashboard
+    const { invalidateOnProductChange } = await import("@/lib/cache");
+    await invalidateOnProductChange().catch((error) => {
+      logger.error("Failed to invalidate cache after product update:", error);
+    });
+
+    // Transform product to match expected format
+    const transformedProduct = {
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      price: Number(product.price),
+      quantity: Number(product.quantity),
+      status: product.status,
+      categoryId: product.categoryId,
+      supplierId: product.supplierId,
+      category: category?.name || "Unknown",
+      supplier: supplier?.name || "Unknown",
+      userId: product.userId,
+      createdBy: product.createdBy,
+      updatedBy: product.updatedBy || null,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt?.toISOString() || null,
+      qrCodeUrl: product.qrCodeUrl || null,
+      imageUrl: product.imageUrl || null,
+      imageFileId: product.imageFileId || null,
+      expirationDate: product.expirationDate?.toISOString() || null,
+    };
+
+    return NextResponse.json(transformedProduct);
+  } catch (error) {
+    logger.error("Error updating product:", error);
+    return NextResponse.json(
+      { error: "Failed to update product" },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * DELETE /api/products
+ * Delete a product
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.role === "supplier") {
+      return NextResponse.json(
+        { error: "Suppliers cannot delete products; only admins can." },
+        { status: 403 },
+      );
+    }
+
+    const userId = session.id;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Product ID is required" },
+        { status: 400 },
+      );
+    }
+
+    // Verify product belongs to user
+    const existingProduct = await prisma.product.findFirst({
+      where: { id, userId },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json(
+        { error: "Product not found or unauthorized" },
+        { status: 404 },
+      );
+    }
+
+    // Check for related orders before deletion
+    // Products can only be deleted if all related orders are delivered or cancelled
+    const orderItems = await prisma.orderItem.findMany({
+      where: { productId: id },
+      include: {
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            invoice: {
+              select: {
+                id: true,
+                invoiceNumber: true,
+                status: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (orderItems.length > 0) {
+      // Group orders by status
+      const activeOrders = orderItems
+        .filter((item) => {
+          const orderStatus = item.order.status;
+          // Orders that are not delivered or cancelled are considered "active"
+          return orderStatus !== "delivered" && orderStatus !== "cancelled";
+        })
+        .map((item) => item.order);
+
+      // Get unique active orders (avoid duplicates)
+      const uniqueActiveOrders = Array.from(
+        new Map(activeOrders.map((order) => [order.id, order])).values(),
+      );
+
+      // Only prevent deletion if there are active orders
+      // Products can be deleted if all related orders are delivered or cancelled
+      if (uniqueActiveOrders.length > 0) {
+        // There are active orders - prevent deletion and show detailed error
+        // Check for invoices on active orders
+        const ordersWithInvoices = uniqueActiveOrders.filter(
+          (order) => order.invoice,
+        );
+
+        // Build detailed error message
+        let errorMessage = `Cannot delete product "${existingProduct.name}" because `;
+        const reasons: string[] = [];
+        const statusCounts: Record<string, number> = {};
+        uniqueActiveOrders.forEach((order) => {
+          statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
+        });
+
+        const statusMessages = Object.entries(statusCounts).map(
+          ([status, count]) =>
+            `${count} ${status} order${count > 1 ? "s" : ""}`,
+        );
+        reasons.push(
+          `it has ${uniqueActiveOrders.length} active order${uniqueActiveOrders.length > 1 ? "s" : ""} (${statusMessages.join(", ")})`,
+        );
+
+        if (ordersWithInvoices.length > 0) {
+          reasons.push(
+            `${ordersWithInvoices.length} invoice${ordersWithInvoices.length > 1 ? "s" : ""} ${ordersWithInvoices.length > 1 ? "are" : "is"} associated with ${ordersWithInvoices.length > 1 ? "these orders" : "this order"}`,
+          );
+        }
+
+        // Count delivered/cancelled orders (for informational purposes)
+        const completedOrders = orderItems.filter(
+          (item) =>
+            item.order.status === "delivered" ||
+            item.order.status === "cancelled",
+        );
+        if (completedOrders.length > 0) {
+          const uniqueCompletedOrders = Array.from(
+            new Map(
+              completedOrders.map((item) => [item.order.id, item.order]),
+            ).values(),
+          );
+          reasons.push(
+            `Additionally, there ${uniqueCompletedOrders.length > 1 ? "are" : "is"} ${uniqueCompletedOrders.length} completed order${uniqueCompletedOrders.length > 1 ? "s" : ""} (delivered/cancelled) in the system history`,
+          );
+        }
+
+        errorMessage += reasons.join(". ") + ".";
+
+        // Add actionable message
+        errorMessage += ` Please wait until all active orders are delivered or cancelled before deleting this product.`;
+
+        return NextResponse.json(
+          {
+            error: errorMessage,
+            details: {
+              activeOrdersCount: uniqueActiveOrders.length,
+              invoicesCount: ordersWithInvoices.length,
+              totalOrdersCount: Array.from(
+                new Map(
+                  orderItems.map((item) => [item.order.id, item.order]),
+                ).values(),
+              ).length,
+              activeOrderStatuses: Object.fromEntries(
+                Object.entries(
+                  uniqueActiveOrders.reduce(
+                    (acc, order) => {
+                      acc[order.status] = (acc[order.status] || 0) + 1;
+                      return acc;
+                    },
+                    {} as Record<string, number>,
+                  ),
+                ),
+              ),
+            },
+          },
+          { status: 409 }, // 409 Conflict - resource cannot be deleted due to constraints
+        );
+      }
+      // If all orders are delivered or cancelled, allow deletion - continue below
+    }
+
+    // Delete QR code from ImageKit if it exists (async, don't block deletion)
+    if (existingProduct.qrCodeFileId) {
+      deleteQRCodeFromImageKit(existingProduct.qrCodeFileId)
+        .then(() => {
+          logger.debug(
+            `Deleted QR code from ImageKit for product: ${existingProduct.id}`,
+          );
+        })
+        .catch((error) => {
+          // Log error but don't fail product deletion - cleanup is not critical
+          logger.error(
+            `Failed to delete QR code from ImageKit for product ${existingProduct.id}:`,
+            error,
+          );
+        });
+    }
+
+    // Delete product image from ImageKit if it exists (async, don't block deletion)
+    if (existingProduct.imageFileId) {
+      deleteProductImageFromImageKit(existingProduct.imageFileId)
+        .then(() => {
+          logger.debug(
+            `Deleted product image from ImageKit for product: ${existingProduct.id}`,
+          );
+        })
+        .catch((error) => {
+          // Log error but don't fail product deletion - cleanup is not critical
+          logger.error(
+            `Failed to delete product image from ImageKit for product ${existingProduct.id}:`,
+            error,
+          );
+        });
+    }
+
+    // Delete product from database
+    await prisma.product.delete({
+      where: { id },
+    });
+
+    createAuditLog({
+      userId: session.id,
+      action: "delete",
+      entityType: "product",
+      entityId: id,
+      details: { productName: existingProduct.name },
+    }).catch(() => {});
+
+    // Global invalidation: products affect categories, suppliers, dashboard
+    const { invalidateOnProductChange } = await import("@/lib/cache");
+    await invalidateOnProductChange().catch((error) => {
+      logger.error("Failed to invalidate cache after product deletion:", error);
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    logger.error("Error deleting product:", error);
+
+    // Check if this is a Prisma foreign key constraint error
+    // This can happen if related orders/invoices exist and weren't caught by our check
+    if (
+      error instanceof Error &&
+      (error.message.includes("Foreign key constraint") ||
+        error.message.includes("delete operation") ||
+        error.message.includes("referenced"))
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot delete product because it is referenced by existing orders or invoices. Please ensure all related orders are delivered or cancelled before deleting this product.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // For any other error, return generic error message
+    return NextResponse.json(
+      { error: "Failed to delete product. Please try again later." },
+      { status: 500 },
+    );
+  }
+}

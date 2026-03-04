@@ -1,14 +1,21 @@
-import { PrismaClient } from "@prisma/client";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/prisma/client";
 
-const prisma = new PrismaClient();
-
+/**
+ * Create a new category with audit fields
+ */
 export const createCategory = async (data: {
   name: string;
   userId: string;
 }) => {
-  console.log("Creating category with data:", data); // Debugging log
+  logger.debug("Creating category with data:", data);
   return prisma.category.create({
-    data,
+    data: {
+      name: data.name,
+      userId: data.userId,
+      createdBy: data.userId, // Set createdBy same as userId
+      createdAt: new Date(),
+    },
   });
 };
 
@@ -18,10 +25,37 @@ export const getCategoriesByUser = async (userId: string) => {
   });
 };
 
-export const updateCategory = async (id: string, data: { name?: string }) => {
+/**
+ * Get category by ID with all related data
+ * Fetches a single category with products and related order items
+ *
+ * @param categoryId - Category ID
+ * @param userId - User ID (for authorization check)
+ * @returns Promise<Category | null> - Category or null if not found
+ */
+export const getCategoryById = async (categoryId: string, userId: string) => {
+  return prisma.category.findFirst({
+    where: {
+      id: categoryId,
+      userId, // Ensure user can only access their own categories
+    },
+  });
+};
+
+/**
+ * Update a category with audit fields
+ */
+export const updateCategory = async (
+  id: string,
+  data: { name?: string; updatedBy?: string }
+) => {
   return prisma.category.update({
     where: { id },
-    data,
+    data: {
+      ...(data.name && { name: data.name }),
+      ...(data.updatedBy && { updatedBy: data.updatedBy }),
+      updatedAt: new Date(), // Always update timestamp
+    },
   });
 };
 

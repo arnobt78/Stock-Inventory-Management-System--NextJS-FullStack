@@ -30,7 +30,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
 
 # vercel
 .vercel
@@ -43,3 +44,10 @@ next-env.d.ts
 .netlify
 .vscode
 .cursorignore
+
+BREVO_INTEGRATION_GUIDE.md
+DROPDOWN_TEST_CREDENTIALS_DOCS.md
+HETZNER_VPS_MIGRATION_GUIDE.md
+SHIPPO_INTEGRATION_DOCUMENTATION.md
+UI_STYLING_GUIDE.md
+PROJECT_PLAN.md

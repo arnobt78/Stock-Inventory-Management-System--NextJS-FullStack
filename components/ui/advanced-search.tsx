@@ -14,11 +14,11 @@ import {
   ChevronDown,
   ChevronUp,
   Filter,
-  Loader2,
   Save,
   Search,
   X,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 
 interface SearchFilter {
@@ -281,11 +281,12 @@ export function AdvancedSearch({
             onClick={handleSearch}
             disabled={isLoading}
             className="flex-1"
+            isLoading={isLoading}
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Searching...
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <span>Searching...</span>
               </>
             ) : (
               <>

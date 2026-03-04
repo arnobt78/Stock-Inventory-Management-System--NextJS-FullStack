@@ -1,0 +1,870 @@
+/**
+ * Invoice Dialog Component
+ * Dialog for generating invoices from orders
+ * Uses indigo glassmorphic styling (different from orders/violet, products/rose)
+ */
+
+"use client";
+
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useCreateInvoice, useUpdateInvoice, useOrders } from "@/hooks/queries";
+import { createInvoiceSchema, updateInvoiceSchema, type UpdateInvoiceFormData } from "@/lib/validations";
+import type { CreateInvoiceInput, Invoice, Order, InvoiceStatus } from "@/types";
+import { useAuth } from "@/contexts";
+import { useToast } from "@/hooks/use-toast";
+import { FileText, Calendar as CalendarIcon } from "lucide-react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormField, FormNumberField } from "@/components/forms";
+
+interface InvoiceDialogProps {
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  editingInvoice?: Invoice | null;
+  onEditInvoice?: (invoice: Invoice | null) => void;
+}
+
+/** Tax options for invoice (default: Free) */
+const taxOptions = [
+  { value: 0, label: "Free" },
+  { value: 3, label: "3" },
+  { value: 5, label: "5" },
+  { value: 10, label: "10" },
+] as const;
+
+/** Shipping options for invoice (default: Free), same as order for transparency */
+const shippingOptions = [
+  { value: 0, label: "Free" },
+  { value: 3, label: "3" },
+  { value: 5, label: "5" },
+  { value: 8, label: "8" },
+] as const;
+
+/** Discount options for invoice (default: None) */
+const discountOptions = [
+  { value: 0, label: "None" },
+  { value: 10, label: "10" },
+  { value: 20, label: "20" },
+  { value: 30, label: "30" },
+  { value: 50, label: "50" },
+] as const;
+
+function normalizeTax(v: number | null | undefined): number {
+  return taxOptions.some((o) => o.value === v) ? (v as number) : 0;
+}
+function normalizeShipping(v: number | null | undefined): number {
+  return shippingOptions.some((o) => o.value === v) ? (v as number) : 0;
+}
+function normalizeDiscount(v: number | null | undefined): number {
+  return discountOptions.some((o) => o.value === v) ? (v as number) : 0;
+}
+
+/**
+ * Invoice Dialog Component
+ * Generates invoices from orders
+ * Uses indigo glassmorphic styling (border-indigo-400/30, shadow indigo)
+ */
+export default function InvoiceDialog({
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  editingInvoice: externalEditingInvoice,
+  onEditInvoice,
+}: InvoiceDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [internalEditingInvoice, setInternalEditingInvoice] = useState<Invoice | null>(null);
+  const dialogCloseRef = useRef<HTMLButtonElement | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Form state
+  const [selectedOrderId, setSelectedOrderId] = useState<string>("");
+  const [dueDate, setDueDate] = useState<string>("");
+  const [tax, setTax] = useState<number>(0);
+  const [shipping, setShipping] = useState<number>(0);
+  const [discount, setDiscount] = useState<number>(0);
+  const [notes, setNotes] = useState<string>("");
+
+  // Use controlled or internal state
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = useCallback(
+    (value: boolean) => {
+      if (isControlled && controlledOnOpenChange) {
+        controlledOnOpenChange(value);
+      } else {
+        setInternalOpen(value);
+      }
+    },
+    [isControlled, controlledOnOpenChange]
+  );
+
+  // Use external or internal editing invoice
+  const editingInvoice =
+    externalEditingInvoice !== undefined
+      ? externalEditingInvoice
+      : internalEditingInvoice;
+
+  const setEditingInvoice =
+    externalEditingInvoice !== undefined && onEditInvoice
+      ? onEditInvoice
+      : setInternalEditingInvoice;
+
+  // Fetch orders for selection
+  const { data: orders = [] } = useOrders();
+
+  // Filter to show orders that don't already have invoices
+  // Note: This is a simple filter - in production, you might want to check invoice existence via API
+  const availableOrders = orders.filter((order) => order.status !== "cancelled");
+
+  // Use TanStack Query mutations
+  const createInvoiceMutation = useCreateInvoice();
+  const updateInvoiceMutation = useUpdateInvoice();
+  const isCreating = createInvoiceMutation.isPending;
+  const isUpdating = updateInvoiceMutation.isPending;
+  const isSubmitting = isCreating || isUpdating;
+
+  // ==================== EDIT INVOICE FORM ====================
+  // Initialize edit form with invoice data
+  const editFormMethods = useForm<UpdateInvoiceFormData>({
+    resolver: zodResolver(updateInvoiceSchema),
+    defaultValues: editingInvoice
+      ? {
+          id: editingInvoice.id,
+          status: editingInvoice.status,
+          amountPaid: editingInvoice.amountPaid,
+          tax: editingInvoice.tax ?? undefined,
+          shipping: editingInvoice.shipping ?? undefined,
+          discount: editingInvoice.discount ?? undefined,
+          total: editingInvoice.total,
+          amountDue: editingInvoice.amountDue,
+          dueDate: editingInvoice.dueDate
+            ? new Date(editingInvoice.dueDate).toISOString().split("T")[0]
+            : "",
+          sentAt: editingInvoice.sentAt
+            ? new Date(editingInvoice.sentAt).toISOString().split("T")[0]
+            : "",
+          paidAt: editingInvoice.paidAt
+            ? new Date(editingInvoice.paidAt).toISOString().split("T")[0]
+            : "",
+          cancelledAt: editingInvoice.cancelledAt
+            ? new Date(editingInvoice.cancelledAt).toISOString().split("T")[0]
+            : "",
+          paymentLink: editingInvoice.paymentLink || "",
+          notes: editingInvoice.notes || "",
+        }
+      : {
+          id: "",
+          status: "draft",
+          amountPaid: 0,
+          tax: undefined,
+          shipping: undefined,
+          discount: undefined,
+          total: 0,
+          amountDue: 0,
+          dueDate: "",
+          sentAt: "",
+          paidAt: "",
+          cancelledAt: "",
+          paymentLink: "",
+          notes: "",
+        },
+  });
+
+  const { reset: editReset, watch: editWatch, setValue: editSetValue } =
+    editFormMethods;
+
+  // Reset edit form when invoice changes or dialog opens
+  useEffect(() => {
+    if (open && editingInvoice) {
+      const taxVal = normalizeTax(editingInvoice.tax ?? 0);
+      const shippingVal = normalizeShipping(editingInvoice.shipping ?? 0);
+      const discountVal = normalizeDiscount(editingInvoice.discount ?? 0);
+      const subtotalVal = editingInvoice.subtotal ?? 0;
+      const totalVal = Math.max(0, subtotalVal + taxVal + shippingVal - discountVal);
+      editReset({
+        id: editingInvoice.id,
+        status: editingInvoice.status,
+        amountPaid: editingInvoice.amountPaid,
+        tax: taxVal,
+        shipping: shippingVal,
+        discount: discountVal,
+        total: totalVal,
+        amountDue: Math.max(0, totalVal - (editingInvoice.amountPaid ?? 0)),
+        dueDate: editingInvoice.dueDate
+          ? new Date(editingInvoice.dueDate).toISOString().split("T")[0]
+          : "",
+        sentAt: editingInvoice.sentAt
+          ? new Date(editingInvoice.sentAt).toISOString().split("T")[0]
+          : "",
+        paidAt: editingInvoice.paidAt
+          ? new Date(editingInvoice.paidAt).toISOString().split("T")[0]
+          : "",
+        cancelledAt: editingInvoice.cancelledAt
+          ? new Date(editingInvoice.cancelledAt).toISOString().split("T")[0]
+          : "",
+        paymentLink: editingInvoice.paymentLink || "",
+        notes: editingInvoice.notes || "",
+      });
+    } else if (open && !editingInvoice && externalEditingInvoice === null) {
+      // Clear edit form when explicitly set to null
+      editReset({
+        id: "",
+        status: "draft",
+        amountPaid: 0,
+        tax: undefined,
+        shipping: undefined,
+        discount: undefined,
+        total: 0,
+        amountDue: 0,
+        dueDate: "",
+        sentAt: "",
+        paidAt: "",
+        cancelledAt: "",
+        paymentLink: "",
+        notes: "",
+      });
+    }
+  }, [open, editingInvoice, externalEditingInvoice, editReset]);
+
+  // Derive total = subtotal + tax + shipping - discount when tax, shipping, or discount change (dynamic calculation)
+  const watchedTax = editWatch("tax");
+  const watchedShipping = editWatch("shipping");
+  const watchedDiscount = editWatch("discount");
+  useEffect(() => {
+    if (!open || !editingInvoice) return;
+    const subtotalVal = editingInvoice.subtotal ?? 0;
+    const taxVal = Number(watchedTax) || 0;
+    const shippingVal = Number(watchedShipping) || 0;
+    const discountVal = Number(watchedDiscount) || 0;
+    const totalVal = Math.max(0, subtotalVal + taxVal + shippingVal - discountVal);
+    editSetValue("total", totalVal);
+  }, [open, editingInvoice, watchedTax, watchedShipping, watchedDiscount, editSetValue]);
+
+  // Keep amountDue in sync with total - amountPaid in the edit form (dynamic calculation)
+  const watchedAmountPaid = editWatch("amountPaid");
+  const watchedTotal = editWatch("total");
+  useEffect(() => {
+    if (!open || !editingInvoice) return;
+    const paid = Number(watchedAmountPaid) || 0;
+    const tot = Number(watchedTotal) || 0;
+    editSetValue("amountDue", Math.max(0, tot - paid));
+  }, [open, editingInvoice, watchedAmountPaid, watchedTotal, editSetValue]);
+
+  // Handle edit invoice submission
+  const handleUpdateInvoice = async (data: UpdateInvoiceFormData) => {
+    if (!editingInvoice) return;
+
+    try {
+      // Derive total = subtotal + tax + shipping - discount and amountDue = total - amountPaid (never send stale values)
+      const subtotalVal = editingInvoice.subtotal ?? 0;
+      const taxVal = data.tax ?? 0;
+      const shippingVal = data.shipping ?? 0;
+      const discountVal = data.discount ?? 0;
+      const total = Math.max(0, subtotalVal + taxVal + shippingVal - discountVal);
+      const amountPaid = data.amountPaid ?? editingInvoice.amountPaid;
+      const amountDue = Math.max(0, total - amountPaid);
+
+      // Prepare update data - convert date strings to ISO strings for API
+      const updateData = {
+        id: data.id,
+        status: data.status,
+        amountPaid: data.amountPaid,
+        tax: data.tax,
+        shipping: data.shipping,
+        discount: data.discount,
+        total,
+        amountDue,
+        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+        sentAt: data.sentAt ? new Date(data.sentAt).toISOString() : undefined,
+        paidAt: data.paidAt ? new Date(data.paidAt).toISOString() : undefined,
+        cancelledAt: data.cancelledAt ? new Date(data.cancelledAt).toISOString() : undefined,
+        paymentLink: data.paymentLink || undefined,
+        notes: data.notes || undefined,
+      };
+
+      // Update invoice using TanStack Query mutation
+      await updateInvoiceMutation.mutateAsync(updateData);
+
+      // Clear editing state on success (toast is handled by mutation hook)
+      if (externalEditingInvoice === undefined) {
+        setInternalEditingInvoice(null);
+      } else if (onEditInvoice) {
+        onEditInvoice(null);
+      }
+
+      // Close dialog if controlled
+      if (isControlled) {
+        setOpen(false);
+      } else {
+        // For internal state, close after a brief delay
+        setTimeout(() => {
+          setOpen(false);
+        }, 500);
+      }
+    } catch (error) {
+      // Error toast is handled by the mutation hook
+    }
+  };
+
+  // Cancel editing
+  const handleCancelEdit = () => {
+    if (externalEditingInvoice === undefined) {
+      setInternalEditingInvoice(null);
+    } else if (onEditInvoice) {
+      onEditInvoice(null);
+    }
+    // Close dialog if controlled
+    if (isControlled) {
+      setOpen(false);
+    }
+  };
+
+  // ==================== CREATE INVOICE FORM ====================
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open && !editingInvoice && !isControlled) {
+      setSelectedOrderId("");
+      setDueDate("");
+      setTax(0);
+      setShipping(0);
+      setDiscount(0);
+      setNotes("");
+    }
+  }, [open, editingInvoice, isControlled]);
+
+  // Pre-fill tax, shipping, discount from selected order when generating invoice (match order's values)
+  const selectedOrder = availableOrders.find((order) => order.id === selectedOrderId);
+  useEffect(() => {
+    if (!selectedOrderId || !selectedOrder) return;
+    setTax(normalizeTax(selectedOrder.tax ?? 0));
+    setShipping(normalizeShipping(selectedOrder.shipping ?? 0));
+    setDiscount(normalizeDiscount(selectedOrder.discount ?? 0));
+  }, [selectedOrderId, selectedOrder]);
+
+  // Handle form submission
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!selectedOrderId) {
+        toast({
+          title: "Order Required",
+          description: "Please select an order to generate an invoice.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!dueDate) {
+        toast({
+          title: "Due Date Required",
+          description: "Please select a due date for the invoice.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prepare invoice data
+      const invoiceData: CreateInvoiceInput = {
+        orderId: selectedOrderId,
+        dueDate: new Date(dueDate).toISOString(),
+        tax: tax > 0 ? tax : undefined,
+        shipping: shipping > 0 ? shipping : undefined,
+        discount: discount > 0 ? discount : undefined,
+        notes: notes.trim() || undefined,
+      };
+
+      // Validate using Zod schema
+      const validationResult = createInvoiceSchema.safeParse(invoiceData);
+      if (!validationResult.success) {
+        const errorMessages = validationResult.error.errors
+          .map((err) => `${err.path.join(".")}: ${err.message}`)
+          .join(". ");
+        toast({
+          title: "Validation Error",
+          description: errorMessages || "Please fix the form errors before submitting.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        await createInvoiceMutation.mutateAsync(invoiceData);
+
+        // Reset form
+        setSelectedOrderId("");
+        setDueDate("");
+        setTax(0);
+        setShipping(0);
+        setDiscount(0);
+        setNotes("");
+
+        // Close dialog
+        setOpen(false);
+      } catch (error) {
+        // Error toast is handled by the mutation hook
+      }
+    },
+    [selectedOrderId, dueDate, tax, shipping, discount, notes, createInvoiceMutation, setOpen, toast]
+  );
+
+  // Handle cancel
+  const handleCancel = useCallback(() => {
+    setSelectedOrderId("");
+    setDueDate("");
+    setTax(0);
+    setShipping(0);
+    setDiscount(0);
+    setNotes("");
+    setOpen(false);
+  }, [setOpen]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+      <DialogContent
+        className="p-4 sm:p-7 sm:px-8 poppins max-h-[90vh] overflow-y-auto border-indigo-400/30 dark:border-indigo-400/30 shadow-[0_30px_80px_rgba(99,102,241,0.45)] dark:shadow-[0_30px_80px_rgba(99,102,241,0.25)]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle className="text-[22px] text-white">
+            {editingInvoice ? `Edit Invoice ${editingInvoice.invoiceNumber}` : "Generate Invoice from Order"}
+          </DialogTitle>
+          <DialogDescription className="text-white/70">
+            {editingInvoice
+              ? "Update invoice status, payment information, dates, and notes."
+              : "Select an order and set invoice details to generate a new invoice."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Edit Invoice Form (shown when editing) */}
+        {editingInvoice ? (
+          <FormProvider {...editFormMethods}>
+            <form onSubmit={editFormMethods.handleSubmit(handleUpdateInvoice)}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                {/* Invoice Status */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-white/80">
+                    Invoice Status
+                  </label>
+                  <Select
+                    value={editFormMethods.watch("status") || editingInvoice.status}
+                    onValueChange={(value) =>
+                      editFormMethods.setValue("status", value as InvoiceStatus)
+                    }
+                  >
+                    <SelectTrigger className="h-11 w-full border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-indigo-400 focus:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="border-indigo-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
+                      position="popper"
+                      sideOffset={5}
+                      align="start"
+                    >
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Amount Paid */}
+                <FormNumberField
+                  name="amountPaid"
+                  label="Amount Paid"
+                  placeholder="0.00"
+                  allowNegative={false}
+                  labelClassName="text-white/80"
+                  inputClassName="h-11 border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                />
+
+                {/* Tax */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-white/80">Tax</label>
+                  <Select
+                    value={String(editWatch("tax") ?? 0)}
+                    onValueChange={(v) =>
+                      editFormMethods.setValue("tax", Number(v), {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-11 w-full border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-indigo-400 focus:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+                      <SelectValue placeholder="Tax" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="border-indigo-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
+                      position="popper"
+                      sideOffset={5}
+                      align="start"
+                    >
+                      {taxOptions.map((o) => (
+                        <SelectItem
+                          key={o.value}
+                          value={String(o.value)}
+                          className="cursor-pointer text-gray-900 dark:text-white focus:bg-indigo-100 dark:focus:bg-white/10 focus:text-gray-900 dark:focus:text-white"
+                        >
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Shipping */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-white/80">
+                    Shipping
+                  </label>
+                  <Select
+                    value={String(editWatch("shipping") ?? 0)}
+                    onValueChange={(v) =>
+                      editFormMethods.setValue("shipping", Number(v), {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-11 w-full border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-indigo-400 focus:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+                      <SelectValue placeholder="Shipping" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="border-indigo-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
+                      position="popper"
+                      sideOffset={5}
+                      align="start"
+                    >
+                      {shippingOptions.map((o) => (
+                        <SelectItem
+                          key={o.value}
+                          value={String(o.value)}
+                          className="cursor-pointer text-gray-900 dark:text-white focus:bg-indigo-100 dark:focus:bg-white/10 focus:text-gray-900 dark:focus:text-white"
+                        >
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Discount */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-white/80">
+                    Discount
+                  </label>
+                  <Select
+                    value={String(editWatch("discount") ?? 0)}
+                    onValueChange={(v) =>
+                      editFormMethods.setValue("discount", Number(v), {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-11 w-full border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-indigo-400 focus:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+                      <SelectValue placeholder="Discount" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="border-indigo-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
+                      position="popper"
+                      sideOffset={5}
+                      align="start"
+                    >
+                      {discountOptions.map((o) => (
+                        <SelectItem
+                          key={o.value}
+                          value={String(o.value)}
+                          className="cursor-pointer text-gray-900 dark:text-white focus:bg-indigo-100 dark:focus:bg-white/10 focus:text-gray-900 dark:focus:text-white"
+                        >
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Due Date */}
+                <FormField
+                  name="dueDate"
+                  label="Due Date"
+                  type="date"
+                  labelClassName="text-white/80"
+                  inputClassName="border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                />
+
+                {/* Sent At */}
+                {editWatch("status") === "sent" || editWatch("status") === "paid" || editWatch("status") === "overdue" ? (
+                  <FormField
+                    name="sentAt"
+                    label="Sent At"
+                    type="date"
+                    labelClassName="text-white/80"
+                    inputClassName="border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                  />
+                ) : null}
+
+                {/* Paid At */}
+                {editWatch("status") === "paid" ? (
+                  <FormField
+                    name="paidAt"
+                    label="Paid At"
+                    type="date"
+                    labelClassName="text-white/80"
+                    inputClassName="border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                  />
+                ) : null}
+
+                {/* Cancelled At */}
+                {editWatch("status") === "cancelled" ? (
+                  <FormField
+                    name="cancelledAt"
+                    label="Cancelled At"
+                    type="date"
+                    labelClassName="text-white/80"
+                    inputClassName="border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                  />
+                ) : null}
+
+                {/* Payment Link */}
+                <FormField
+                  name="paymentLink"
+                  label="Payment Link"
+                  placeholder="https://..."
+                  type="url"
+                  labelClassName="text-white/80"
+                  className="sm:col-span-2"
+                  inputClassName="border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                />
+
+                {/* Notes */}
+                <div className="sm:col-span-2">
+                  <FormField
+                    name="notes"
+                    label="Notes"
+                    placeholder="Enter invoice notes..."
+                    labelClassName="text-white/80"
+                    inputClassName="border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-9 mb-4 flex flex-col sm:flex-row items-center gap-4">
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="secondary"
+                  className="h-11 w-full sm:w-auto px-11 inline-flex items-center justify-center rounded-xl border border-white/10 bg-gradient-to-r from-gray-400/40 via-gray-300/30 to-gray-400/40 dark:bg-background/50 backdrop-blur-sm shadow-[0_15px_35px_rgba(0,0,0,0.3)] dark:shadow-[0_15px_35px_rgba(255,255,255,0.25)] transition duration-200 hover:bg-gradient-to-r hover:from-gray-400/60 hover:via-gray-300/50 hover:to-gray-400/60 dark:hover:bg-accent/50 hover:border-white/20 dark:hover:border-white/20 hover:shadow-[0_20px_45px_rgba(0,0,0,0.5)] dark:hover:shadow-[0_20px_45px_rgba(255,255,255,0.4)]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="h-11 w-full sm:w-auto px-11 inline-flex items-center justify-center rounded-xl border border-indigo-400/30 dark:border-indigo-400/30 bg-gradient-to-r from-indigo-500/70 via-indigo-500/50 to-indigo-500/30 text-white shadow-[0_15px_35px_rgba(99,102,241,0.45)] backdrop-blur-sm transition duration-200 hover:border-indigo-300/40 hover:from-indigo-500/80 hover:via-indigo-500/60 hover:to-indigo-500/40 hover:shadow-[0_20px_45px_rgba(99,102,241,0.6)]"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? "Updating..." : "Update Invoice"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </FormProvider>
+        ) : (
+          /* Create Invoice Form (shown when not editing) */
+          <form onSubmit={handleSubmit}>
+          <div className="space-y-4 mt-4">
+            {/* Order Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="order-select" className="text-sm font-medium text-white/80">
+                Select Order <span className="text-red-400">*</span>
+              </Label>
+              <Select value={selectedOrderId} onValueChange={setSelectedOrderId}>
+                <SelectTrigger
+                  id="order-select"
+                  className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+                >
+                  <SelectValue placeholder="Select an order..." />
+                </SelectTrigger>
+                <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
+                  {availableOrders.map((order) => (
+                    <SelectItem key={order.id} value={order.id}>
+                      {order.orderNumber} - ${order.total.toFixed(2)} ({order.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedOrder && (
+                <p className="text-xs text-white/60">
+                  Order Total: ${selectedOrder.total.toFixed(2)} | Items: {selectedOrder.items?.length || 0}
+                </p>
+              )}
+            </div>
+
+            {/* Due Date */}
+            <div className="space-y-2">
+              <Label htmlFor="due-date" className="text-sm font-medium text-white/80 flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Due Date <span className="text-red-400">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="due-date"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)] pr-10"
+                  min={new Date().toISOString().split("T")[0]}
+                />
+                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white dark:text-white/40 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Tax */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-white/80">Tax</Label>
+              <Select value={String(tax)} onValueChange={(v) => setTax(Number(v))}>
+                <SelectTrigger className="w-full h-11 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+                  <SelectValue placeholder="Tax" />
+                </SelectTrigger>
+                <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
+                  {taxOptions.map((o) => (
+                    <SelectItem key={o.value} value={String(o.value)}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Shipping */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-white/80">Shipping</Label>
+              <Select value={String(shipping)} onValueChange={(v) => setShipping(Number(v))}>
+                <SelectTrigger className="w-full h-11 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+                  <SelectValue placeholder="Shipping" />
+                </SelectTrigger>
+                <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
+                  {shippingOptions.map((o) => (
+                    <SelectItem key={o.value} value={String(o.value)}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Discount */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-white/80">Discount</Label>
+              <Select value={String(discount)} onValueChange={(v) => setDiscount(Number(v))}>
+                <SelectTrigger className="w-full h-11 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+                  <SelectValue placeholder="Discount" />
+                </SelectTrigger>
+                <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
+                  {discountOptions.map((o) => (
+                    <SelectItem key={o.value} value={String(o.value)}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subtotal / Total (dynamic when order selected; includes shipping for order ↔ invoice transparency) */}
+            {selectedOrder && (
+              <div className="p-4 border border-indigo-400/20 rounded-lg bg-white/5 space-y-2">
+                <div className="flex justify-between text-sm text-white/70">
+                  <span>Subtotal:</span>
+                  <span>${(selectedOrder.subtotal ?? 0).toFixed(2)}</span>
+                </div>
+                {tax > 0 && (
+                  <div className="flex justify-between text-sm text-white/70">
+                    <span>Tax:</span>
+                    <span>${tax.toFixed(2)}</span>
+                  </div>
+                )}
+                {shipping > 0 && (
+                  <div className="flex justify-between text-sm text-white/70">
+                    <span>Shipping:</span>
+                    <span>${shipping.toFixed(2)}</span>
+                  </div>
+                )}
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-white/70">
+                    <span>Discount:</span>
+                    <span className="text-red-400">-${discount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-semibold text-white pt-2 border-t border-indigo-400/20">
+                  <span>Total:</span>
+                  <span>
+                    $
+                    {Math.max(
+                      0,
+                      (selectedOrder.subtotal ?? 0) + tax + shipping - discount
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes" className="text-sm font-medium text-white/80">
+                Notes (Optional)
+              </Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any additional notes for this invoice..."
+                rows={3}
+                className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-9 mb-4 flex flex-col sm:flex-row items-center gap-4">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              variant="secondary"
+              className="h-11 w-full sm:w-auto px-11 inline-flex items-center justify-center rounded-xl border border-white/10 bg-gradient-to-r from-gray-400/40 via-gray-300/30 to-gray-400/40 dark:bg-background/50 backdrop-blur-sm shadow-[0_15px_35px_rgba(0,0,0,0.3)] dark:shadow-[0_15px_35px_rgba(255,255,255,0.25)] transition duration-200 hover:bg-gradient-to-r hover:from-gray-400/60 hover:via-gray-300/50 hover:to-gray-400/60 dark:hover:bg-accent/50 hover:border-white/20 dark:hover:border-white/20 hover:shadow-[0_20px_45px_rgba(0,0,0,0.5)] dark:hover:shadow-[0_20px_45px_rgba(255,255,255,0.4)]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="h-11 w-full sm:w-auto px-11 inline-flex items-center justify-center rounded-xl border border-indigo-400/30 bg-gradient-to-r from-indigo-500/70 via-indigo-500/50 to-indigo-500/30 text-white shadow-[0_15px_35px_rgba(99,102,241,0.45)] backdrop-blur-sm transition duration-200 hover:border-indigo-300/40 hover:from-indigo-500/80 hover:via-indigo-500/60 hover:to-indigo-500/40 hover:shadow-[0_20px_45px_rgba(99,102,241,0.6)]"
+              disabled={isCreating || !selectedOrderId || !dueDate}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {isCreating ? "Generating..." : "Generate Invoice"}
+            </Button>
+          </DialogFooter>
+        </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,0 +1,310 @@
+/**
+ * Server-side data fetching for orders page SSR
+ * Fetches orders using the same logic and cache as GET /api/orders.
+ * Only import this from server code (e.g. app/orders/page.tsx).
+ */
+
+import { getCache, setCache, cacheKeys } from "@/lib/cache";
+import {
+  getOrdersByUser,
+  getOrdersByClientId,
+  getOrdersContainingSupplierProducts,
+  getOrdersContainingProductOwnerProducts,
+} from "@/prisma/order";
+import { prisma } from "@/prisma/client";
+
+/** Order item shape (dates as ISO strings) */
+type OrderItemForPage = {
+  id: string;
+  orderId: string;
+  productId: string;
+  productName: string;
+  sku: string | null;
+  quantity: number;
+  price: number;
+  subtotal: number;
+  createdAt: string;
+};
+
+/** Order shape returned by orders API GET (dates as ISO strings) */
+export type OrderForPage = {
+  id: string;
+  orderNumber: string;
+  userId: string;
+  clientId: string | null;
+  status: string;
+  paymentStatus: string;
+  subtotal: number;
+  tax: number | null;
+  shipping: number | null;
+  discount: number | null;
+  total: number;
+  shippingAddress: unknown;
+  billingAddress: unknown;
+  notes: string | null;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  estimatedDelivery: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  createdBy: string;
+  updatedBy: string | null;
+  items: OrderItemForPage[];
+  /** Placer name/email when shipping has none (e.g. Google one-click checkout) */
+  placedByName?: string | null;
+};
+
+/**
+ * Fetch orders for the given user.
+ * Uses the same cache key and transform as GET /api/orders so Redis is shared.
+ */
+export async function getOrdersForUser(
+  userId: string
+): Promise<OrderForPage[]> {
+  const cacheKey = cacheKeys.orders.list({ userId });
+  const cached = await getCache<OrderForPage[]>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const orders = await getOrdersByUser(userId);
+  const firstOrder = orders[0];
+  const user =
+    firstOrder != null
+      ? await prisma.user.findUnique({
+          where: { id: firstOrder.userId },
+          select: { name: true, email: true },
+        })
+      : null;
+  const placedByName = user?.name ?? user?.email ?? null;
+
+  const transformed: OrderForPage[] = orders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    userId: order.userId,
+    clientId: order.clientId ?? null,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    subtotal: order.subtotal,
+    tax: order.tax ?? null,
+    shipping: order.shipping ?? null,
+    discount: order.discount ?? null,
+    total: order.total,
+    shippingAddress: order.shippingAddress,
+    billingAddress: order.billingAddress,
+    notes: order.notes,
+    trackingNumber: order.trackingNumber,
+    trackingUrl: order.trackingUrl,
+    estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
+    shippedAt: order.shippedAt?.toISOString() || null,
+    deliveredAt: order.deliveredAt?.toISOString() || null,
+    cancelledAt: order.cancelledAt?.toISOString() || null,
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt?.toISOString() || null,
+    createdBy: order.createdBy,
+    updatedBy: order.updatedBy,
+    items: order.items.map((item) => ({
+      id: item.id,
+      orderId: item.orderId,
+      productId: item.productId,
+      productName: item.productName,
+      sku: item.sku ?? null,
+      quantity: item.quantity,
+      price: item.price,
+      subtotal: item.subtotal,
+      createdAt: item.createdAt.toISOString(),
+    })),
+    placedByName,
+  }));
+
+  await setCache(cacheKey, transformed, 300);
+  return transformed;
+}
+
+/**
+ * Fetch orders that contain at least one product from the given supplier.
+ * Used for role=supplier: "View Orders" shows orders from any client/admin that include this supplier's products.
+ */
+export async function getOrdersForSupplierId(
+  supplierId: string,
+): Promise<OrderForPage[]> {
+  const cacheKey = cacheKeys.orders.list({ supplierId });
+  const cached = await getCache<OrderForPage[]>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const orders = await getOrdersContainingSupplierProducts(supplierId);
+
+  const transformed: OrderForPage[] = orders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    userId: order.userId,
+    clientId: order.clientId ?? null,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    subtotal: order.subtotal,
+    tax: order.tax ?? null,
+    shipping: order.shipping ?? null,
+    discount: order.discount ?? null,
+    total: order.total,
+    shippingAddress: order.shippingAddress,
+    billingAddress: order.billingAddress,
+    notes: order.notes,
+    trackingNumber: order.trackingNumber,
+    trackingUrl: order.trackingUrl,
+    estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
+    shippedAt: order.shippedAt?.toISOString() || null,
+    deliveredAt: order.deliveredAt?.toISOString() || null,
+    cancelledAt: order.cancelledAt?.toISOString() || null,
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt?.toISOString() ?? null,
+    createdBy: order.createdBy,
+    updatedBy: order.updatedBy,
+    items: order.items.map((item) => ({
+      id: item.id,
+      orderId: item.orderId,
+      productId: item.productId,
+      productName: item.productName,
+      sku: item.sku ?? null,
+      quantity: item.quantity,
+      price: item.price,
+      subtotal: item.subtotal,
+      createdAt: item.createdAt.toISOString(),
+    })),
+  }));
+
+  await setCache(cacheKey, transformed, 300);
+  return transformed;
+}
+
+/**
+ * Fetch orders that contain at least one product owned by the given user (product owner).
+ * Used for admin "Client Orders" list.
+ */
+export async function getClientOrdersForProductOwner(
+  productOwnerUserId: string,
+): Promise<OrderForPage[]> {
+  const cacheKey = cacheKeys.orders.list({ productOwnerId: productOwnerUserId });
+  const cached = await getCache<OrderForPage[]>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const orders = await getOrdersContainingProductOwnerProducts(productOwnerUserId);
+  const userIds = [...new Set(orders.map((o) => o.userId))];
+  const users =
+    userIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+  const userMap = new Map(users.map((u) => [u.id, u]));
+
+  const transformed: OrderForPage[] = orders.map((order) => {
+    const u = userMap.get(order.userId);
+    const placedByName = u?.name ?? u?.email ?? null;
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      userId: order.userId,
+      clientId: order.clientId ?? null,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      subtotal: order.subtotal,
+      tax: order.tax ?? null,
+      shipping: order.shipping ?? null,
+      discount: order.discount ?? null,
+      total: order.total,
+      shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress,
+      notes: order.notes,
+      trackingNumber: order.trackingNumber,
+      trackingUrl: order.trackingUrl,
+      estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
+      shippedAt: order.shippedAt?.toISOString() || null,
+      deliveredAt: order.deliveredAt?.toISOString() || null,
+      cancelledAt: order.cancelledAt?.toISOString() || null,
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt?.toISOString() ?? null,
+      createdBy: order.createdBy,
+      updatedBy: order.updatedBy,
+      items: order.items.map((item) => ({
+        id: item.id,
+        orderId: item.orderId,
+        productId: item.productId,
+        productName: item.productName,
+        sku: item.sku ?? null,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+        createdAt: item.createdAt.toISOString(),
+      })),
+      placedByName,
+    };
+  });
+
+  await setCache(cacheKey, transformed, 300);
+  return transformed;
+}
+
+/**
+ * Fetch orders for the given client (role=client: orders where they are the customer).
+ * Uses a distinct cache key so client list does not mix with creator list.
+ */
+export async function getOrdersForClientId(
+  clientId: string,
+): Promise<OrderForPage[]> {
+  const cacheKey = cacheKeys.orders.list({ userId: clientId, byClient: true });
+  const cached = await getCache<OrderForPage[]>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const orders = await getOrdersByClientId(clientId);
+
+  const transformed: OrderForPage[] = orders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    userId: order.userId,
+    clientId: order.clientId ?? null,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    subtotal: order.subtotal,
+    tax: order.tax ?? null,
+    shipping: order.shipping ?? null,
+    discount: order.discount ?? null,
+    total: order.total,
+    shippingAddress: order.shippingAddress,
+    billingAddress: order.billingAddress,
+    notes: order.notes,
+    trackingNumber: order.trackingNumber,
+    trackingUrl: order.trackingUrl,
+    estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
+    shippedAt: order.shippedAt?.toISOString() || null,
+    deliveredAt: order.deliveredAt?.toISOString() || null,
+    cancelledAt: order.cancelledAt?.toISOString() || null,
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt?.toISOString() || null,
+    createdBy: order.createdBy,
+    updatedBy: order.updatedBy,
+    items: order.items.map((item) => ({
+      id: item.id,
+      orderId: item.orderId,
+      productId: item.productId,
+      productName: item.productName,
+      sku: item.sku ?? null,
+      quantity: item.quantity,
+      price: item.price,
+      subtotal: item.subtotal,
+      createdAt: item.createdAt.toISOString(),
+    })),
+  }));
+
+  await setCache(cacheKey, transformed, 300);
+  return transformed;
+}

@@ -1,0 +1,60 @@
+/**
+ * System Configuration query hooks
+ */
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient, getErrorMessage } from "@/lib/api";
+import { queryKeys } from "@/lib/react-query";
+import { useToast } from "@/hooks/use-toast";
+import type { SystemConfig, UpdateSystemConfigInput } from "@/types";
+
+interface SystemConfigResponse {
+  configs: SystemConfig[];
+  categories: Record<string, string>;
+}
+
+/**
+ * Get all system configurations
+ */
+export function useSystemConfigs() {
+  return useQuery({
+    queryKey: queryKeys.systemConfig.all(),
+    queryFn: async (): Promise<SystemConfigResponse> => {
+      const response = await apiClient.systemConfig.getAll();
+      return response.data;
+    },
+    staleTime: 0, // Refetch on mount/activity so config updates immediately
+  });
+}
+
+/**
+ * Update system configurations
+ */
+export function useUpdateSystemConfigs() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (configs: UpdateSystemConfigInput[]) => {
+      const response = await apiClient.systemConfig.update(configs);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.systemConfig.all(),
+      });
+      toast({
+        title: "Settings saved",
+        description: "System configuration updated successfully.",
+      });
+    },
+    onError: (error: unknown) => {
+      toast({
+        title: "Failed to save settings",
+        description:
+          getErrorMessage(error) || "Could not update configuration.",
+        variant: "destructive",
+      });
+    },
+  });
+}
