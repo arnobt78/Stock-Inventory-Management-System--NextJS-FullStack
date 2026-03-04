@@ -202,11 +202,15 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Get callback URL from cookie
-      const callbackUrl = request.cookies.get("oauth_callback")?.value || "/";
+      // Redirect to role-appropriate page directly (avoids double-redirect chain through /)
+      const roleDest =
+        user.role === "client"
+          ? "/client"
+          : user.role === "supplier"
+            ? "/supplier"
+            : "/";
 
-      // Add query parameter to indicate OAuth success (for client-side session check)
-      const redirectUrl = new URL(callbackUrl, request.url);
+      const redirectUrl = new URL(roleDest, request.url);
       redirectUrl.searchParams.set("oauth_success", "true");
 
       // Create response and set cookies
