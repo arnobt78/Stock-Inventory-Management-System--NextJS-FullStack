@@ -46,7 +46,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isNavigatingToHome, setIsNavigatingToHome] = useState(false);
   const [selectMounted, setSelectMounted] = useState(false);
-  const { login, isLoggedIn } = useAuth();
+  const { login, isLoggedIn, user } = useAuth();
 
   // useLayoutEffect runs before paint so the Select appears on first paint (no flash)
   useLayoutEffect(() => {
@@ -58,19 +58,27 @@ export default function LoginPage() {
   const prefetchedRef = useRef(false);
   const navigatingFromSubmitRef = useRef(false);
 
-  // Prefetch home route once so post-login navigation is fast (ref guards against Strict Mode double-run)
+  // Prefetch landing pages so post-login navigation is instant
   useEffect(() => {
     if (prefetchedRef.current) return;
     prefetchedRef.current = true;
     router.prefetch("/");
+    router.prefetch("/client");
+    router.prefetch("/supplier");
   }, [router]);
 
   // Redirect if already logged in (e.g. landed on /login with cookie). Skip when we're redirecting from form submit.
   useEffect(() => {
     if (isLoggedIn && !navigatingFromSubmitRef.current) {
-      router.replace("/");
+      const dest =
+        user?.role === "client"
+          ? "/client"
+          : user?.role === "supplier"
+            ? "/supplier"
+            : "/";
+      router.replace(dest);
     }
-  }, [isLoggedIn, router]);
+  }, [isLoggedIn, user, router]);
 
   // Handle OAuth errors from callback
   useEffect(() => {
@@ -175,31 +183,31 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Login and get user data from response
       const userData = await login(email, password);
 
-      // Get user name from login response
       const userName = userData.name || userData.email.split("@")[0] || "User";
 
-      // Mark that we're navigating from submit so the isLoggedIn effect doesn't trigger a second RSC fetch
       navigatingFromSubmitRef.current = true;
-
-      // Keep Sign In button in loading state (Loader2 inside button) until homepage displays
       setIsNavigatingToHome(true);
 
-      // Show success toast with user name and wave emoji
       toast({
         title: `Welcome back, ${userName}! 👋`,
         description: "You have successfully logged in. Enjoy your stay!",
       });
 
-      // Clear form
       setEmail("");
       setPassword("");
       setSelectedRole("");
 
-      // Navigate so RSC fetch has cookie attached
-      router.replace("/");
+      // Navigate directly to the correct page for the user's role.
+      // This avoids the slow chain: / → server checks role → redirect → /client or /supplier
+      const dest =
+        userData.role === "client"
+          ? "/client"
+          : userData.role === "supplier"
+            ? "/supplier"
+            : "/";
+      router.replace(dest);
     } catch (error: unknown) {
       const axiosErr = error as { response?: { data?: { error?: string }; status?: number } };
       const serverMessage = axiosErr?.response?.data?.error;
