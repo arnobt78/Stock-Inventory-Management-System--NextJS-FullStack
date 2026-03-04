@@ -8,7 +8,7 @@ import { getSessionFromRequest } from "@/utils/auth";
 import { logger } from "@/lib/logger";
 import { createInvoice, getInvoicesByUser, getInvoicesByClientId } from "@/prisma/invoice";
 import { createInvoiceSchema } from "@/lib/validations";
-import { getCache, setCache, invalidateCache, cacheKeys } from "@/lib/cache";
+import { getCache, setCache, cacheKeys } from "@/lib/cache";
 import { createAuditLog } from "@/prisma/audit-log";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
 import type { CreateInvoiceInput, InvoiceFilters } from "@/types";
@@ -168,13 +168,8 @@ export async function POST(request: NextRequest) {
       details: { invoiceNumber: invoice.invoiceNumber },
     }).catch(() => {});
 
-    // Invalidate invoices cache
-    await invalidateCache(cacheKeys.invoices.pattern).catch((error) => {
-      logger.warn("Failed to invalidate invoice cache:", error);
-    });
-    await invalidateCache(cacheKeys.dashboard.pattern).catch((error) => {
-      logger.warn("Failed to invalidate dashboard cache:", error);
-    });
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     // Transform invoice for response
     const transformedInvoice = {

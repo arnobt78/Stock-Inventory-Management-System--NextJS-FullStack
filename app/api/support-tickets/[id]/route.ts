@@ -15,7 +15,6 @@ import {
 } from "@/prisma/support-ticket";
 import { updateSupportTicketSchema } from "@/lib/validations";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { createSupportTicketRepliedNotification } from "@/lib/notifications/in-app";
 import { createAuditLog } from "@/prisma/audit-log";
 import { prisma } from "@/prisma/client";
@@ -164,8 +163,8 @@ export async function PUT(
     if (data.notes !== undefined) updatePayload.notes = data.notes;
 
     const updated = await updateSupportTicket(id, updatePayload);
-    await invalidateCache(cacheKeys.supportTickets.pattern);
-    await invalidateCache(cacheKeys.dashboard.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     createAuditLog({
       userId: session.id,
@@ -268,8 +267,8 @@ export async function DELETE(
     }
 
     await deleteSupportTicket(id);
-    await invalidateCache(cacheKeys.supportTickets.pattern);
-    await invalidateCache(cacheKeys.dashboard.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     createAuditLog({
       userId: session.id,

@@ -13,7 +13,7 @@ import {
   getWarehouseStockSummary,
 } from "@/prisma/stock-allocation";
 import { prisma } from "@/prisma/client";
-import { getCache, setCache, cacheKeys, invalidateCache } from "@/lib/cache";
+import { getCache, setCache, cacheKeys } from "@/lib/cache";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
 import { createStockAllocationSchema } from "@/lib/validations";
 import type { StockAllocation, WarehouseStockSummary } from "@/types";
@@ -192,8 +192,8 @@ export async function POST(request: NextRequest) {
 
     const allocation = await upsertStockAllocation(data, session.id);
 
-    // Invalidate cache
-    await invalidateCache(cacheKeys.stockAllocation.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     const result: StockAllocation = {
       id: allocation.id,

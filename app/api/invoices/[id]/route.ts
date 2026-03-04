@@ -15,7 +15,6 @@ import {
 } from "@/prisma/invoice";
 import { prisma } from "@/prisma/client";
 import { updateInvoiceSchema } from "@/lib/validations";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
 import { createAuditLog } from "@/prisma/audit-log";
 import type { UpdateInvoiceInput } from "@/types";
@@ -230,13 +229,8 @@ export async function PUT(
       details: { invoiceNumber: invoice.invoiceNumber },
     }).catch(() => {});
 
-    // Invalidate invoices cache
-    await invalidateCache(cacheKeys.invoices.pattern).catch((error) => {
-      logger.warn("Failed to invalidate invoice cache:", error);
-    });
-    await invalidateCache(cacheKeys.dashboard.pattern).catch((error) => {
-      logger.warn("Failed to invalidate dashboard cache:", error);
-    });
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     // Transform invoice for response
     const transformedInvoice = {
@@ -323,13 +317,8 @@ export async function DELETE(
       details: existingInvoice ? { invoiceNumber: existingInvoice.invoiceNumber } : undefined,
     }).catch(() => {});
 
-    // Invalidate invoices cache
-    await invalidateCache(cacheKeys.invoices.pattern).catch((error) => {
-      logger.warn("Failed to invalidate invoice cache:", error);
-    });
-    await invalidateCache(cacheKeys.dashboard.pattern).catch((error) => {
-      logger.warn("Failed to invalidate dashboard cache:", error);
-    });
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     logger.info("Invoice deleted successfully", { invoiceId, userId });
 

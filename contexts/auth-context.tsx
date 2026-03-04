@@ -3,7 +3,7 @@
 /**
  * Auth context: provides user, login state, and logout to the whole app.
  * On mount, restores session from localStorage (for fast UI) then validates via /api/auth/session.
- * Clearing auth also clears dashboard/portal query caches so the next user does not see stale data.
+ * On logout/login queryClient.clear() wipes ALL cached queries so the next user never sees stale data.
  */
 import React, {
   createContext,
@@ -16,7 +16,6 @@ import Cookies from "js-cookie";
 import { useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
 import { getSessionClient } from "@/utils/auth.client";
-import { queryKeys } from "@/lib/react-query";
 import type { User, AuthContextType } from "@/types";
 
 /** Context holding auth state and methods; consumed via useAuth(). */
@@ -37,20 +36,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [mounted, setMounted] = useState(false);
 
   /**
-   * Clear all authentication data from state and storage
+   * Clear all authentication data from state, storage, and query cache.
+   * queryClient.clear() wipes every cached query (products, orders, invoices,
+   * dashboard, portal, notifications, etc.) so the next user starts fresh.
    */
   const clearAuthData = useCallback(() => {
     setIsLoggedIn(false);
     setUser(null);
     Cookies.remove("session_id");
-    // Clear attributes from local storage
     localStorage.setItem("isAuth", "false");
     localStorage.setItem("isLoggedIn", "false");
     localStorage.setItem("token", "");
     localStorage.setItem("getSession", "");
-    // Remove dashboard and portal caches so next user doesn't see previous user's data
-    queryClient.removeQueries({ queryKey: queryKeys.dashboard.all });
-    queryClient.removeQueries({ queryKey: queryKeys.portal.all });
+    queryClient.clear();
   }, [queryClient]);
 
   useEffect(() => {
@@ -86,10 +84,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const checkSession = useCallback(async () => {
     try {
       setIsCheckingAuth(true);
-      // Note: session_id cookie is httpOnly, so Cookies.get() won't work
-      // We need to check session via API which will include the cookie automatically
       const session = await getSessionClient();
       if (session) {
+        // If the user identity changed (e.g. OAuth login after previous session),
+        // wipe cached queries so the new user sees only their own data.
+        const prevId = localStorage.getItem("prevUserId");
+        if (prevId && prevId !== session.id) {
+          queryClient.clear();
+        }
+        localStorage.setItem("prevUserId", session.id);
+
         setIsLoggedIn(true);
         setUser({
           id: session.id,
@@ -98,13 +102,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           image:
             session.image ||
             (session as { picture?: string }).picture ||
-            undefined, // Support both image and picture (backward compatibility)
+            undefined,
           role: (session as { role?: string }).role ?? "user",
         });
-        // Set necessary attributes in local storage
         localStorage.setItem("isAuth", "true");
         localStorage.setItem("isLoggedIn", "true");
-        // Store session ID from localStorage if available, otherwise use session.id as token
         const existingToken = localStorage.getItem("token") || session.id;
         localStorage.setItem("token", existingToken);
         localStorage.setItem("getSession", JSON.stringify(session));
@@ -114,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setIsCheckingAuth(false);
     }
-  }, []); // Empty dependency array - function is stable
+  }, [clearAuthData, queryClient]);
 
   /**
    * Force refresh session (useful after OAuth redirect)
@@ -189,17 +191,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email: result.userEmail,
         role: result.userRole ?? "user",
       };
+
+      // Wipe all cached queries from the previous session so the new user
+      // never sees stale orders, invoices, products, dashboard cards, etc.
+      queryClient.clear();
+
       setIsLoggedIn(true);
       setUser(userData);
       Cookies.set("session_id", result.sessionId);
 
-      // Set necessary attributes in local storage
       localStorage.setItem("isAuth", "true");
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("token", result.sessionId);
       localStorage.setItem("getSession", JSON.stringify(result));
 
-      // Return user data for immediate use (e.g., in toast notifications)
       return userData;
     } catch (error) {
       throw error;

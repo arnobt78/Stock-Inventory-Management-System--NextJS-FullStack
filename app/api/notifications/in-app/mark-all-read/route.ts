@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/utils/auth";
 import { logger } from "@/lib/logger";
 import { markAllNotificationsAsRead } from "@/prisma/notification";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
 
 /**
@@ -35,10 +34,8 @@ export async function PUT(request: NextRequest) {
     // Mark all notifications as read
     const count = await markAllNotificationsAsRead(userId);
 
-    // Invalidate notifications cache for this user
-    await invalidateCache(cacheKeys.notifications.pattern).catch((error) => {
-      logger.warn("Failed to invalidate notification cache:", error);
-    });
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     logger.info("Marked all notifications as read", { userId, count });
 

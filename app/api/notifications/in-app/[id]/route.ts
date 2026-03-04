@@ -11,7 +11,6 @@ import {
   updateNotification,
   deleteNotification,
 } from "@/prisma/notification";
-import { invalidateCache } from "@/lib/cache";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
 import type { UpdateNotificationInput } from "@/types";
 
@@ -136,10 +135,8 @@ export async function PUT(
       userId
     );
 
-    // Invalidate notifications cache for this user
-    await invalidateCache(`notifications:*:${userId}*`).catch((error) => {
-      logger.warn("Failed to invalidate notification cache:", error);
-    });
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     // Transform notification for response
     const transformedNotification = {
@@ -207,10 +204,8 @@ export async function DELETE(
 
     await deleteNotification(notificationId, userId);
 
-    // Invalidate notifications cache for this user
-    await invalidateCache(`notifications:*:${userId}*`).catch((error) => {
-      logger.warn("Failed to invalidate notification cache:", error);
-    });
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     logger.info("Notification deleted", { userId, notificationId });
 

@@ -16,7 +16,6 @@ import {
 } from "@/prisma/product-review";
 import { updateProductReviewSchema } from "@/lib/validations";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { createAuditLog } from "@/prisma/audit-log";
 import type { ProductReview, UpdateProductReviewInput } from "@/types";
 
@@ -176,8 +175,8 @@ export async function PUT(
     }
 
     const updated = await updateProductReview(id, updatePayload);
-    await invalidateCache(cacheKeys.productReviews.pattern);
-    await invalidateCache(cacheKeys.dashboard.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     const productForAudit = await prisma.product.findUnique({
       where: { id: updated.productId },
@@ -244,8 +243,8 @@ export async function DELETE(
     }
 
     await deleteProductReview(id);
-    await invalidateCache(cacheKeys.productReviews.pattern);
-    await invalidateCache(cacheKeys.dashboard.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     createAuditLog({
       userId: session.id,

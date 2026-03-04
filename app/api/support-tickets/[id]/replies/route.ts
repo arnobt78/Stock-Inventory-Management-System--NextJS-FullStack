@@ -14,7 +14,6 @@ import {
 } from "@/prisma/support-ticket";
 import { createSupportTicketReplySchema } from "@/lib/validations";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { createSupportTicketRepliedNotification } from "@/lib/notifications/in-app";
 import { prisma } from "@/prisma/client";
 import type { SupportTicketReply } from "@/types";
@@ -140,7 +139,8 @@ export async function POST(
       session.id,
       parsed.data.body,
     );
-    await invalidateCache(cacheKeys.supportTickets.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     const updaterDisplay =
       session.name?.trim() || session.email || "Someone";

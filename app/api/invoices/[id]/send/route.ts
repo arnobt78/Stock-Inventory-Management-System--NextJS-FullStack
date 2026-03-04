@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/utils/auth";
 import { logger } from "@/lib/logger";
 import { getInvoiceById, markInvoiceAsSent } from "@/prisma/invoice";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
 import { sendInvoiceEmail } from "@/lib/email/notifications";
 import { getOrderById } from "@/prisma/order";
@@ -194,13 +193,8 @@ export async function POST(
       });
     }
 
-    // Invalidate invoices cache
-    await invalidateCache(cacheKeys.invoices.pattern).catch((error) => {
-      logger.warn("Failed to invalidate invoice cache:", error);
-    });
-    await invalidateCache(cacheKeys.dashboard.pattern).catch((error) => {
-      logger.warn("Failed to invalidate dashboard cache:", error);
-    });
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     logger.info("Invoice email sent successfully", {
       invoiceId,

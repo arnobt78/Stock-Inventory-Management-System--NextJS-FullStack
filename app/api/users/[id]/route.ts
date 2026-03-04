@@ -15,7 +15,6 @@ import {
 } from "@/prisma/user-admin";
 import { updateUserAdminSchema } from "@/lib/validations";
 import { withRateLimit, defaultRateLimits } from "@/lib/api/rate-limit";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { createAuditLog } from "@/prisma/audit-log";
 import { prisma } from "@/prisma/client";
 import type {
@@ -225,8 +224,8 @@ export async function PUT(
       entityId: id,
     }).catch(() => {});
 
-    await invalidateCache(cacheKeys.userManagement.pattern);
-    await invalidateCache(cacheKeys.dashboard.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     return NextResponse.json(transform(updated));
   } catch (error) {
@@ -285,8 +284,8 @@ export async function DELETE(
       entityId: id,
     }).catch(() => {});
 
-    await invalidateCache(cacheKeys.userManagement.pattern);
-    await invalidateCache(cacheKeys.dashboard.pattern);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     return NextResponse.json(transform(deleted));
   } catch (error) {

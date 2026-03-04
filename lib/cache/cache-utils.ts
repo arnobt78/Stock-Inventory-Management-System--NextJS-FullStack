@@ -350,43 +350,45 @@ export const cacheKeys = {
 } as const;
 
 /**
- * Global invalidation: invalidate all caches affected by order changes.
- * Use when orders are created/updated/cancelled (affects product/category/supplier detail Recent Orders).
+ * Nuclear server-side cache invalidation: wipe ALL Redis caches so every
+ * stat card, badge, table, detail page, and portal dashboard shows fresh
+ * data on the next client-side refetch.
+ *
+ * Call from every mutation API route (create/update/delete) so the
+ * subsequent TanStack Query refetch (triggered by invalidateAllRelatedQueries
+ * on the client) always hits the database, not stale Redis.
  */
-export async function invalidateOnOrderChange(): Promise<void> {
+export async function invalidateAllServerCaches(): Promise<void> {
   await Promise.all([
-    invalidateCache(cacheKeys.orders.pattern),
     invalidateCache(cacheKeys.products.pattern),
     invalidateCache(cacheKeys.categories.pattern),
     invalidateCache(cacheKeys.suppliers.pattern),
+    invalidateCache(cacheKeys.orders.pattern),
     invalidateCache(cacheKeys.invoices.pattern),
     invalidateCache(cacheKeys.dashboard.pattern),
+    invalidateCache(cacheKeys.notifications.pattern),
+    invalidateCache(cacheKeys.supportTickets.pattern),
+    invalidateCache(cacheKeys.productReviews.pattern),
+    invalidateCache(cacheKeys.userManagement.pattern),
+    invalidateCache(cacheKeys.stockAllocation.pattern),
+    invalidateCache(cacheKeys.history.pattern),
     invalidateCache(cacheKeys.portal.pattern),
+    invalidateCache(cacheKeys.clientPortal.pattern),
+    invalidateCache(cacheKeys.supplierPortal.pattern),
   ]);
 }
 
-/**
- * Global invalidation: invalidate all caches affected by product changes.
- * Use when products are created/updated/deleted.
- */
+/** @deprecated Use invalidateAllServerCaches instead */
+export async function invalidateOnOrderChange(): Promise<void> {
+  await invalidateAllServerCaches();
+}
+
+/** @deprecated Use invalidateAllServerCaches instead */
 export async function invalidateOnProductChange(): Promise<void> {
-  await Promise.all([
-    invalidateCache(cacheKeys.products.pattern),
-    invalidateCache(cacheKeys.categories.pattern),
-    invalidateCache(cacheKeys.suppliers.pattern),
-    invalidateCache(cacheKeys.dashboard.pattern),
-    invalidateCache(cacheKeys.portal.pattern),
-  ]);
+  await invalidateAllServerCaches();
 }
 
-/**
- * Global invalidation: invalidate all caches affected by category/supplier changes.
- */
+/** @deprecated Use invalidateAllServerCaches instead */
 export async function invalidateOnCategoryOrSupplierChange(): Promise<void> {
-  await Promise.all([
-    invalidateCache(cacheKeys.products.pattern),
-    invalidateCache(cacheKeys.categories.pattern),
-    invalidateCache(cacheKeys.suppliers.pattern),
-    invalidateCache(cacheKeys.dashboard.pattern),
-  ]);
+  await invalidateAllServerCaches();
 }

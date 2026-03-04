@@ -275,6 +275,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
+
     const response: CheckoutSessionResponse = {
       sessionId: checkoutSession.id,
       url: checkoutSession.url!,

@@ -20,7 +20,6 @@ import {
   createImportHistory,
   updateImportHistory,
 } from "@/prisma/import-history";
-import { invalidateCache, cacheKeys } from "@/lib/cache";
 import { checkAndSendStockAlerts } from "@/lib/email/notifications";
 
 /**
@@ -320,11 +319,8 @@ export async function POST(request: NextRequest) {
         status: failCount === 0 ? "completed" : "completed",
       });
 
-      // Invalidate products cache
-      await invalidateCache(cacheKeys.products.pattern);
-      // Invalidate history cache so admin History list updates
-      await invalidateCache(cacheKeys.history.pattern);
-      await invalidateCache(cacheKeys.dashboard.pattern);
+      const { invalidateAllServerCaches } = await import("@/lib/cache");
+      await invalidateAllServerCaches().catch(() => {});
 
       // Check and send stock alerts for newly imported products
       // This is done asynchronously to not block the response
@@ -367,8 +363,8 @@ export async function POST(request: NextRequest) {
           },
         ],
       });
-      await invalidateCache(cacheKeys.history.pattern);
-      await invalidateCache(cacheKeys.dashboard.pattern);
+      const { invalidateAllServerCaches } = await import("@/lib/cache");
+      await invalidateAllServerCaches().catch(() => {});
 
       logger.error("Product import failed:", error);
       return NextResponse.json(

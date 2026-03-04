@@ -82,6 +82,9 @@ export async function POST(request: NextRequest) {
       details: { name: warehouse.name },
     }).catch(() => {});
 
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
+
     return NextResponse.json(warehouse, { status: 201 });
   } catch (error) {
     logger.error("Error creating warehouse:", error);
@@ -162,6 +165,9 @@ export async function PUT(request: NextRequest) {
       details: { name: warehouse.name },
     }).catch(() => {});
 
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
+
     return NextResponse.json(warehouse);
   } catch (error) {
     logger.error("Error updating warehouse:", error);
@@ -216,6 +222,9 @@ export async function DELETE(request: NextRequest) {
       entityId: id,
       details: { name: existing.name },
     }).catch(() => {});
+
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {
