@@ -186,28 +186,28 @@ export default function AdminSupplierPortalContent({
             <>
               <AnalyticsCard
                 title="Suppliers"
-                value={stats.counts.suppliers}
+                value={stats.counts?.suppliers}
                 icon={Truck}
                 description="Supplier entities"
                 variant="violet"
               />
               <AnalyticsCard
                 title="Products"
-                value={stats.counts.products}
+                value={stats.counts?.products}
                 icon={Package}
                 description="From all suppliers"
                 variant="sky"
               />
               <AnalyticsCard
                 title="Orders"
-                value={stats.counts.orders}
+                value={stats.counts?.orders}
                 icon={ShoppingCart}
                 description="Containing supplier products"
                 variant="emerald"
               />
               <AnalyticsCard
                 title="Inventory Value"
-                value={`$${stats.counts.totalValue.toLocaleString()}`}
+                value={`$${stats.counts?.totalValue.toLocaleString()}`}
                 icon={DollarSign}
                 description="Total product value"
                 variant="amber"

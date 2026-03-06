@@ -90,6 +90,9 @@ export async function PUT(request: NextRequest) {
       preferences
     );
 
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
+
     // Return preferences directly (matching API client expectations)
     return NextResponse.json(updatedPreferences);
   } catch (error) {

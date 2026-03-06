@@ -375,6 +375,9 @@ export async function invalidateAllServerCaches(): Promise<void> {
     invalidateCache(cacheKeys.portal.pattern),
     invalidateCache(cacheKeys.clientPortal.pattern),
     invalidateCache(cacheKeys.supplierPortal.pattern),
+    invalidateCache(cacheKeys.sessions.pattern),
+    invalidateCache("forecasting:*"),
+    invalidateCache("system-config:*"),
   ]);
 }
 

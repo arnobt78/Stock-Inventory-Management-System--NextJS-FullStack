@@ -30,8 +30,7 @@ export function getPersister() {
     return createSyncStoragePersister({
       storage: window.localStorage,
       key: "stock-inventory-query-cache",
-      // Throttle saves to avoid excessive writes
-      throttleTime: 1000, // Save at most once per second
+      throttleTime: 1000,
     });
   } catch (error) {
     // Graceful degradation: if localStorage is unavailable, return null

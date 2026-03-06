@@ -76,16 +76,16 @@ export default function AdminAnalyticsContent({
 
   const buildAiSummary = useCallback(() => {
     if (!stats) return "";
-    const c = stats.counts;
-    const r = stats.revenue;
-    const totalRev = r.fromOrders + r.fromInvoices;
+    const c = stats.counts ?? {};
+    const r = stats.revenue ?? {};
+    const totalRev = (r.fromOrders ?? 0) + (r.fromInvoices ?? 0);
     const parts = [
-      `Products: ${c.products}. Users: ${c.users}. Suppliers: ${c.suppliers}. Categories: ${c.categories}.`,
-      `Orders: ${c.orders}. Invoices: ${c.invoices}. Warehouses: ${c.warehouses}.`,
-      `Support tickets: ${c.tickets}. Product reviews: ${c.reviews}.`,
+      `Products: ${c.products ?? 0}. Users: ${c.users ?? 0}. Suppliers: ${c.suppliers ?? 0}. Categories: ${c.categories ?? 0}.`,
+      `Orders: ${c.orders ?? 0}. Invoices: ${c.invoices ?? 0}. Warehouses: ${c.warehouses ?? 0}.`,
+      `Support tickets: ${c.tickets ?? 0}. Product reviews: ${c.reviews ?? 0}.`,
       `Total revenue (orders + invoices): $${totalRev.toLocaleString()}.`,
     ];
-    const last = stats.trends[stats.trends.length - 1];
+    const last = stats.trends?.[stats.trends.length - 1];
     if (last) {
       parts.push(
         `Last month trend: ${last.orders} orders, $${last.revenue.toLocaleString()} revenue, ${last.products} new products, ${last.invoices} invoices.`,
@@ -177,7 +177,7 @@ export default function AdminAnalyticsContent({
             <>
               <StatisticsCard
                 title="Total Products"
-                value={stats.counts.products}
+                value={stats.counts?.products}
                 description="Products availability"
                 icon={Package}
                 variant="rose"
@@ -264,7 +264,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Total Orders"
-                value={stats.counts.orders}
+                value={stats.counts?.orders}
                 description="Total orders placed (self + client)"
                 icon={ShoppingCart}
                 variant="blue"
@@ -299,7 +299,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Total Users"
-                value={stats.counts.users}
+                value={stats.counts?.users}
                 description="Registered users"
                 icon={Users}
                 variant="amber"
@@ -320,7 +320,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Total Suppliers"
-                value={stats.counts.suppliers}
+                value={stats.counts?.suppliers}
                 description="Suppliers"
                 icon={Truck}
                 variant="emerald"
@@ -337,7 +337,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Total Warehouses"
-                value={stats.counts.warehouses}
+                value={stats.counts?.warehouses}
                 description="Storage locations"
                 icon={Warehouse}
                 variant="teal"
@@ -354,7 +354,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Invoices"
-                value={stats.counts.invoices}
+                value={stats.counts?.invoices}
                 description="Total invoices (store-wide)"
                 icon={FileText}
                 variant="sky"
@@ -389,7 +389,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Categories"
-                value={stats.counts.categories}
+                value={stats.counts?.categories}
                 description="Product categories"
                 icon={FolderTree}
                 variant="amber"
@@ -406,7 +406,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Support Tickets"
-                value={stats.counts.tickets}
+                value={stats.counts?.tickets}
                 description="Tickets"
                 icon={MessageSquare}
                 variant="rose"
@@ -431,7 +431,7 @@ export default function AdminAnalyticsContent({
               />
               <StatisticsCard
                 title="Reviews"
-                value={stats.counts.reviews}
+                value={stats.counts?.reviews}
                 description="Product reviews"
                 icon={Star}
                 variant="orange"
@@ -478,7 +478,7 @@ export default function AdminAnalyticsContent({
         </div>
 
         {/* Trending charts */}
-        {stats && stats.trends.length > 0 && (
+        {stats && stats.trends?.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard
               variant="sky"
@@ -610,24 +610,24 @@ export default function AdminAnalyticsContent({
                 icon={DollarSign}
                 variant="emerald"
                 badges={[
-                  { label: "Orders", value: stats.counts.orders },
+                  { label: "Orders", value: stats.counts?.orders },
                   {
                     label: "Excl. cancelled",
                     value:
-                      stats.counts.orders -
+                      stats.counts?.orders -
                       (stats.orderAnalytics.statusDistribution.cancelled ?? 0),
                   },
                   {
                     label: "Avg (excl.)",
                     value:
-                      stats.counts.orders -
+                      stats.counts?.orders -
                         (stats.orderAnalytics.statusDistribution.cancelled ??
                           0) >
                       0
                         ? formatCurrency(
                             (stats.orderAnalytics
                               .totalRevenueExcludingCancelled ?? 0) /
-                              (stats.counts.orders -
+                              (stats.counts?.orders -
                                 (stats.orderAnalytics.statusDistribution
                                   .cancelled ?? 0)),
                           )
@@ -878,11 +878,11 @@ export default function AdminAnalyticsContent({
                 icon={DollarSign}
                 variant="amber"
                 badges={[
-                  { label: "Invoices", value: stats.counts.invoices },
+                  { label: "Invoices", value: stats.counts?.invoices },
                   {
                     label: "Excl. cancelled",
                     value:
-                      stats.counts.invoices -
+                      stats.counts?.invoices -
                       (stats.invoiceAnalytics.statusDistribution.cancelled ??
                         0),
                   },

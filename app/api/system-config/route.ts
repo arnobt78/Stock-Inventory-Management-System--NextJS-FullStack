@@ -145,6 +145,8 @@ export async function PUT(request: NextRequest) {
 
     // Invalidate cache
     await invalidateCache(CACHE_KEY);
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     logger.info("System configurations updated", {
       userId: session.id,

@@ -181,28 +181,28 @@ export default function AdminClientPortalContent({
             <>
               <AnalyticsCard
                 title="Clients"
-                value={stats.counts.clients}
+                value={stats.counts?.clients ?? 0}
                 icon={Users}
                 description="Users with role client"
                 variant="violet"
               />
               <AnalyticsCard
                 title="Orders"
-                value={stats.counts.orders}
+                value={stats.counts?.orders ?? 0}
                 icon={ShoppingCart}
                 description="Client orders"
                 variant="sky"
               />
               <AnalyticsCard
                 title="Invoices"
-                value={stats.counts.invoices}
+                value={stats.counts?.invoices ?? 0}
                 icon={FileText}
                 description="Client invoices"
                 variant="emerald"
               />
               <AnalyticsCard
                 title="Revenue"
-                value={`$${(stats.revenue.orders + stats.revenue.invoices).toLocaleString()}`}
+                value={`$${((stats.revenue?.orders ?? 0) + (stats.revenue?.invoices ?? 0)).toLocaleString()}`}
                 icon={DollarSign}
                 description="Orders + Invoices"
                 variant="amber"
@@ -238,13 +238,13 @@ export default function AdminClientPortalContent({
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : stats.recentOrders.length === 0 ? (
+            ) : (stats.recentOrders?.length ?? 0) === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No client orders yet.
               </p>
             ) : (
               <ul className="divide-y divide-sky-200/40 dark:divide-white/10">
-                {stats.recentOrders.map((o) => (
+                {(stats.recentOrders ?? []).map((o) => (
                   <li
                     key={o.id}
                     className="py-3 flex items-center justify-between gap-2"

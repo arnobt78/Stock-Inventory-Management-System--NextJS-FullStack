@@ -326,21 +326,21 @@ export default function AdminMyActivityContent() {
                 badges={[
                   {
                     label: "Pending",
-                    value: stats.ordersByStatus.pending ?? 0,
+                    value: stats.ordersByStatus?.pending ?? 0,
                   },
                   {
                     label: "Shipped",
                     value:
-                      (stats.ordersByStatus.shipped ?? 0) +
-                      (stats.ordersByStatus.processing ?? 0),
+                      (stats.ordersByStatus?.shipped ?? 0) +
+                      (stats.ordersByStatus?.processing ?? 0),
                   },
                   {
                     label: "Delivered",
-                    value: stats.ordersByStatus.delivered ?? 0,
+                    value: stats.ordersByStatus?.delivered ?? 0,
                   },
                   {
                     label: "Cancelled",
-                    value: stats.ordersByStatus.cancelled ?? 0,
+                    value: stats.ordersByStatus?.cancelled ?? 0,
                   },
                 ]}
               />

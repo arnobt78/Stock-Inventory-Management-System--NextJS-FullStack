@@ -206,15 +206,15 @@ export default function ClientPortalPage() {
               icon={ShoppingCart}
               variant="sky"
               badges={[
-                { label: "Pending", value: dashboard.orderStatusCounts.pending },
+                { label: "Pending", value: dashboard.orderStatusCounts?.pending ?? 0 },
                 {
                   label: "In progress",
-                  value: dashboard.orderStatusCounts.inProgress ?? 0,
+                  value: dashboard.orderStatusCounts?.inProgress ?? 0,
                 },
-                { label: "Shipped", value: dashboard.orderStatusCounts.shipped },
+                { label: "Shipped", value: dashboard.orderStatusCounts?.shipped ?? 0 },
                 {
                   label: "Delivered",
-                  value: dashboard.orderStatusCounts.delivered,
+                  value: dashboard.orderStatusCounts?.delivered ?? 0,
                 },
                 {
                   label: "Refunded",

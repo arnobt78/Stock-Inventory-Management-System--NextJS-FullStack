@@ -6,6 +6,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getErrorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/react-query";
+import { invalidateAllRelatedQueries } from "@/lib/react-query/invalidate-all";
 import { useToast } from "@/hooks/use-toast";
 import type {
   EmailPreferences,
@@ -47,6 +48,7 @@ export function useUpdateEmailPreferences() {
       );
       // Invalidate so all user-related data refetches and UI stays in sync
       queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
+      invalidateAllRelatedQueries(queryClient);
 
       // Show success toast
       toast({

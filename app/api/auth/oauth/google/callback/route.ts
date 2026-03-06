@@ -148,6 +148,9 @@ export async function GET(request: NextRequest) {
         });
 
         logger.info(`New user created via Google OAuth: ${email}`);
+
+        const { invalidateAllServerCaches } = await import("@/lib/cache");
+        await invalidateAllServerCaches().catch(() => {});
       } else {
         // Update existing user with Google OAuth data if needed
         const updateData: {
@@ -228,6 +231,9 @@ export async function GET(request: NextRequest) {
       // Clear OAuth cookies
       response.cookies.delete("oauth_state");
       response.cookies.delete("oauth_callback");
+
+      const { invalidateAllServerCaches } = await import("@/lib/cache");
+      await invalidateAllServerCaches().catch(() => {});
 
       logger.info(`User authenticated via Google OAuth: ${email}`);
       return response;

@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getErrorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/react-query";
+import { invalidateAllRelatedQueries } from "@/lib/react-query/invalidate-all";
 import { useToast } from "@/hooks/use-toast";
 import type { SystemConfig, UpdateSystemConfigInput } from "@/types";
 
@@ -42,6 +43,7 @@ export function useUpdateSystemConfigs() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.systemConfig.all(),
       });
+      invalidateAllRelatedQueries(queryClient);
       toast({
         title: "Settings saved",
         description: "System configuration updated successfully.",

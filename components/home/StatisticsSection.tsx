@@ -63,7 +63,7 @@ export function StatisticsSection() {
         <>
           <StatisticsCard
             title="Total Products"
-            value={stats.counts.products}
+            value={stats.counts?.products ?? 0}
             description="Products availability"
             icon={Package}
             variant="rose"
@@ -132,7 +132,7 @@ export function StatisticsSection() {
           />
           <StatisticsCard
             title="Total Orders"
-            value={stats.counts.orders}
+            value={stats.counts?.orders}
             description="Total orders placed (self + client)"
             icon={ShoppingCart}
             variant="blue"
@@ -166,7 +166,7 @@ export function StatisticsSection() {
           />
           <StatisticsCard
             title="Invoices"
-            value={stats.counts.invoices}
+            value={stats.counts?.invoices}
             description="Total invoices (store-wide)"
             icon={FileText}
             variant="sky"
@@ -200,7 +200,7 @@ export function StatisticsSection() {
           />
           <StatisticsCard
             title="Total Warehouses"
-            value={stats.counts.warehouses}
+            value={stats.counts?.warehouses}
             description="Storage locations"
             icon={Warehouse}
             variant="teal"
@@ -211,7 +211,7 @@ export function StatisticsSection() {
           />
           <StatisticsCard
             title="Total Suppliers"
-            value={stats.counts.suppliers}
+            value={stats.counts?.suppliers}
             description="Suppliers"
             icon={Truck}
             variant="emerald"
@@ -222,7 +222,7 @@ export function StatisticsSection() {
           />
           <StatisticsCard
             title="Categories"
-            value={stats.counts.categories}
+            value={stats.counts?.categories}
             description="Product categories"
             icon={FolderTree}
             variant="amber"

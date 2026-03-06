@@ -42,12 +42,10 @@ export function QueryProvider({ children }: QueryProviderProps) {
         client={queryClient}
         persistOptions={{
           persister,
-          // Persist all queries by default
           maxAge: 1000 * 60 * 60 * 24, // 24 hours
-          // Don't persist queries that are considered stale
+          buster: "v2.0.1",
           dehydrateOptions: {
             shouldDehydrateQuery: (query) => {
-              // Only persist successful queries
               return query.state.status === "success";
             },
           },

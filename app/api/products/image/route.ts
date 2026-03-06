@@ -74,6 +74,9 @@ export async function POST(request: NextRequest) {
     // Upload to ImageKit
     const result = await uploadProductImageToImageKit(buffer, fileName);
 
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
+
     logger.info("Product image uploaded successfully", {
       userId: session.id,
       sku,
@@ -129,6 +132,9 @@ export async function DELETE(request: NextRequest) {
 
     // Delete from ImageKit
     await deleteProductImageFromImageKit(fileId);
+
+    const { invalidateAllServerCaches } = await import("@/lib/cache");
+    await invalidateAllServerCaches().catch(() => {});
 
     logger.info("Product image deleted successfully", {
       userId: session.id,

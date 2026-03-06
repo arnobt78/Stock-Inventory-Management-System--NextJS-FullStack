@@ -204,27 +204,27 @@ export default function SupplierPortalPage() {
               badges={[
                 {
                   label: "Pending",
-                  value: dashboard.orderStatusCounts.pending,
+                  value: dashboard.orderStatusCounts?.pending ?? 0,
                 },
                 {
                   label: "In progress",
-                  value: dashboard.orderStatusCounts.inProgress ?? 0,
+                  value: dashboard.orderStatusCounts?.inProgress ?? 0,
                 },
                 {
                   label: "Shipped",
-                  value: dashboard.orderStatusCounts.shipped,
+                  value: dashboard.orderStatusCounts?.shipped ?? 0,
                 },
                 {
                   label: "Delivered",
-                  value: dashboard.orderStatusCounts.delivered,
+                  value: dashboard.orderStatusCounts?.delivered ?? 0,
                 },
                 {
                   label: "Refunded",
-                  value: dashboard.orderStatusCounts.refunded ?? 0,
+                  value: dashboard.orderStatusCounts?.refunded ?? 0,
                 },
                 {
                   label: "Cancelled",
-                  value: dashboard.orderStatusCounts.cancelled,
+                  value: dashboard.orderStatusCounts?.cancelled ?? 0,
                 },
               ]}
             />
@@ -237,22 +237,22 @@ export default function SupplierPortalPage() {
               badges={[
                 {
                   label: "Cancelled",
-                  value: dashboard.orderStatusCounts.cancelled,
+                  value: dashboard.orderStatusCounts?.cancelled ?? 0,
                 },
                 {
                   label: "Completed",
-                  value: dashboard.orderStatusCounts.completed,
+                  value: dashboard.orderStatusCounts?.completed ?? 0,
                 },
                 {
                   label: "Refunded",
-                  value: dashboard.orderStatusCounts.refunded ?? 0,
+                  value: dashboard.orderStatusCounts?.refunded ?? 0,
                 },
                 { label: "Of Total", value: dashboard.totalOrders },
               ]}
             />
             <StatisticsCard
               title="Total Revenue"
-              value={`$${dashboard.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              value={`$${(dashboard.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               description="Revenue from your products (excl. cancelled)"
               icon={DollarSign}
               variant="violet"
@@ -294,7 +294,7 @@ export default function SupplierPortalPage() {
                           Math.max(
                             1,
                             dashboard.totalOrders -
-                              (dashboard.orderStatusCounts.cancelled ?? 0),
+                              (dashboard.orderStatusCounts?.cancelled ?? 0),
                           )
                         ).toLocaleString(undefined, {
                           minimumFractionDigits: 2,

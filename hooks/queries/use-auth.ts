@@ -72,6 +72,7 @@ export function useLogin() {
  * Mutation hook for user registration
  */
 export function useRegister() {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
@@ -80,6 +81,7 @@ export function useRegister() {
       return response.data;
     },
     onSuccess: (user) => {
+      invalidateAllRelatedQueries(queryClient);
       toast({
         title: "Success",
         description: "Account created successfully",

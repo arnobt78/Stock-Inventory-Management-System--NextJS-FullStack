@@ -180,6 +180,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (sentCount > 0) {
+      const { invalidateAllServerCaches } = await import("@/lib/cache");
+      await invalidateAllServerCaches().catch(() => {});
+    }
+
     return NextResponse.json({
       success: true,
       message: `Sent ${sentCount} payment reminders`,

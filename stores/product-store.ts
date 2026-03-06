@@ -37,8 +37,8 @@ interface ProductState {
   // Supplier actions
   loadSuppliers: () => Promise<void>;
   addSupplier: (supplier: Supplier) => void;
-  editSupplier: (oldName: string, newName: string) => void;
-  deleteSupplier: (name: string) => void;
+  editSupplier: (supplierId: string, newSupplierName: string) => void;
+  deleteSupplier: (supplierId: string) => void;
 }
 
 /**
@@ -174,7 +174,7 @@ export const useProductStore = create<ProductState>((set) => ({
   loadCategories: async () => {
     try {
       const response = await axiosInstance.get("/categories");
-      set({ categories: response.data });
+      set({ categories: response.data ?? [] });
     } catch (error) {
       // Error handled silently
     }
@@ -214,7 +214,7 @@ export const useProductStore = create<ProductState>((set) => ({
   loadSuppliers: async () => {
     try {
       const response = await axiosInstance.get("/suppliers");
-      set({ suppliers: response.data });
+      set({ suppliers: response.data ?? [] });
     } catch (error) {
       // Error handled silently
     }

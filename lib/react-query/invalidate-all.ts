@@ -37,4 +37,5 @@ export function invalidateAllRelatedQueries(queryClient: QueryClient): void {
   queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.systemConfig.all() });
   queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
 }
