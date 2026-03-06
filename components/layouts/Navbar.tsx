@@ -112,7 +112,7 @@ interface NavbarProps {
  * Also provides the layout structure with background and scrolling
  */
 export default function Navbar({ children }: NavbarProps) {
-  const { logout, user, isCheckingAuth } = useAuth();
+  const { user, isCheckingAuth } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -144,9 +144,11 @@ export default function Navbar({ children }: NavbarProps) {
       localStorage.removeItem("prevUserId");
       localStorage.removeItem("stock-inventory-query-cache");
 
-      // Navigate to /login instantly — full page load discards all React
-      // state. The server-side logout API fires in the background.
-      logout().catch(() => {});
+      // Fire server-side session cleanup directly via fetch (NOT through
+      // logout() which calls clearAuthData() → setIsLoggedIn(false) →
+      // React re-renders the current page with empty data before the
+      // browser finishes navigating, causing "Failed to load" flash).
+      fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
       window.location.href = "/login";
       return;
     } catch (error) {
