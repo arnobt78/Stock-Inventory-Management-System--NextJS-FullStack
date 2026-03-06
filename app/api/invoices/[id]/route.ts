@@ -218,8 +218,20 @@ export async function PUT(
       id,
     };
 
+    // Admin can update any invoice (including client invoices); other roles
+    // can only update their own invoices or invoices linked to their products.
+    const isAdmin = session.role === "admin";
+    let ownerUserId = userId;
+    if (isAdmin) {
+      const existing = await prisma.invoice.findUnique({ where: { id } });
+      if (!existing) {
+        return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      }
+      ownerUserId = existing.userId;
+    }
+
     // Update invoice
-    const invoice = await updateInvoice(id, updateData, userId);
+    const invoice = await updateInvoice(id, updateData, ownerUserId);
 
     createAuditLog({
       userId,
@@ -305,9 +317,17 @@ export async function DELETE(
     }
 
     const userId = session.id;
+    const isAdmin = session.role === "admin";
 
-    const existingInvoice = await getInvoiceById(invoiceId, userId);
-    await deleteInvoice(invoiceId, userId);
+    // Admin can delete any invoice; other roles only their own.
+    let ownerUserId = userId;
+    if (isAdmin) {
+      const existing = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+      if (existing) ownerUserId = existing.userId;
+    }
+
+    const existingInvoice = await getInvoiceById(invoiceId, ownerUserId);
+    await deleteInvoice(invoiceId, ownerUserId);
 
     createAuditLog({
       userId,

@@ -40,16 +40,27 @@ export async function POST(
     }
 
     const userId = session.id;
+    const isAdmin = session.role === "admin";
+
+    // Admin can send any invoice; other roles only their own.
+    let ownerUserId = userId;
+    if (isAdmin) {
+      const existing = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+      if (existing) ownerUserId = existing.userId;
+    }
 
     // Get invoice
-    const invoice = await getInvoiceById(invoiceId, userId);
+    const invoice = await getInvoiceById(invoiceId, ownerUserId);
 
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     // Get order to get order items for email
-    const order = await getOrderById(invoice.orderId, userId);
+    const order = await prisma.order.findUnique({
+      where: { id: invoice.orderId },
+      include: { items: true },
+    });
 
     if (!order) {
       return NextResponse.json(
@@ -178,7 +189,7 @@ export async function POST(
     );
 
     // Mark invoice as sent
-    const updatedInvoice = await markInvoiceAsSent(invoiceId, userId);
+    const updatedInvoice = await markInvoiceAsSent(invoiceId, ownerUserId);
 
     // Notify order owner in-app (non-blocking)
     if (order.userId) {

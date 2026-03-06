@@ -224,8 +224,19 @@ export async function PUT(
 
     const updateData = validationResult.data;
 
-    // Get existing order to track status changes
-    const existingOrder = await getOrderById(id, userId);
+    // Get existing order to track status changes.
+    // Admin can update any order (including client orders); other roles
+    // can only update their own orders or orders linked to their products.
+    const isAdmin = session.role === "admin";
+    let existingOrder: Awaited<ReturnType<typeof getOrderById>> | null;
+    if (isAdmin) {
+      existingOrder = await getOrderByIdForAdmin(id);
+    } else {
+      existingOrder = await getOrderById(id, userId);
+      if (!existingOrder) {
+        existingOrder = await getOrderByIdForProductOwner(id, userId);
+      }
+    }
     if (!existingOrder) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
@@ -261,8 +272,9 @@ export async function PUT(
       updatePayload.cancelledAt = new Date(updateData.cancelledAt);
     if (updateData.notes !== undefined) updatePayload.notes = updateData.notes;
 
-    // Update order
-    const order = await updateOrder(id, updatePayload, userId);
+    // Update order — for admin, use the order's own userId so the
+    // Prisma updateOrder filter matches.
+    const order = await updateOrder(id, updatePayload, isAdmin ? existingOrder.userId : userId);
 
     const auditDetails: Record<string, unknown> = {};
     if (existingOrder.orderNumber) auditDetails.orderNumber = existingOrder.orderNumber;
@@ -521,14 +533,25 @@ export async function DELETE(
     const { id } = await params;
     const userId = session.id;
 
-    // Get existing order before cancellation for notification
-    const existingOrder = await getOrderById(id, userId);
+    // Get existing order before cancellation for notification.
+    // Admin can cancel any order; other roles only their own.
+    const isAdmin = session.role === "admin";
+    let existingOrder: Awaited<ReturnType<typeof getOrderById>> | null;
+    if (isAdmin) {
+      existingOrder = await getOrderByIdForAdmin(id);
+    } else {
+      existingOrder = await getOrderById(id, userId);
+      if (!existingOrder) {
+        existingOrder = await getOrderByIdForProductOwner(id, userId);
+      }
+    }
     if (!existingOrder) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Cancel order
-    const order = await cancelOrder(id, userId);
+    // Cancel order — for admin, use the order's own userId so the
+    // Prisma cancelOrder filter matches.
+    const order = await cancelOrder(id, isAdmin ? existingOrder.userId : userId);
 
     createAuditLog({
       userId,
