@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateInvoice, useUpdateInvoice, useOrders } from "@/hooks/queries";
+import { useCreateInvoice, useUpdateInvoice, useOrders, useClientOrders } from "@/hooks/queries";
 import { createInvoiceSchema, updateInvoiceSchema, type UpdateInvoiceFormData } from "@/lib/validations";
 import type { CreateInvoiceInput, Invoice, Order, InvoiceStatus } from "@/types";
 import { useAuth } from "@/contexts";
@@ -131,11 +131,22 @@ export default function InvoiceDialog({
       ? onEditInvoice
       : setInternalEditingInvoice;
 
-  // Fetch orders for selection
-  const { data: orders = [] } = useOrders();
+  // Fetch orders for selection (self + client orders for admin)
+  const { data: selfOrders = [] } = useOrders();
+  const isAdmin = user?.role === "admin";
+  const { data: clientOrders = [] } = useClientOrders();
 
-  // Filter to show orders that don't already have invoices
-  // Note: This is a simple filter - in production, you might want to check invoice existence via API
+  // Merge self + client orders for admin, deduplicating by id; tag source for display
+  const orders = React.useMemo(() => {
+    if (!isAdmin) return selfOrders;
+    const byId = new Map<string, Order & { _source?: string }>();
+    selfOrders.forEach((o) => byId.set(o.id, { ...o, _source: "self" }));
+    clientOrders.forEach((o) => {
+      if (!byId.has(o.id)) byId.set(o.id, { ...o, _source: "client" });
+    });
+    return Array.from(byId.values());
+  }, [isAdmin, selfOrders, clientOrders]);
+
   const availableOrders = orders.filter((order) => order.status !== "cancelled");
 
   // Use TanStack Query mutations
@@ -706,11 +717,15 @@ export default function InvoiceDialog({
                   <SelectValue placeholder="Select an order..." />
                 </SelectTrigger>
                 <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
-                  {availableOrders.map((order) => (
-                    <SelectItem key={order.id} value={order.id}>
-                      {order.orderNumber} - ${order.total.toFixed(2)} ({order.status})
-                    </SelectItem>
-                  ))}
+                  {availableOrders.map((order) => {
+                    const src = (order as Order & { _source?: string })._source;
+                    const tag = isAdmin && src ? (src === "client" ? " [Client]" : " [Self]") : "";
+                    return (
+                      <SelectItem key={order.id} value={order.id}>
+                        {order.orderNumber} - ${order.total.toFixed(2)} ({order.status}){tag}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               {selectedOrder && (
