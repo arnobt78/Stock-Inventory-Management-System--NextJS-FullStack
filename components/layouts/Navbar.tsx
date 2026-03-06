@@ -20,6 +20,7 @@ import {
   Activity,
 } from "lucide-react";
 import { AiFillProduct } from "react-icons/ai";
+import Cookies from "js-cookie";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -132,11 +133,19 @@ export default function Navbar({ children }: NavbarProps) {
         description: "You have been logged out successfully. See you soon!",
       });
 
-      // Navigate to login FIRST to avoid the flash of error UI on the
-      // current page (e.g. "Failed to load client dashboard") that occurs
-      // when clearAuthData() wipes the query cache mid-render.
-      // The logout API call fires in the background; the full page
-      // navigation to /login will discard all React state regardless.
+      // Clear auth artifacts directly (cookie + localStorage) WITHOUT
+      // touching React state, so the current page never re-renders with
+      // empty data (avoids flash of "Failed to load client dashboard").
+      Cookies.remove("session_id");
+      localStorage.removeItem("isAuth");
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("token");
+      localStorage.removeItem("getSession");
+      localStorage.removeItem("prevUserId");
+      localStorage.removeItem("stock-inventory-query-cache");
+
+      // Navigate to /login instantly — full page load discards all React
+      // state. The server-side logout API fires in the background.
       logout().catch(() => {});
       window.location.href = "/login";
       return;
