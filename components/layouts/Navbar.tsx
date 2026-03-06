@@ -126,15 +126,18 @@ export default function Navbar({ children }: NavbarProps) {
       // Get user name before logout (will be cleared after)
       const userName = user?.name || user?.email?.split("@")[0] || "User";
 
-      await logout();
-
-      // Show success toast with user name and goodbye message
+      // Show success toast immediately so the user sees feedback
       toast({
         title: `Goodbye, ${userName}! 👋`,
         description: "You have been logged out successfully. See you soon!",
       });
 
-      // Full page navigation so server sees cleared cookie and we avoid redirect loop
+      // Navigate to login FIRST to avoid the flash of error UI on the
+      // current page (e.g. "Failed to load client dashboard") that occurs
+      // when clearAuthData() wipes the query cache mid-render.
+      // The logout API call fires in the background; the full page
+      // navigation to /login will discard all React state regardless.
+      logout().catch(() => {});
       window.location.href = "/login";
       return;
     } catch (error) {
