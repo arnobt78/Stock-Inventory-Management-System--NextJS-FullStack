@@ -45,40 +45,8 @@ interface InvoiceDialogProps {
   onEditInvoice?: (invoice: Invoice | null) => void;
 }
 
-/** Tax options for invoice (default: Free) */
-const taxOptions = [
-  { value: 0, label: "Free" },
-  { value: 3, label: "3" },
-  { value: 5, label: "5" },
-  { value: 10, label: "10" },
-] as const;
-
-/** Shipping options for invoice (default: Free), same as order for transparency */
-const shippingOptions = [
-  { value: 0, label: "Free" },
-  { value: 3, label: "3" },
-  { value: 5, label: "5" },
-  { value: 8, label: "8" },
-] as const;
-
-/** Discount options for invoice (default: None) */
-const discountOptions = [
-  { value: 0, label: "None" },
-  { value: 10, label: "10" },
-  { value: 20, label: "20" },
-  { value: 30, label: "30" },
-  { value: 50, label: "50" },
-] as const;
-
-function normalizeTax(v: number | null | undefined): number {
-  return taxOptions.some((o) => o.value === v) ? (v as number) : 0;
-}
-function normalizeShipping(v: number | null | undefined): number {
-  return shippingOptions.some((o) => o.value === v) ? (v as number) : 0;
-}
-function normalizeDiscount(v: number | null | undefined): number {
-  return discountOptions.some((o) => o.value === v) ? (v as number) : 0;
-}
+const fmt = (v: number) =>
+  `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /**
  * Invoice Dialog Component
@@ -98,12 +66,9 @@ export default function InvoiceDialog({
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Form state
+  // Form state (tax/shipping/discount come from the selected order — not editable)
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
-  const [tax, setTax] = useState<number>(0);
-  const [shipping, setShipping] = useState<number>(0);
-  const [discount, setDiscount] = useState<number>(0);
   const [notes, setNotes] = useState<string>("");
 
   // Use controlled or internal state
@@ -209,9 +174,9 @@ export default function InvoiceDialog({
   // Reset edit form when invoice changes or dialog opens
   useEffect(() => {
     if (open && editingInvoice) {
-      const taxVal = normalizeTax(editingInvoice.tax ?? 0);
-      const shippingVal = normalizeShipping(editingInvoice.shipping ?? 0);
-      const discountVal = normalizeDiscount(editingInvoice.discount ?? 0);
+      const taxVal = editingInvoice.tax ?? 0;
+      const shippingVal = editingInvoice.shipping ?? 0;
+      const discountVal = editingInvoice.discount ?? 0;
       const subtotalVal = editingInvoice.subtotal ?? 0;
       const totalVal = Math.max(0, subtotalVal + taxVal + shippingVal - discountVal);
       editReset({
@@ -358,21 +323,11 @@ export default function InvoiceDialog({
     if (!open && !editingInvoice && !isControlled) {
       setSelectedOrderId("");
       setDueDate("");
-      setTax(0);
-      setShipping(0);
-      setDiscount(0);
       setNotes("");
     }
   }, [open, editingInvoice, isControlled]);
 
-  // Pre-fill tax, shipping, discount from selected order when generating invoice (match order's values)
   const selectedOrder = availableOrders.find((order) => order.id === selectedOrderId);
-  useEffect(() => {
-    if (!selectedOrderId || !selectedOrder) return;
-    setTax(normalizeTax(selectedOrder.tax ?? 0));
-    setShipping(normalizeShipping(selectedOrder.shipping ?? 0));
-    setDiscount(normalizeDiscount(selectedOrder.discount ?? 0));
-  }, [selectedOrderId, selectedOrder]);
 
   // Handle form submission
   const handleSubmit = useCallback(
@@ -397,13 +352,17 @@ export default function InvoiceDialog({
         return;
       }
 
-      // Prepare invoice data
+      // Use order's actual tax/shipping/discount (calculated at order time)
+      const orderTax = selectedOrder?.tax ?? 0;
+      const orderShipping = selectedOrder?.shipping ?? 0;
+      const orderDiscount = selectedOrder?.discount ?? 0;
+
       const invoiceData: CreateInvoiceInput = {
         orderId: selectedOrderId,
         dueDate: new Date(dueDate).toISOString(),
-        tax: tax > 0 ? tax : undefined,
-        shipping: shipping > 0 ? shipping : undefined,
-        discount: discount > 0 ? discount : undefined,
+        tax: orderTax > 0 ? orderTax : undefined,
+        shipping: orderShipping > 0 ? orderShipping : undefined,
+        discount: orderDiscount > 0 ? orderDiscount : undefined,
         notes: notes.trim() || undefined,
       };
 
@@ -427,9 +386,6 @@ export default function InvoiceDialog({
         // Reset form
         setSelectedOrderId("");
         setDueDate("");
-        setTax(0);
-        setShipping(0);
-        setDiscount(0);
         setNotes("");
 
         // Close dialog
@@ -438,16 +394,13 @@ export default function InvoiceDialog({
         // Error toast is handled by the mutation hook
       }
     },
-    [selectedOrderId, dueDate, tax, shipping, discount, notes, createInvoiceMutation, setOpen, toast]
+    [selectedOrderId, selectedOrder, dueDate, notes, createInvoiceMutation, setOpen, toast]
   );
 
   // Handle cancel
   const handleCancel = useCallback(() => {
     setSelectedOrderId("");
     setDueDate("");
-    setTax(0);
-    setShipping(0);
-    setDiscount(0);
     setNotes("");
     setOpen(false);
   }, [setOpen]);
@@ -514,107 +467,34 @@ export default function InvoiceDialog({
                   inputClassName="h-11 border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]"
                 />
 
-                {/* Tax */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-white/80">Tax</label>
-                  <Select
-                    value={String(editWatch("tax") ?? 0)}
-                    onValueChange={(v) =>
-                      editFormMethods.setValue("tax", Number(v), {
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-11 w-full border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-indigo-400 focus:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
-                      <SelectValue placeholder="Tax" />
-                    </SelectTrigger>
-                    <SelectContent
-                      className="border-indigo-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
-                      position="popper"
-                      sideOffset={5}
-                      align="start"
-                    >
-                      {taxOptions.map((o) => (
-                        <SelectItem
-                          key={o.value}
-                          value={String(o.value)}
-                          className="cursor-pointer text-gray-900 dark:text-white focus:bg-indigo-100 dark:focus:bg-white/10 focus:text-gray-900 dark:focus:text-white"
-                        >
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Shipping */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-white/80">
-                    Shipping
-                  </label>
-                  <Select
-                    value={String(editWatch("shipping") ?? 0)}
-                    onValueChange={(v) =>
-                      editFormMethods.setValue("shipping", Number(v), {
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-11 w-full border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-indigo-400 focus:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
-                      <SelectValue placeholder="Shipping" />
-                    </SelectTrigger>
-                    <SelectContent
-                      className="border-indigo-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
-                      position="popper"
-                      sideOffset={5}
-                      align="start"
-                    >
-                      {shippingOptions.map((o) => (
-                        <SelectItem
-                          key={o.value}
-                          value={String(o.value)}
-                          className="cursor-pointer text-gray-900 dark:text-white focus:bg-indigo-100 dark:focus:bg-white/10 focus:text-gray-900 dark:focus:text-white"
-                        >
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Discount */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-white/80">
-                    Discount
-                  </label>
-                  <Select
-                    value={String(editWatch("discount") ?? 0)}
-                    onValueChange={(v) =>
-                      editFormMethods.setValue("discount", Number(v), {
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-11 w-full border-indigo-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-indigo-400 focus:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
-                      <SelectValue placeholder="Discount" />
-                    </SelectTrigger>
-                    <SelectContent
-                      className="border-indigo-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
-                      position="popper"
-                      sideOffset={5}
-                      align="start"
-                    >
-                      {discountOptions.map((o) => (
-                        <SelectItem
-                          key={o.value}
-                          value={String(o.value)}
-                          className="cursor-pointer text-gray-900 dark:text-white focus:bg-indigo-100 dark:focus:bg-white/10 focus:text-gray-900 dark:focus:text-white"
-                        >
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Order Pricing Summary (read-only — values come from the order) */}
+                <div className="sm:col-span-2 p-4 border border-indigo-400/20 rounded-lg bg-white/5 space-y-2">
+                  <div className="flex justify-between text-sm text-white/70">
+                    <span>Subtotal:</span>
+                    <span>{fmt(editingInvoice.subtotal ?? 0)}</span>
+                  </div>
+                  {(editingInvoice.tax ?? 0) > 0 && (
+                    <div className="flex justify-between text-sm text-white/70">
+                      <span>Tax:</span>
+                      <span>{fmt(editingInvoice.tax ?? 0)}</span>
+                    </div>
+                  )}
+                  {(editingInvoice.shipping ?? 0) > 0 && (
+                    <div className="flex justify-between text-sm text-white/70">
+                      <span>Shipping:</span>
+                      <span>{fmt(editingInvoice.shipping ?? 0)}</span>
+                    </div>
+                  )}
+                  {(editingInvoice.discount ?? 0) > 0 && (
+                    <div className="flex justify-between text-sm text-white/70">
+                      <span>Discount:</span>
+                      <span className="text-red-400">-{fmt(editingInvoice.discount ?? 0)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-base font-semibold text-white pt-2 border-t border-indigo-400/20">
+                    <span>Total:</span>
+                    <span>{fmt(editingInvoice.total ?? 0)}</span>
+                  </div>
                 </div>
 
                 {/* Due Date */}
@@ -754,92 +634,38 @@ export default function InvoiceDialog({
               </div>
             </div>
 
-            {/* Tax */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-white/80">Tax</Label>
-              <Select value={String(tax)} onValueChange={(v) => setTax(Number(v))}>
-                <SelectTrigger className="w-full h-11 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
-                  <SelectValue placeholder="Tax" />
-                </SelectTrigger>
-                <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
-                  {taxOptions.map((o) => (
-                    <SelectItem key={o.value} value={String(o.value)}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Shipping */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-white/80">Shipping</Label>
-              <Select value={String(shipping)} onValueChange={(v) => setShipping(Number(v))}>
-                <SelectTrigger className="w-full h-11 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
-                  <SelectValue placeholder="Shipping" />
-                </SelectTrigger>
-                <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
-                  {shippingOptions.map((o) => (
-                    <SelectItem key={o.value} value={String(o.value)}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Discount */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-white/80">Discount</Label>
-              <Select value={String(discount)} onValueChange={(v) => setDiscount(Number(v))}>
-                <SelectTrigger className="w-full h-11 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/40 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/50 shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
-                  <SelectValue placeholder="Discount" />
-                </SelectTrigger>
-                <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
-                  {discountOptions.map((o) => (
-                    <SelectItem key={o.value} value={String(o.value)}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Subtotal / Total (dynamic when order selected; includes shipping for order ↔ invoice transparency) */}
+            {/* Order Pricing Summary (read-only — values calculated at order time) */}
             {selectedOrder && (
               <div className="p-4 border border-indigo-400/20 rounded-lg bg-white/5 space-y-2">
                 <div className="flex justify-between text-sm text-white/70">
                   <span>Subtotal:</span>
-                  <span>${(selectedOrder.subtotal ?? 0).toFixed(2)}</span>
+                  <span>{fmt(selectedOrder.subtotal ?? 0)}</span>
                 </div>
-                {tax > 0 && (
+                {(selectedOrder.tax ?? 0) > 0 && (
                   <div className="flex justify-between text-sm text-white/70">
-                    <span>Tax:</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>Tax (7%):</span>
+                    <span>{fmt(selectedOrder.tax ?? 0)}</span>
                   </div>
                 )}
-                {shipping > 0 && (
+                {(selectedOrder.shipping ?? 0) > 0 && (
                   <div className="flex justify-between text-sm text-white/70">
                     <span>Shipping:</span>
-                    <span>${shipping.toFixed(2)}</span>
+                    <span>{fmt(selectedOrder.shipping ?? 0)}</span>
                   </div>
                 )}
-                {discount > 0 && (
+                {(selectedOrder.discount ?? 0) > 0 && (
                   <div className="flex justify-between text-sm text-white/70">
                     <span>Discount:</span>
-                    <span className="text-red-400">-${discount.toFixed(2)}</span>
+                    <span className="text-red-400">-{fmt(selectedOrder.discount ?? 0)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-semibold text-white pt-2 border-t border-indigo-400/20">
-                  <span>Total:</span>
-                  <span>
-                    $
-                    {Math.max(
-                      0,
-                      (selectedOrder.subtotal ?? 0) + tax + shipping - discount
-                    ).toFixed(2)}
-                  </span>
+                  <span>Invoice Total:</span>
+                  <span>{fmt(selectedOrder.total ?? 0)}</span>
                 </div>
+                <p className="text-xs text-white/50 pt-1">
+                  Tax, shipping, and discount are calculated from the order and cannot be changed.
+                </p>
               </div>
             )}
 

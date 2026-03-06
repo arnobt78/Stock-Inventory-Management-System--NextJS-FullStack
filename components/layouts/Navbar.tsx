@@ -20,7 +20,7 @@ import {
   Activity,
 } from "lucide-react";
 import { AiFillProduct } from "react-icons/ai";
-import Cookies from "js-cookie";
+
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -133,10 +133,7 @@ export default function Navbar({ children }: NavbarProps) {
         description: "You have been logged out successfully. See you soon!",
       });
 
-      // Clear auth artifacts directly (cookie + localStorage) WITHOUT
-      // touching React state, so the current page never re-renders with
-      // empty data (avoids flash of "Failed to load client dashboard").
-      Cookies.remove("session_id");
+      // Clear localStorage keys synchronously (no React re-renders).
       localStorage.removeItem("isAuth");
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("token");
@@ -144,11 +141,14 @@ export default function Navbar({ children }: NavbarProps) {
       localStorage.removeItem("prevUserId");
       localStorage.removeItem("stock-inventory-query-cache");
 
-      // Fire server-side session cleanup directly via fetch (NOT through
-      // logout() which calls clearAuthData() → setIsLoggedIn(false) →
-      // React re-renders the current page with empty data before the
-      // browser finishes navigating, causing "Failed to load" flash).
-      fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
+      // Await the server-side logout so the httpOnly session_id cookie is
+      // cleared via Set-Cookie BEFORE the browser navigates to /login.
+      // (Cookies.remove can't clear httpOnly cookies; only a server
+      // response can.)  This is fast — no DB calls, just clears a cookie.
+      // We do NOT call logout() from auth context because that would
+      // setIsLoggedIn(false) → React re-renders the current page with
+      // empty data → "Failed to load" flash.
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
       window.location.href = "/login";
       return;
     } catch (error) {
