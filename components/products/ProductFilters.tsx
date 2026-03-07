@@ -420,6 +420,7 @@ function FilterArea({
             )}
           </div>
           <button
+            aria-label="Clear status filter"
             onClick={() => setSelectedStatuses([])}
             className="ml-1 hover:text-gray-700 dark:hover:text-white/80 transition-colors"
           >
@@ -452,6 +453,7 @@ function FilterArea({
             )}
           </div>
           <button
+            aria-label="Clear category filter"
             onClick={() => setSelectedCategories([])}
             className="ml-1 hover:text-gray-700 dark:hover:text-white/80 transition-colors"
           >
@@ -484,6 +486,7 @@ function FilterArea({
             )}
           </div>
           <button
+            aria-label="Clear supplier filter"
             onClick={() => setSelectedSuppliers([])}
             className="ml-1 hover:text-gray-700 dark:hover:text-white/80 transition-colors"
           >
