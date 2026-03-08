@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { usePathname } from "next/navigation";
 import { useCreateInvoice, useUpdateInvoice, useOrders, useClientOrders } from "@/hooks/queries";
 import { createInvoiceSchema, updateInvoiceSchema, type UpdateInvoiceFormData } from "@/lib/validations";
 import type { CreateInvoiceInput, Invoice, Order, InvoiceStatus } from "@/types";
@@ -96,21 +97,25 @@ export default function InvoiceDialog({
       ? onEditInvoice
       : setInternalEditingInvoice;
 
-  // Fetch orders for selection (self + client orders for admin)
+  const pathname = usePathname();
+  const isAdminInvoicesPage = pathname?.startsWith("/admin/invoices");
+
+  // Fetch orders for selection
   const { data: selfOrders = [] } = useOrders();
   const isAdmin = user?.role === "admin";
   const { data: clientOrders = [] } = useClientOrders();
 
-  // Merge self + client orders for admin, deduplicating by id; tag source for display
+  // /admin/invoices: show self + client orders with placer name
+  // /invoices: show only self orders (product owner's own)
   const orders = React.useMemo(() => {
-    if (!isAdmin) return selfOrders;
+    if (!isAdmin || !isAdminInvoicesPage) return selfOrders;
     const byId = new Map<string, Order & { _source?: string }>();
     selfOrders.forEach((o) => byId.set(o.id, { ...o, _source: "self" }));
     clientOrders.forEach((o) => {
       if (!byId.has(o.id)) byId.set(o.id, { ...o, _source: "client" });
     });
     return Array.from(byId.values());
-  }, [isAdmin, selfOrders, clientOrders]);
+  }, [isAdmin, isAdminInvoicesPage, selfOrders, clientOrders]);
 
   const availableOrders = orders.filter((order) => order.status !== "cancelled");
 
@@ -598,11 +603,11 @@ export default function InvoiceDialog({
                 </SelectTrigger>
                 <SelectContent className="bg-white/80 dark:bg-popover/50 backdrop-blur-sm">
                   {availableOrders.map((order) => {
-                    const src = (order as Order & { _source?: string })._source;
-                    const tag = isAdmin && src ? (src === "client" ? " [Client]" : " [Self]") : "";
+                    const placer = order.placedByName || order.placedByEmail || null;
+                    const showPlacer = isAdminInvoicesPage && isAdmin && placer;
                     return (
                       <SelectItem key={order.id} value={order.id}>
-                        {order.orderNumber} - ${order.total.toFixed(2)} ({order.status}){tag}
+                        {order.orderNumber} - {fmt(order.total)} ({order.status}){showPlacer ? ` — ${placer}` : ""}
                       </SelectItem>
                     );
                   })}
