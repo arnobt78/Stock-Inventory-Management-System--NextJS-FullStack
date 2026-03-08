@@ -88,10 +88,10 @@ export default function ProductReviewList({
   return (
     <div className="flex flex-col poppins">
       <div className="pb-6 flex flex-col items-start text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
           Store Product Reviews (your products)
         </h2>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Manage and moderate product reviews. Approve or reject, view by
           product, rating, and status. Add reviews for products.
         </p>
@@ -129,11 +129,7 @@ export default function ProductReviewList({
             />
             <StatisticsCard
               title="Avg. Rating"
-              value={
-                avgRating > 0
-                  ? `${avgRating} · ${avgRatingLabel}`
-                  : "—"
-              }
+              value={avgRating > 0 ? `${avgRating} · ${avgRatingLabel}` : "—"}
               description="Average among your product reviews"
               icon={Star}
               variant="amber"

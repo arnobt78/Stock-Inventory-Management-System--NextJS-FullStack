@@ -66,10 +66,10 @@ export default function UserManagementList({
   return (
     <div className="flex flex-col poppins">
       <div className="pb-6 flex flex-col items-start text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
           User Management
         </h2>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Manage users and roles. View and update name, role, and profile.
         </p>
       </div>

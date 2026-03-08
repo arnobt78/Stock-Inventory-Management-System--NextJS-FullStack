@@ -200,11 +200,14 @@ export default function LoginPage() {
             : "/";
       window.location.href = dest;
     } catch (error: unknown) {
-      const axiosErr = error as { response?: { data?: { error?: string }; status?: number } };
+      const axiosErr = error as {
+        response?: { data?: { error?: string }; status?: number };
+      };
       const serverMessage = axiosErr?.response?.data?.error;
       toast({
         title: "Login Failed",
-        description: serverMessage || "Invalid email or password. Please try again.",
+        description:
+          serverMessage || "Invalid email or password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -233,7 +236,7 @@ export default function LoginPage() {
             </div>
             <div className="relative z-10 max-w-2xl w-full space-y-6">
               {/* Main Welcome Card - Demo guide */}
-              <div className="rounded-[28px] border border-sky-400/30 dark:border-white/10 bg-gradient-to-br from-sky-500/25 via-sky-500/10 to-sky-500/5 dark:from-white/5 dark:via-white/5 dark:to-white/5 backdrop-blur-sm shadow-[0_30px_80px_rgba(2,132,199,0.35)] dark:shadow-lg p-6 sm:p-8">
+              <div className="rounded-[28px] border border-sky-400/30 dark:border-white/10 bg-gradient-to-br from-sky-500/25 via-sky-500/10 to-sky-500/5 dark:from-white/5 dark:via-white/5 dark:to-white/5 backdrop-blur-sm shadow-[0_30px_80px_rgba(2,132,199,0.35)] dark:shadow-lg p-4 sm:p-8">
                 <h1 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-white mb-3 tracking-tight text-center">
                   Demo Accounts Guide
                 </h1>
@@ -314,8 +317,8 @@ export default function LoginPage() {
           </div>
 
           {/* Right Side - Login Form */}
-          <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12">
-            <div className="w-full max-w-md rounded-[28px] border border-sky-400/30 dark:border-white/10 bg-gradient-to-br from-sky-500/25 via-sky-500/10 to-sky-500/5 dark:from-white/5 dark:via-white/5 dark:to-white/5 backdrop-blur-sm shadow-[0_30px_80px_rgba(2,132,199,0.35)] dark:shadow-lg p-6 sm:p-8 transition-all duration-300 hover:shadow-[0_40px_100px_rgba(2,132,199,0.5)] dark:hover:shadow-[0_40px_100px_rgba(2,132,199,0.4)] hover:border-sky-300/50 dark:hover:border-sky-300/30">
+          <div className="w-full lg:w-1/2 flex items-center justify-center p-0 sm:p-8 lg:p-12">
+            <div className="w-full max-w-md rounded-[28px] border border-sky-400/30 dark:border-white/10 bg-gradient-to-br from-sky-500/25 via-sky-500/10 to-sky-500/5 dark:from-white/5 dark:via-white/5 dark:to-white/5 backdrop-blur-sm shadow-[0_30px_80px_rgba(2,132,199,0.35)] dark:shadow-lg p-4 sm:p-8 transition-all duration-300 hover:shadow-[0_40px_100px_rgba(2,132,199,0.5)] dark:hover:shadow-[0_40px_100px_rgba(2,132,199,0.4)] hover:border-sky-300/50 dark:hover:border-sky-300/30">
               <div className="space-y-2 mb-6">
                 <h2 className="text-2xl sm:text-2xl font-semibold text-gray-900 dark:text-white text-center">
                   Welcome Back

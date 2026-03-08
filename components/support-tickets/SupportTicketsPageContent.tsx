@@ -102,7 +102,7 @@ export default function SupportTicketsPageContent({
         <div className="flex flex-col poppins">
           <div className="pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-3">
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-3">
                 <div
                   className={cn(
                     "p-2.5 rounded-xl border",
@@ -113,7 +113,7 @@ export default function SupportTicketsPageContent({
                 </div>
                 Your Support Tickets
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
                 Open and track tickets you&apos;ve sent. Create a ticket to get
                 help from a product owner.
               </p>

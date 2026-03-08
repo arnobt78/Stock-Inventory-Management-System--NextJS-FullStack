@@ -800,10 +800,10 @@ export default function BusinessInsightPage({
           {/* Header */}
           <div className="pb-6 flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex flex-col">
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
                 Product Inventory Business Insights
               </h1>
-              <p className="text-base text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Analyze your product inventory performance and get insights to
                 improve your business as product owner.
               </p>
@@ -954,330 +954,332 @@ export default function BusinessInsightPage({
                 </div>
               </>
             ) : (
-            <Tabs value={insightsTab} onValueChange={setInsightsTab}>
-              <TabsList className="grid w-full grid-cols-4 mb-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="distribution">Distribution</TabsTrigger>
-                <TabsTrigger value="trends">Trends</TabsTrigger>
-                <TabsTrigger value="alerts">Alerts</TabsTrigger>
-              </TabsList>
+              <Tabs value={insightsTab} onValueChange={setInsightsTab}>
+                <TabsList className="grid w-full grid-cols-4 mb-4">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="distribution">Distribution</TabsTrigger>
+                  <TabsTrigger value="trends">Trends</TabsTrigger>
+                  <TabsTrigger value="alerts">Alerts</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="overview">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {showSkeleton ? (
-                    // Show skeleton loading while data is fetching - matches ChartCard dimensions
-                    <>
-                      <CardSkeleton contentHeight="h-[300px]" />
-                      <CardSkeleton contentHeight="h-[300px]" />
-                    </>
-                  ) : (
-                    <>
-                      {/* Category Distribution */}
+                <TabsContent value="overview">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {showSkeleton ? (
+                      // Show skeleton loading while data is fetching - matches ChartCard dimensions
+                      <>
+                        <CardSkeleton contentHeight="h-[300px]" />
+                        <CardSkeleton contentHeight="h-[300px]" />
+                      </>
+                    ) : (
+                      <>
+                        {/* Category Distribution */}
+                        <ChartCard
+                          title="Category Distribution"
+                          icon={PieChartIcon}
+                          variant="violet"
+                        >
+                          <ResponsiveChartContainer>
+                            <PieChart>
+                              <Pie
+                                data={analyticsData.categoryDistribution}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ name, percent }) =>
+                                  `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                                }
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                              >
+                                {analyticsData.categoryDistribution.map(
+                                  (_entry, index) => (
+                                    <Cell
+                                      key={`cell-${index}`}
+                                      fill={COLORS[index % COLORS.length]}
+                                    />
+                                  ),
+                                )}
+                              </Pie>
+                              <Tooltip />
+                            </PieChart>
+                          </ResponsiveChartContainer>
+                        </ChartCard>
+
+                        {/* Monthly Trend - Full Year */}
+                        <ChartCard
+                          title="Product Growth Trend (Full Year)"
+                          icon={TrendingUp}
+                          variant="sky"
+                        >
+                          <ResponsiveChartContainer>
+                            <AreaChart data={analyticsData.monthlyTrend}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="month" />
+                              <YAxis />
+                              <Tooltip />
+                              <Area
+                                type="monotone"
+                                dataKey="products"
+                                stroke="#8884d8"
+                                fill="#8884d8"
+                              />
+                            </AreaChart>
+                          </ResponsiveChartContainer>
+                        </ChartCard>
+                      </>
+                    )}
+                  </div>
+                  {/* Sales / Order value trend — only when orders exist */}
+                  {!showSkeleton && allOrders.length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                       <ChartCard
-                        title="Category Distribution"
-                        icon={PieChartIcon}
-                        variant="violet"
+                        title="Sales / Order Value Trend"
+                        icon={DollarSign}
+                        variant="emerald"
                       >
                         <ResponsiveChartContainer>
-                          <PieChart>
-                            <Pie
-                              data={analyticsData.categoryDistribution}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              label={({ name, percent }) =>
-                                `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                              }
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {analyticsData.categoryDistribution.map(
-                                (_entry, index) => (
-                                  <Cell
-                                    key={`cell-${index}`}
-                                    fill={COLORS[index % COLORS.length]}
-                                  />
-                                ),
-                              )}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveChartContainer>
-                      </ChartCard>
-
-                      {/* Monthly Trend - Full Year */}
-                      <ChartCard
-                        title="Product Growth Trend (Full Year)"
-                        icon={TrendingUp}
-                        variant="sky"
-                      >
-                        <ResponsiveChartContainer>
-                          <AreaChart data={analyticsData.monthlyTrend}>
+                          <AreaChart data={orderTrendByMonth}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="month" />
                             <YAxis />
-                            <Tooltip />
+                            <Tooltip
+                              formatter={(value: number | undefined) => [
+                                value != null
+                                  ? `$${Number(value).toLocaleString()}`
+                                  : "$0",
+                                "Revenue",
+                              ]}
+                            />
                             <Area
                               type="monotone"
-                              dataKey="products"
-                              stroke="#8884d8"
-                              fill="#8884d8"
+                              dataKey="totalValue"
+                              stroke="#00C49F"
+                              fill="#00C49F"
                             />
                           </AreaChart>
                         </ResponsiveChartContainer>
                       </ChartCard>
-                    </>
+                      <ChartCard
+                        title="Order Count by Month"
+                        icon={ShoppingCart}
+                        variant="amber"
+                      >
+                        <ResponsiveChartContainer>
+                          <BarChart data={orderTrendByMonth}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="orderCount" fill="#8884D8" />
+                          </BarChart>
+                        </ResponsiveChartContainer>
+                      </ChartCard>
+                    </div>
                   )}
-                </div>
-                {/* Sales / Order value trend — only when orders exist */}
-                {!showSkeleton && allOrders.length > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                </TabsContent>
+
+                <TabsContent value="distribution">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Status Distribution */}
                     <ChartCard
-                      title="Sales / Order Value Trend"
-                      icon={DollarSign}
-                      variant="emerald"
+                      title="Status Distribution"
+                      icon={Activity}
+                      variant="blue"
                     >
                       <ResponsiveChartContainer>
-                        <AreaChart data={orderTrendByMonth}>
+                        <BarChart data={analyticsData.statusDistribution}>
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="value" fill="#8884d8" />
+                        </BarChart>
+                      </ResponsiveChartContainer>
+                    </ChartCard>
+
+                    {/* Price Range Distribution */}
+                    <ChartCard
+                      title="Price Range Distribution"
+                      icon={BarChart3}
+                      variant="teal"
+                    >
+                      <ResponsiveChartContainer>
+                        <BarChart data={analyticsData.priceRangeDistribution}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="value" fill="#00C49F" />
+                        </BarChart>
+                      </ResponsiveChartContainer>
+                    </ChartCard>
+
+                    {/* Category Performance (by value) */}
+                    <ChartCard
+                      title="Category by Value"
+                      icon={PieChartIcon}
+                      variant="amber"
+                    >
+                      <ResponsiveChartContainer>
+                        <BarChart
+                          data={analyticsData.categoryDistribution}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
                           <YAxis />
                           <Tooltip
                             formatter={(value: number | undefined) => [
                               value != null
                                 ? `$${Number(value).toLocaleString()}`
                                 : "$0",
-                              "Revenue",
+                              "Value",
                             ]}
                           />
-                          <Area
-                            type="monotone"
-                            dataKey="totalValue"
-                            stroke="#00C49F"
-                            fill="#00C49F"
-                          />
-                        </AreaChart>
+                          <Bar dataKey="totalValue" fill="#FFBB28" />
+                        </BarChart>
                       </ResponsiveChartContainer>
                     </ChartCard>
+
+                    {/* Supplier Performance (by value) */}
                     <ChartCard
-                      title="Order Count by Month"
-                      icon={ShoppingCart}
-                      variant="amber"
+                      title="Supplier Performance"
+                      icon={Users}
+                      variant="orange"
                     >
                       <ResponsiveChartContainer>
-                        <BarChart data={orderTrendByMonth}>
+                        <BarChart
+                          data={analyticsData.supplierDistribution}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
+                          <XAxis dataKey="name" />
                           <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="orderCount" fill="#8884D8" />
+                          <Tooltip
+                            formatter={(value: number | undefined) => [
+                              value != null
+                                ? `$${Number(value).toLocaleString()}`
+                                : "$0",
+                              "Value",
+                            ]}
+                          />
+                          <Bar dataKey="totalValue" fill="#FF8042" />
                         </BarChart>
                       </ResponsiveChartContainer>
                     </ChartCard>
                   </div>
-                )}
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="distribution">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Status Distribution */}
-                  <ChartCard
-                    title="Status Distribution"
-                    icon={Activity}
-                    variant="blue"
-                  >
-                    <ResponsiveChartContainer>
-                      <BarChart data={analyticsData.statusDistribution}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="value" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveChartContainer>
-                  </ChartCard>
+                <TabsContent value="trends">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Top Products by Value */}
+                    <ChartCard
+                      title="Top Products by Value"
+                      icon={TrendingUp}
+                      variant="emerald"
+                    >
+                      <ResponsiveChartContainer>
+                        <BarChart
+                          data={analyticsData.topProducts}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip
+                            formatter={(value) => [
+                              value
+                                ? `$${Number(value).toLocaleString()}`
+                                : "$0",
+                              "Value",
+                            ]}
+                            labelFormatter={(label) => `Product: ${label}`}
+                          />
+                          <Bar dataKey="value" fill="#FFBB28" />
+                        </BarChart>
+                      </ResponsiveChartContainer>
+                    </ChartCard>
 
-                  {/* Price Range Distribution */}
-                  <ChartCard
-                    title="Price Range Distribution"
-                    icon={BarChart3}
-                    variant="teal"
-                  >
-                    <ResponsiveChartContainer>
-                      <BarChart data={analyticsData.priceRangeDistribution}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="value" fill="#00C49F" />
-                      </BarChart>
-                    </ResponsiveChartContainer>
-                  </ChartCard>
+                    {/* Monthly Product Addition Trend */}
+                    <ChartCard
+                      title="Monthly Product Addition"
+                      icon={TrendingDown}
+                      variant="rose"
+                    >
+                      <ResponsiveChartContainer>
+                        <LineChart data={analyticsData.monthlyTrend}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Line
+                            type="monotone"
+                            dataKey="monthlyAdded"
+                            stroke="#FF8042"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveChartContainer>
+                    </ChartCard>
+                  </div>
+                </TabsContent>
 
-                  {/* Category Performance (by value) */}
+                <TabsContent value="alerts">
+                  {/* Low Stock Alerts */}
                   <ChartCard
-                    title="Category by Value"
-                    icon={PieChartIcon}
-                    variant="amber"
-                  >
-                    <ResponsiveChartContainer>
-                      <BarChart
-                        data={analyticsData.categoryDistribution}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip
-                          formatter={(value: number | undefined) => [
-                            value != null
-                              ? `$${Number(value).toLocaleString()}`
-                              : "$0",
-                            "Value",
-                          ]}
-                        />
-                        <Bar dataKey="totalValue" fill="#FFBB28" />
-                      </BarChart>
-                    </ResponsiveChartContainer>
-                  </ChartCard>
-
-                  {/* Supplier Performance (by value) */}
-                  <ChartCard
-                    title="Supplier Performance"
-                    icon={Users}
-                    variant="orange"
-                  >
-                    <ResponsiveChartContainer>
-                      <BarChart
-                        data={analyticsData.supplierDistribution}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip
-                          formatter={(value: number | undefined) => [
-                            value != null
-                              ? `$${Number(value).toLocaleString()}`
-                              : "$0",
-                            "Value",
-                          ]}
-                        />
-                        <Bar dataKey="totalValue" fill="#FF8042" />
-                      </BarChart>
-                    </ResponsiveChartContainer>
-                  </ChartCard>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="trends">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Top Products by Value */}
-                  <ChartCard
-                    title="Top Products by Value"
-                    icon={TrendingUp}
-                    variant="emerald"
-                  >
-                    <ResponsiveChartContainer>
-                      <BarChart
-                        data={analyticsData.topProducts}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip
-                          formatter={(value) => [
-                            value ? `$${Number(value).toLocaleString()}` : "$0",
-                            "Value",
-                          ]}
-                          labelFormatter={(label) => `Product: ${label}`}
-                        />
-                        <Bar dataKey="value" fill="#FFBB28" />
-                      </BarChart>
-                    </ResponsiveChartContainer>
-                  </ChartCard>
-
-                  {/* Monthly Product Addition Trend */}
-                  <ChartCard
-                    title="Monthly Product Addition"
-                    icon={TrendingDown}
+                    title="Low Stock Alerts"
+                    icon={AlertTriangle}
                     variant="rose"
                   >
-                    <ResponsiveChartContainer>
-                      <LineChart data={analyticsData.monthlyTrend}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Line
-                          type="monotone"
-                          dataKey="monthlyAdded"
-                          stroke="#FF8042"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveChartContainer>
-                  </ChartCard>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="alerts">
-                {/* Low Stock Alerts */}
-                <ChartCard
-                  title="Low Stock Alerts"
-                  icon={AlertTriangle}
-                  variant="rose"
-                >
-                  <div>
-                    {analyticsData.lowStockProducts.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
-                        {analyticsData.lowStockProducts.map(
-                          (product, index) => (
-                            <div
-                              key={index}
-                              className="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent p-4 backdrop-blur-sm"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
-                                    {product.name}
-                                  </h4>
-                                  <p className="text-xs text-gray-600 dark:text-white/60">
-                                    SKU: {product.sku}
-                                  </p>
+                    <div>
+                      {analyticsData.lowStockProducts.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                          {analyticsData.lowStockProducts.map(
+                            (product, index) => (
+                              <div
+                                key={index}
+                                className="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent p-4 backdrop-blur-sm"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
+                                      {product.name}
+                                    </h4>
+                                    <p className="text-xs text-gray-600 dark:text-white/60">
+                                      SKU: {product.sku}
+                                    </p>
+                                  </div>
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-xs"
+                                  >
+                                    {product.quantity} left
+                                  </Badge>
                                 </div>
-                                <Badge
-                                  variant="destructive"
-                                  className="text-xs"
-                                >
-                                  {product.quantity} left
-                                </Badge>
                               </div>
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <AlertTriangle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
-                        <p className="text-gray-600 dark:text-white/60">
-                          No low stock alerts at the moment!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </ChartCard>
-              </TabsContent>
-            </Tabs>
+                            ),
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <AlertTriangle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+                          <p className="text-gray-600 dark:text-white/60">
+                            No low stock alerts at the moment!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </ChartCard>
+                </TabsContent>
+              </Tabs>
             )}
           </div>
 
           {/* Additional Insights */}
           <div className="pb-6 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
             {/* Quick Insights Card */}
-            <article className="rounded-[20px] border border-sky-400/20 bg-gradient-to-br from-sky-500/15 via-sky-500/5 to-transparent p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(2,132,199,0.15)] dark:shadow-[0_15px_40px_rgba(2,132,199,0.1)] transition hover:border-sky-300/40">
+            <article className="rounded-[20px] border border-sky-400/20 bg-gradient-to-br from-sky-500/15 via-sky-500/5 to-transparent p-4 sm:p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(2,132,199,0.15)] dark:shadow-[0_15px_40px_rgba(2,132,199,0.1)] transition hover:border-sky-300/40">
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-100/50 dark:border-white/15 dark:bg-white/10">
                   <Eye className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -1315,7 +1317,7 @@ export default function BusinessInsightPage({
             </article>
 
             {/* Performance Card */}
-            <article className="rounded-[20px] border border-emerald-400/20 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(16,185,129,0.15)] dark:shadow-[0_15px_40px_rgba(16,185,129,0.1)] transition hover:border-emerald-300/40">
+            <article className="rounded-[20px] border border-emerald-400/20 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent p-4 sm:p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(16,185,129,0.15)] dark:shadow-[0_15px_40px_rgba(16,185,129,0.1)] transition hover:border-emerald-300/40">
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-300/30 bg-emerald-100/50 dark:border-white/15 dark:bg-white/10">
                   <Users className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -1361,7 +1363,7 @@ export default function BusinessInsightPage({
             </article>
 
             {/* QR Code Card */}
-            <article className="rounded-[20px] border border-violet-400/20 bg-gradient-to-br from-violet-500/15 via-violet-500/5 to-transparent p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(139,92,246,0.15)] dark:shadow-[0_15px_40px_rgba(139,92,246,0.1)] transition hover:border-violet-300/40">
+            <article className="rounded-[20px] border border-violet-400/20 bg-gradient-to-br from-violet-500/15 via-violet-500/5 to-transparent p-4 sm:p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(139,92,246,0.15)] dark:shadow-[0_15px_40px_rgba(139,92,246,0.1)] transition hover:border-violet-300/40">
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-300/30 bg-violet-100/50 dark:border-white/15 dark:bg-white/10">
                   <QrCode className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -1379,7 +1381,7 @@ export default function BusinessInsightPage({
             </article>
 
             {/* AI Insights Card */}
-            <article className="rounded-[20px] border border-amber-400/20 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(245,158,11,0.12)] dark:shadow-[0_15px_40px_rgba(245,158,11,0.08)] transition hover:border-amber-300/40">
+            <article className="rounded-[20px] border border-amber-400/20 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent p-4 sm:p-5 backdrop-blur-sm shadow-[0_15px_40px_rgba(245,158,11,0.12)] dark:shadow-[0_15px_40px_rgba(245,158,11,0.08)] transition hover:border-amber-300/40">
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-100/50 dark:border-white/15 dark:bg-white/10">
                   <Sparkles className="h-4 w-4 text-gray-900 dark:text-white" />

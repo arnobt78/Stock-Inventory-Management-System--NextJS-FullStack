@@ -177,8 +177,12 @@ export default function AdminDashboardOverview({
     <PageContentWrapper>
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-primary">{title}</h1>
-          <p className="text-base text-muted-foreground">{subtitle}</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+            {title}
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {subtitle}
+          </p>
         </div>
 
         {/* KPI cards — same style as codebook-ecommerce dashboard */}

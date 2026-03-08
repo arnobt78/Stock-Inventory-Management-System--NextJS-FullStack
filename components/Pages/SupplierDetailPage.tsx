@@ -292,7 +292,7 @@ export default function SupplierDetailPage({
 
             {/* Status Card Skeleton */}
             <GlassCard variant="emerald">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="h-4 w-20 bg-gray-200/50 dark:bg-white/10 rounded animate-pulse mb-3" />
                 <div className="h-8 w-24 bg-gray-200/50 dark:bg-white/10 rounded-xl animate-pulse" />
               </div>
@@ -301,7 +301,7 @@ export default function SupplierDetailPage({
             {/* Info and Statistics Skeleton */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GlassCard variant="orange">
-                <div className="p-5 space-y-4">
+                <div className="p-4 sm:p-5 space-y-4">
                   <div className="h-6 w-40 bg-gray-200/50 dark:bg-white/10 rounded-lg animate-pulse" />
                   {[1, 2, 3, 4].map((i) => (
                     <div
@@ -312,7 +312,7 @@ export default function SupplierDetailPage({
                 </div>
               </GlassCard>
               <GlassCard variant="teal">
-                <div className="p-5 space-y-4">
+                <div className="p-4 sm:p-5 space-y-4">
                   <div className="h-6 w-40 bg-gray-200/50 dark:bg-white/10 rounded-lg animate-pulse" />
                   {[1, 2, 3].map((i) => (
                     <div
@@ -368,7 +368,7 @@ export default function SupplierDetailPage({
 
           {/* Supplier Status Card */}
           <GlassCard variant="emerald">
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-3">
                 Status
               </p>
@@ -399,7 +399,7 @@ export default function SupplierDetailPage({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Supplier Information */}
             <GlassCard variant="orange">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-orange-300/30 bg-orange-100/50 dark:border-white/15 dark:bg-white/10">
                     <Truck className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -518,7 +518,7 @@ export default function SupplierDetailPage({
 
             {/* Statistics */}
             <GlassCard variant="teal">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-teal-300/30 bg-teal-100/50 dark:border-white/15 dark:bg-white/10">
                     <BarChart3 className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -585,7 +585,7 @@ export default function SupplierDetailPage({
           {/* Products from this Supplier */}
           {supplier.products && supplier.products.length > 0 && (
             <GlassCard variant="sky">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-100/50 dark:border-white/15 dark:bg-white/10">
                     <Package className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -644,7 +644,7 @@ export default function SupplierDetailPage({
           {/* Recent Orders */}
           {supplier.recentOrders && supplier.recentOrders.length > 0 && (
             <GlassCard variant="violet">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-300/30 bg-violet-100/50 dark:border-white/15 dark:bg-white/10">
                     <ShoppingCart className="h-4 w-4 text-gray-900 dark:text-white" />

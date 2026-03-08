@@ -154,11 +154,11 @@ export default function AdminAnalyticsContent({
     <PageContentWrapper>
       <div className="space-y-6">
         <div className="flex flex-col items-start text-left pb-2">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white pb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-1">
             Store Analytics &amp; Dashboard (self + client + supplier + other
             users)
           </h1>
-          <p className="text-base text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Overview, statistics, trends, and AI-powered insights across
             products, users, suppliers, categories, orders, invoices,
             warehouses, tickets, and reviews. Store-wide metrics.
@@ -596,7 +596,7 @@ export default function AdminAnalyticsContent({
         {/* Order Analytics section */}
         {stats && stats.orderAnalytics && (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <ShoppingCart className="h-5 w-5 text-sky-600" />
               Order Analytics
             </h2>

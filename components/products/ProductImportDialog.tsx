@@ -189,36 +189,41 @@ export function ProductImportDialog({
           Import Products
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent
+        className="p-4 sm:p-7 sm:px-8 poppins max-h-[90vh] overflow-y-auto border-amber-400/30 dark:border-amber-400/30 shadow-[0_30px_80px_rgba(245,158,11,0.45)] dark:shadow-[0_30px_80px_rgba(245,158,11,0.25)]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
-          <DialogTitle>Import Products</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-[22px] text-white">
+            Import Products
+          </DialogTitle>
+          <DialogDescription className="text-white/70">
             Upload a CSV or Excel file to import products. The file should
             include columns: Product Name, SKU, Price, Quantity, Status,
             Category, Supplier.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 mt-4">
           {/* File Input */}
           <div className="flex flex-col gap-2">
             <label
               htmlFor="file-upload"
-              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-violet-400/30 dark:border-violet-400/30 rounded-lg cursor-pointer bg-violet-500/10 dark:bg-violet-500/5 hover:bg-violet-500/20 dark:hover:bg-violet-500/10 transition-colors"
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-amber-400/30 dark:border-amber-400/30 rounded-xl cursor-pointer bg-white/10 dark:bg-white/5 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-white/10 transition-colors shadow-[0_10px_30px_rgba(245,158,11,0.15)]"
             >
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 {isImporting ? (
-                  <Loader2 className="w-8 h-8 mb-2 text-violet-500 animate-spin" />
+                  <Loader2 className="w-8 h-8 mb-2 text-amber-400 animate-spin" />
                 ) : (
-                  <Upload className="w-8 h-8 mb-2 text-violet-500" />
+                  <Upload className="w-8 h-8 mb-2 text-amber-400" />
                 )}
-                <p className="mb-2 text-sm text-gray-700 dark:text-gray-300">
+                <p className="mb-2 text-sm text-white/80">
                   <span className="font-semibold">
                     {isImporting ? "Importing..." : "Click to upload"}
                   </span>{" "}
                   or drag and drop
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-white/50">
                   CSV or Excel (MAX. 10MB)
                 </p>
               </div>
@@ -237,44 +242,44 @@ export function ProductImportDialog({
           {/* Import Result */}
           {importResult && (
             <div
-              className={`p-4 rounded-lg border ${
+              className={`p-4 rounded-xl border backdrop-blur-sm ${
                 importResult.success && importResult.failedRows === 0
-                  ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                  : "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
+                  ? "bg-emerald-500/10 border-emerald-400/30 shadow-[0_10px_30px_rgba(16,185,129,0.15)]"
+                  : "bg-amber-500/10 border-amber-400/30 shadow-[0_10px_30px_rgba(245,158,11,0.15)]"
               }`}
             >
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-white">
                   <FileText className="h-4 w-4" />
                   <span className="font-semibold">Import Summary</span>
                 </div>
-                <div className="text-sm space-y-1">
+                <div className="text-sm space-y-1 text-white/80">
                   <p>
-                    Total Rows: <strong>{importResult.totalRows}</strong>
+                    Total Rows: <strong className="text-white">{importResult.totalRows}</strong>
                   </p>
-                  <p className="text-green-600 dark:text-green-400">
+                  <p className="text-emerald-400">
                     Successful: <strong>{importResult.successRows}</strong>
                   </p>
                   {importResult.failedRows > 0 && (
-                    <p className="text-red-600 dark:text-red-400">
+                    <p className="text-red-400">
                       Failed: <strong>{importResult.failedRows}</strong>
                     </p>
                   )}
                 </div>
                 {importResult.errors && importResult.errors.length > 0 && (
                   <div className="mt-2 max-h-32 overflow-y-auto">
-                    <p className="text-xs font-semibold mb-1">Errors:</p>
+                    <p className="text-xs font-semibold mb-1 text-white/70">Errors:</p>
                     <ul className="text-xs space-y-1 list-disc list-inside">
                       {importResult.errors.slice(0, 5).map((error, index) => (
                         <li
                           key={index}
-                          className="text-red-600 dark:text-red-400"
+                          className="text-red-400"
                         >
                           Row {error.rowNumber}: {error.message}
                         </li>
                       ))}
                       {importResult.errors.length > 5 && (
-                        <li className="text-gray-500">
+                        <li className="text-white/50">
                           ... and {importResult.errors.length - 5} more errors
                         </li>
                       )}
@@ -286,11 +291,11 @@ export function ProductImportDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="mt-9 mb-4">
           <Button
-            variant="outline"
             onClick={() => handleOpenChange(false)}
             disabled={isImporting}
+            className="h-11 w-full sm:w-auto px-11 inline-flex items-center justify-center rounded-xl border border-white/10 bg-gradient-to-r from-gray-400/40 via-gray-300/30 to-gray-400/40 dark:bg-background/50 backdrop-blur-sm shadow-[0_15px_35px_rgba(0,0,0,0.3)] dark:shadow-[0_15px_35px_rgba(255,255,255,0.25)] transition duration-200 hover:bg-gradient-to-r hover:from-gray-400/60 hover:via-gray-300/50 hover:to-gray-400/60 dark:hover:bg-accent/50 hover:border-white/20 dark:hover:border-white/20 hover:shadow-[0_20px_45px_rgba(0,0,0,0.5)] dark:hover:shadow-[0_20px_45px_rgba(255,255,255,0.4)] text-white"
           >
             {importResult ? "Close" : "Cancel"}
           </Button>

@@ -104,7 +104,7 @@ export default function SupportTicketDetailContent({
 
           <article
             className={cn(
-              "rounded-[20px] border p-5 sm:p-6 backdrop-blur-sm",
+              "rounded-[20px] border p-4 sm:p-6 backdrop-blur-sm",
               "bg-white/60 dark:bg-white/5",
               variantConfig.border,
               variantConfig.gradient,
@@ -200,7 +200,7 @@ export default function SupportTicketDetailContent({
 
           <section
             className={cn(
-              "rounded-[20px] border p-5 sm:p-6 backdrop-blur-sm",
+              "rounded-[20px] border p-4 sm:p-6 backdrop-blur-sm",
               "bg-white/60 dark:bg-white/5",
               variantConfig.border,
               variantConfig.gradient,

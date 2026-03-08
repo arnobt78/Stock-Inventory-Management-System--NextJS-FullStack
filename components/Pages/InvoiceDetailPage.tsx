@@ -154,7 +154,7 @@ function GlassCard({
   return (
     <article
       className={cn(
-        "group rounded-[20px] border p-5 backdrop-blur-sm transition-all duration-300",
+        "group rounded-[20px] border p-4 sm:p-5 backdrop-blur-sm transition-all duration-300",
         "bg-white/60 dark:bg-white/5",
         config.border,
         config.gradient,

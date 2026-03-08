@@ -51,10 +51,10 @@ export default function HistoryList({ detailHrefBase }: HistoryListProps = {}) {
   return (
     <div className="flex flex-col poppins">
       <div className="pb-6 flex flex-col items-start text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
           Import History
         </h2>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Bulk import runs (CSV/Excel). Data appears here when you use Import
           for products, orders, suppliers, or categories. View details,
           success/failed rows, and error logs.

@@ -192,7 +192,7 @@ export default function ProductReviewsSection({
   return (
     <article
       className={cn(
-        "rounded-[20px] border p-5 backdrop-blur-sm",
+        "rounded-[20px] border p-4 sm:p-5 backdrop-blur-sm",
         "bg-white/60 dark:bg-white/5",
         config.border,
         config.gradient,

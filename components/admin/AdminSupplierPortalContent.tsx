@@ -103,7 +103,7 @@ function GlassCard({
   return (
     <article
       className={cn(
-        "group rounded-[20px] border p-5 backdrop-blur-sm transition-all duration-300 bg-white/60 dark:bg-white/5",
+        "group rounded-[20px] border p-4 sm:p-5 backdrop-blur-sm transition-all duration-300 bg-white/60 dark:bg-white/5",
         config.border,
         config.gradient,
         config.shadow,
@@ -165,10 +165,10 @@ export default function AdminSupplierPortalContent({
     <PageContentWrapper>
       <div className="mx-auto space-y-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
             Supplier Portal
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Overview of supplier entities, their products, orders, and activity.
           </p>
         </div>
@@ -231,7 +231,7 @@ export default function AdminSupplierPortalContent({
                 <Package className="h-5 w-5 text-sky-600 dark:text-sky-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                   Recent Supplier Products
                 </h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -304,7 +304,7 @@ export default function AdminSupplierPortalContent({
                 <ShoppingCart className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                   Recent Supplier Orders
                 </h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -379,7 +379,7 @@ export default function AdminSupplierPortalContent({
               <Truck className="h-5 w-5 text-violet-600 dark:text-violet-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                 Suppliers
               </h3>
               <p className="text-xs text-gray-600 dark:text-gray-400">

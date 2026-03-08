@@ -574,7 +574,8 @@ export default function ApiDocsPage() {
         {
           method: "GET",
           path: "/api/orders",
-          description: "List orders for the authenticated user (or client/supplier filtered)",
+          description:
+            "List orders for the authenticated user (or client/supplier filtered)",
           parameters: [],
           response: {
             success: { status: 200, data: "Order[]" },
@@ -586,8 +587,18 @@ export default function ApiDocsPage() {
           path: "/api/orders",
           description: "Create a new order with line items",
           parameters: [
-            { name: "items", type: "array", required: true, description: "Order line items (productId, quantity, price)" },
-            { name: "shippingAddress", type: "object", required: false, description: "Shipping address" },
+            {
+              name: "items",
+              type: "array",
+              required: true,
+              description: "Order line items (productId, quantity, price)",
+            },
+            {
+              name: "shippingAddress",
+              type: "object",
+              required: false,
+              description: "Shipping address",
+            },
           ],
           response: {
             success: { status: 201, data: "Order" },
@@ -598,7 +609,14 @@ export default function ApiDocsPage() {
           method: "GET",
           path: "/api/orders/[id]",
           description: "Get order by ID",
-          parameters: [{ name: "id", type: "string", required: true, description: "Order ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Order ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "Order" },
             error: { status: 404, data: "{ error: string }" },
@@ -608,7 +626,14 @@ export default function ApiDocsPage() {
           method: "PUT",
           path: "/api/orders/[id]",
           description: "Update order (status, etc.)",
-          parameters: [{ name: "id", type: "string", required: true, description: "Order ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Order ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "Order" },
             error: { status: 400, data: "{ error: string }" },
@@ -618,7 +643,14 @@ export default function ApiDocsPage() {
           method: "DELETE",
           path: "/api/orders/[id]",
           description: "Cancel order",
-          parameters: [{ name: "id", type: "string", required: true, description: "Order ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Order ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "{ message: string }" },
             error: { status: 400, data: "{ error: string }" },
@@ -654,7 +686,14 @@ export default function ApiDocsPage() {
           method: "GET",
           path: "/api/invoices/[id]",
           description: "Get invoice by ID",
-          parameters: [{ name: "id", type: "string", required: true, description: "Invoice ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Invoice ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "Invoice" },
             error: { status: 404, data: "{ error: string }" },
@@ -664,7 +703,14 @@ export default function ApiDocsPage() {
           method: "PUT",
           path: "/api/invoices/[id]",
           description: "Update invoice",
-          parameters: [{ name: "id", type: "string", required: true, description: "Invoice ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Invoice ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "Invoice" },
             error: { status: 400, data: "{ error: string }" },
@@ -674,7 +720,14 @@ export default function ApiDocsPage() {
           method: "POST",
           path: "/api/invoices/[id]/send",
           description: "Send invoice to customer",
-          parameters: [{ name: "id", type: "string", required: true, description: "Invoice ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Invoice ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "{ message: string }" },
             error: { status: 400, data: "{ error: string }" },
@@ -684,7 +737,14 @@ export default function ApiDocsPage() {
           method: "GET",
           path: "/api/invoices/[id]/pdf",
           description: "Get invoice PDF",
-          parameters: [{ name: "id", type: "string", required: true, description: "Invoice ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Invoice ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "PDF binary" },
             error: { status: 404, data: "{ error: string }" },
@@ -711,9 +771,24 @@ export default function ApiDocsPage() {
           path: "/api/warehouses",
           description: "Create a warehouse",
           parameters: [
-            { name: "name", type: "string", required: true, description: "Warehouse name" },
-            { name: "type", type: "string", required: false, description: "Type (main, storage, etc.)" },
-            { name: "status", type: "boolean", required: false, description: "Active status" },
+            {
+              name: "name",
+              type: "string",
+              required: true,
+              description: "Warehouse name",
+            },
+            {
+              name: "type",
+              type: "string",
+              required: false,
+              description: "Type (main, storage, etc.)",
+            },
+            {
+              name: "status",
+              type: "boolean",
+              required: false,
+              description: "Active status",
+            },
           ],
           response: {
             success: { status: 201, data: "Warehouse" },
@@ -724,7 +799,14 @@ export default function ApiDocsPage() {
           method: "GET",
           path: "/api/warehouses/[id]",
           description: "Get warehouse by ID",
-          parameters: [{ name: "id", type: "string", required: true, description: "Warehouse ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Warehouse ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "Warehouse" },
             error: { status: 404, data: "{ error: string }" },
@@ -734,7 +816,14 @@ export default function ApiDocsPage() {
           method: "PUT",
           path: "/api/warehouses/[id]",
           description: "Update warehouse",
-          parameters: [{ name: "id", type: "string", required: true, description: "Warehouse ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Warehouse ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "Warehouse" },
             error: { status: 400, data: "{ error: string }" },
@@ -744,7 +833,14 @@ export default function ApiDocsPage() {
           method: "DELETE",
           path: "/api/warehouses/[id]",
           description: "Delete warehouse",
-          parameters: [{ name: "id", type: "string", required: true, description: "Warehouse ID" }],
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Warehouse ID",
+            },
+          ],
           response: {
             success: { status: 200, data: "{ message: string }" },
             error: { status: 400, data: "{ error: string }" },
@@ -759,7 +855,8 @@ export default function ApiDocsPage() {
         {
           method: "GET",
           path: "/api/dashboard",
-          description: "Get store dashboard stats (counts, revenue, analytics, trends). Admin/store owner only.",
+          description:
+            "Get store dashboard stats (counts, revenue, analytics, trends). Admin/store owner only.",
           parameters: [],
           response: {
             success: { status: 200, data: "DashboardStats" },
@@ -775,7 +872,8 @@ export default function ApiDocsPage() {
         {
           method: "GET",
           path: "/api/health",
-          description: "Service health (database, redis, imagekit, brevo). No auth required.",
+          description:
+            "Service health (database, redis, imagekit, brevo). No auth required.",
           parameters: [],
           response: {
             success: { status: 200, data: "{ status, services, uptime }" },
@@ -785,7 +883,8 @@ export default function ApiDocsPage() {
         {
           method: "GET",
           path: "/api/performance",
-          description: "API performance summary (endpoints, response times, error rates)",
+          description:
+            "API performance summary (endpoints, response times, error rates)",
           parameters: [],
           response: {
             success: { status: 200, data: "{ summary }" },
@@ -818,21 +917,183 @@ export default function ApiDocsPage() {
       name: "More APIs",
       icon: Server,
       endpoints: [
-        { method: "GET", path: "/api/notifications/in-app", description: "List in-app notifications", parameters: [], response: { success: { status: 200, data: "Notification[]" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/notifications/in-app/unread-count", description: "Unread notification count", parameters: [], response: { success: { status: 200, data: "{ count }" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/support-tickets", description: "List support tickets", parameters: [], response: { success: { status: 200, data: "Ticket[]" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/support-tickets/[id]", description: "Get ticket by ID", parameters: [{ name: "id", type: "string", required: true, description: "Ticket ID" }], response: { success: { status: 200, data: "Ticket" }, error: { status: 404, data: "{}" } } },
-        { method: "GET", path: "/api/product-reviews", description: "List product reviews", parameters: [], response: { success: { status: 200, data: "Review[]" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/product-reviews/[id]", description: "Get review by ID", parameters: [{ name: "id", type: "string", required: true, description: "Review ID" }], response: { success: { status: 200, data: "Review" }, error: { status: 404, data: "{}" } } },
-        { method: "POST", path: "/api/payments/checkout", description: "Create Stripe checkout session", parameters: [{ name: "type", type: "string", required: true, description: "order | invoice" }, { name: "id", type: "string", required: true, description: "Order or invoice ID" }], response: { success: { status: 200, data: "{ url }" }, error: { status: 400, data: "{}" } } },
-        { method: "POST", path: "/api/products/import", description: "Bulk import products (CSV/Excel)", parameters: [], response: { success: { status: 200, data: "{ success, failed }" }, error: { status: 400, data: "{}" } } },
-        { method: "GET", path: "/api/import-history", description: "List import history", parameters: [], response: { success: { status: 200, data: "ImportHistory[]" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/user/email-preferences", description: "Get email preferences", parameters: [], response: { success: { status: 200, data: "EmailPreferences" }, error: { status: 401, data: "{}" } } },
-        { method: "PUT", path: "/api/user/email-preferences", description: "Update email preferences", parameters: [], response: { success: { status: 200, data: "EmailPreferences" }, error: { status: 400, data: "{}" } } },
-        { method: "GET", path: "/api/ai/insights", description: "AI-generated business insights", parameters: [], response: { success: { status: 200, data: "object" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/forecasting", description: "Demand/forecast data", parameters: [], response: { success: { status: 200, data: "object" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/audit-logs", description: "Audit log entries", parameters: [], response: { success: { status: 200, data: "AuditLog[]" }, error: { status: 401, data: "{}" } } },
-        { method: "GET", path: "/api/system-config", description: "System configuration", parameters: [], response: { success: { status: 200, data: "object" }, error: { status: 401, data: "{}" } } },
+        {
+          method: "GET",
+          path: "/api/notifications/in-app",
+          description: "List in-app notifications",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "Notification[]" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/notifications/in-app/unread-count",
+          description: "Unread notification count",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "{ count }" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/support-tickets",
+          description: "List support tickets",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "Ticket[]" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/support-tickets/[id]",
+          description: "Get ticket by ID",
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Ticket ID",
+            },
+          ],
+          response: {
+            success: { status: 200, data: "Ticket" },
+            error: { status: 404, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/product-reviews",
+          description: "List product reviews",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "Review[]" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/product-reviews/[id]",
+          description: "Get review by ID",
+          parameters: [
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Review ID",
+            },
+          ],
+          response: {
+            success: { status: 200, data: "Review" },
+            error: { status: 404, data: "{}" },
+          },
+        },
+        {
+          method: "POST",
+          path: "/api/payments/checkout",
+          description: "Create Stripe checkout session",
+          parameters: [
+            {
+              name: "type",
+              type: "string",
+              required: true,
+              description: "order | invoice",
+            },
+            {
+              name: "id",
+              type: "string",
+              required: true,
+              description: "Order or invoice ID",
+            },
+          ],
+          response: {
+            success: { status: 200, data: "{ url }" },
+            error: { status: 400, data: "{}" },
+          },
+        },
+        {
+          method: "POST",
+          path: "/api/products/import",
+          description: "Bulk import products (CSV/Excel)",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "{ success, failed }" },
+            error: { status: 400, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/import-history",
+          description: "List import history",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "ImportHistory[]" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/user/email-preferences",
+          description: "Get email preferences",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "EmailPreferences" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "PUT",
+          path: "/api/user/email-preferences",
+          description: "Update email preferences",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "EmailPreferences" },
+            error: { status: 400, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/ai/insights",
+          description: "AI-generated business insights",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "object" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/forecasting",
+          description: "Demand/forecast data",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "object" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/audit-logs",
+          description: "Audit log entries",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "AuditLog[]" },
+            error: { status: 401, data: "{}" },
+          },
+        },
+        {
+          method: "GET",
+          path: "/api/system-config",
+          description: "System configuration",
+          parameters: [],
+          response: {
+            success: { status: 200, data: "object" },
+            error: { status: 401, data: "{}" },
+          },
+        },
       ],
     },
   ];
@@ -942,10 +1203,10 @@ export default function ApiDocsPage() {
         <div className="space-y-6">
           {/* Header */}
           <div className="text-center space-y-4 pb-4">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
               Stock API Documentation
             </h1>
-            <p className="text-lg text-gray-600 dark:text-white/70 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-white/70 max-w-2xl mx-auto">
               Comprehensive API documentation for the Stock inventory management
               system. All endpoints require authentication via JWT token.
             </p>
@@ -958,7 +1219,7 @@ export default function ApiDocsPage() {
                 {[1, 2, 3, 4].map((i) => (
                   <article
                     key={i}
-                    className="rounded-[20px] border border-gray-300/30 dark:border-white/10 bg-gradient-to-br from-gray-100/50 via-gray-100/30 to-gray-100/20 dark:from-white/5 dark:via-white/5 dark:to-white/5 min-h-[120px] p-5 animate-pulse"
+                    className="rounded-[20px] border border-gray-300/30 dark:border-white/10 bg-gradient-to-br from-gray-100/50 via-gray-100/30 to-gray-100/20 dark:from-white/5 dark:via-white/5 dark:to-white/5 min-h-[120px] p-4 sm:p-5 animate-pulse"
                   >
                     <Skeleton className="h-9 w-9 rounded-xl mb-3" />
                     <Skeleton className="h-5 w-24 mb-2" />
@@ -970,7 +1231,7 @@ export default function ApiDocsPage() {
               <>
                 {/* Base URL */}
                 <GlassCard variant="blue">
-                  <div className="p-5">
+                  <div className="p-4 sm:p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-blue-300/30 bg-blue-100/50 dark:border-white/15 dark:bg-white/10">
                         <FiCode className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -987,63 +1248,64 @@ export default function ApiDocsPage() {
 
                 {/* Authentication */}
                 <GlassCard variant="violet">
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-300/30 bg-violet-100/50 dark:border-white/15 dark:bg-white/10">
-                    <FiKey className="h-4 w-4 text-gray-900 dark:text-white" />
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-300/30 bg-violet-100/50 dark:border-white/15 dark:bg-white/10">
+                        <FiKey className="h-4 w-4 text-gray-900 dark:text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Auth
+                      </h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-white/70">
+                      Session cookie (HTTP-only). Send{" "}
+                      <code className="text-xs bg-violet-500/10 px-1 py-0.5 rounded">
+                        credentials: &quot;include&quot;
+                      </code>
+                    </p>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Auth
-                  </h3>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-white/70">
-                  Session cookie (HTTP-only). Send{" "}
-                  <code className="text-xs bg-violet-500/10 px-1 py-0.5 rounded">
-                    credentials: &quot;include&quot;
-                  </code>
-                </p>
-              </div>
-            </GlassCard>
+                </GlassCard>
 
-            {/* Rate Limiting */}
-            <GlassCard variant="amber">
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-100/50 dark:border-white/15 dark:bg-white/10">
-                    <Zap className="h-4 w-4 text-gray-900 dark:text-white" />
+                {/* Rate Limiting */}
+                <GlassCard variant="amber">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-100/50 dark:border-white/15 dark:bg-white/10">
+                        <Zap className="h-4 w-4 text-gray-900 dark:text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Rate Limit
+                      </h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-white/70">
+                      100 req/min (standard), 10 req/min (import), 5 req/min
+                      (auth)
+                    </p>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Rate Limit
-                  </h3>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-white/70">
-                  100 req/min (standard), 10 req/min (import), 5 req/min (auth)
-                </p>
-              </div>
-            </GlassCard>
+                </GlassCard>
 
-            {/* OpenAPI */}
-            <GlassCard variant="teal">
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-teal-300/30 bg-teal-100/50 dark:border-white/15 dark:bg-white/10">
-                    <FileJson className="h-4 w-4 text-gray-900 dark:text-white" />
+                {/* OpenAPI */}
+                <GlassCard variant="teal">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-teal-300/30 bg-teal-100/50 dark:border-white/15 dark:bg-white/10">
+                        <FileJson className="h-4 w-4 text-gray-900 dark:text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        OpenAPI 3.0
+                      </h3>
+                    </div>
+                    <a
+                      href={`${baseUrl}/api/openapi`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300"
+                    >
+                      Download spec
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    OpenAPI 3.0
-                  </h3>
-                </div>
-                <a
-                  href={`${baseUrl}/api/openapi`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300"
-                >
-                  Download spec
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            </GlassCard>
+                </GlassCard>
               </>
             )}
           </div>
@@ -1083,7 +1345,7 @@ export default function ApiDocsPage() {
                   className="mt-4 focus-visible:outline-none"
                 >
                   <GlassCard variant={variant}>
-                    <div className="p-5">
+                    <div className="p-4 sm:p-5">
                       <div className="flex items-center gap-2 mb-4">
                         <div
                           className={cn(
@@ -1232,163 +1494,169 @@ export default function ApiDocsPage() {
               );
             })}
 
-            <TabsContent value="data-types" className="mt-4 focus-visible:outline-none">
+            <TabsContent
+              value="data-types"
+              className="mt-4 focus-visible:outline-none"
+            >
               <GlassCard variant="sky">
-            <div className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-100/50 dark:border-white/15 dark:bg-white/10">
-                  <FiDatabase className="h-5 w-5 text-gray-900 dark:text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Data Types
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-white/60">
-                    Common data structures used throughout the API
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {dataTypes.map((type, typeIndex) => {
-                  const typeVariants: CardVariant[] = [
-                    "emerald",
-                    "violet",
-                    "orange",
-                    "teal",
-                  ];
-                  const typeVariant =
-                    typeVariants[typeIndex % typeVariants.length];
-                  return (
-                    <div
-                      key={type.name}
-                      className={cn(
-                        "rounded-xl border p-4 backdrop-blur-sm",
-                        typeVariant === "emerald" &&
-                          "border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent",
-                        typeVariant === "violet" &&
-                          "border-violet-400/20 bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent",
-                        typeVariant === "orange" &&
-                          "border-orange-400/20 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent",
-                        typeVariant === "teal" &&
-                          "border-teal-400/20 bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent",
-                      )}
-                    >
-                      <h4 className="font-semibold mb-3 text-gray-900 dark:text-white">
-                        {type.name}
-                      </h4>
-                      <div className="space-y-2">
-                        {type.fields.map((field, fieldIndex) => (
-                          <div
-                            key={fieldIndex}
-                            className="flex flex-wrap items-center gap-2 text-sm"
-                          >
-                            <code className="bg-white/50 dark:bg-white/5 border border-gray-300/20 dark:border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono text-gray-800 dark:text-white/90">
-                              {field.name}
-                            </code>
-                            <span className="text-gray-500 dark:text-white/50">
-                              ({field.type})
-                            </span>
-                            <span className="text-gray-500 dark:text-white/60">
-                              - {field.description}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-100/50 dark:border-white/15 dark:bg-white/10">
+                      <FiDatabase className="h-5 w-5 text-gray-900 dark:text-white" />
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </GlassCard>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        Data Types
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-white/60">
+                        Common data structures used throughout the API
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {dataTypes.map((type, typeIndex) => {
+                      const typeVariants: CardVariant[] = [
+                        "emerald",
+                        "violet",
+                        "orange",
+                        "teal",
+                      ];
+                      const typeVariant =
+                        typeVariants[typeIndex % typeVariants.length];
+                      return (
+                        <div
+                          key={type.name}
+                          className={cn(
+                            "rounded-xl border p-4 backdrop-blur-sm",
+                            typeVariant === "emerald" &&
+                              "border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent",
+                            typeVariant === "violet" &&
+                              "border-violet-400/20 bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent",
+                            typeVariant === "orange" &&
+                              "border-orange-400/20 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent",
+                            typeVariant === "teal" &&
+                              "border-teal-400/20 bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent",
+                          )}
+                        >
+                          <h4 className="font-semibold mb-3 text-gray-900 dark:text-white">
+                            {type.name}
+                          </h4>
+                          <div className="space-y-2">
+                            {type.fields.map((field, fieldIndex) => (
+                              <div
+                                key={fieldIndex}
+                                className="flex flex-wrap items-center gap-2 text-sm"
+                              >
+                                <code className="bg-white/50 dark:bg-white/5 border border-gray-300/20 dark:border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono text-gray-800 dark:text-white/90">
+                                  {field.name}
+                                </code>
+                                <span className="text-gray-500 dark:text-white/50">
+                                  ({field.type})
+                                </span>
+                                <span className="text-gray-500 dark:text-white/60">
+                                  - {field.description}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </GlassCard>
             </TabsContent>
 
-            <TabsContent value="error-codes" className="mt-4 focus-visible:outline-none">
+            <TabsContent
+              value="error-codes"
+              className="mt-4 focus-visible:outline-none"
+            >
               <GlassCard variant="rose">
-            <div className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-300/30 bg-rose-100/50 dark:border-white/15 dark:bg-white/10">
-                  <AlertCircle className="h-5 w-5 text-gray-900 dark:text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Error Codes
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-white/60">
-                    Common HTTP status codes and their meanings
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Success Codes */}
-                <div className="rounded-xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-4 backdrop-blur-sm space-y-3">
-                  <h4 className="font-medium text-emerald-700 dark:text-emerald-300 text-sm">
-                    Success Codes
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-400/30 font-mono">
-                        200
-                      </Badge>
-                      <span className="text-sm text-gray-700 dark:text-white/80">
-                        OK - Request successful
-                      </span>
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-300/30 bg-rose-100/50 dark:border-white/15 dark:bg-white/10">
+                      <AlertCircle className="h-5 w-5 text-gray-900 dark:text-white" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-400/30 font-mono">
-                        201
-                      </Badge>
-                      <span className="text-sm text-gray-700 dark:text-white/80">
-                        Created - Resource created
-                      </span>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        Error Codes
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-white/60">
+                        Common HTTP status codes and their meanings
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Success Codes */}
+                    <div className="rounded-xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-4 backdrop-blur-sm space-y-3">
+                      <h4 className="font-medium text-emerald-700 dark:text-emerald-300 text-sm">
+                        Success Codes
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-400/30 font-mono">
+                            200
+                          </Badge>
+                          <span className="text-sm text-gray-700 dark:text-white/80">
+                            OK - Request successful
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-400/30 font-mono">
+                            201
+                          </Badge>
+                          <span className="text-sm text-gray-700 dark:text-white/80">
+                            Created - Resource created
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Error Codes */}
+                    <div className="rounded-xl border border-rose-400/20 bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent p-4 backdrop-blur-sm space-y-3">
+                      <h4 className="font-medium text-rose-700 dark:text-rose-300 text-sm">
+                        Error Codes
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-400/30 font-mono">
+                            400
+                          </Badge>
+                          <span className="text-sm text-gray-700 dark:text-white/80">
+                            Bad Request - Invalid input
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-400/30 font-mono">
+                            401
+                          </Badge>
+                          <span className="text-sm text-gray-700 dark:text-white/80">
+                            Unauthorized - Auth required
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/30 font-mono">
+                            429
+                          </Badge>
+                          <span className="text-sm text-gray-700 dark:text-white/80">
+                            Too Many Requests
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-400/30 font-mono">
+                            500
+                          </Badge>
+                          <span className="text-sm text-gray-700 dark:text-white/80">
+                            Internal Server Error
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Error Codes */}
-                <div className="rounded-xl border border-rose-400/20 bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent p-4 backdrop-blur-sm space-y-3">
-                  <h4 className="font-medium text-rose-700 dark:text-rose-300 text-sm">
-                    Error Codes
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-400/30 font-mono">
-                        400
-                      </Badge>
-                      <span className="text-sm text-gray-700 dark:text-white/80">
-                        Bad Request - Invalid input
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-400/30 font-mono">
-                        401
-                      </Badge>
-                      <span className="text-sm text-gray-700 dark:text-white/80">
-                        Unauthorized - Auth required
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/30 font-mono">
-                        429
-                      </Badge>
-                      <span className="text-sm text-gray-700 dark:text-white/80">
-                        Too Many Requests
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-400/30 font-mono">
-                        500
-                      </Badge>
-                      <span className="text-sm text-gray-700 dark:text-white/80">
-                        Internal Server Error
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </GlassCard>
+              </GlassCard>
             </TabsContent>
           </Tabs>
         </div>

@@ -68,7 +68,8 @@ export default function WarehouseList() {
 
   /** Type badges for user /warehouses page cards (from dashboard stats) */
   const warehousesPageTypeBadges = useMemo(() => {
-    const dist = warehousesPageStats?.warehouseAnalytics?.typeDistribution ?? [];
+    const dist =
+      warehousesPageStats?.warehouseAnalytics?.typeDistribution ?? [];
     const typeMap = new Map(
       dist.map((t) => [(t.type ?? "").toLowerCase().trim(), t.count]),
     );
@@ -130,10 +131,10 @@ export default function WarehouseList() {
     <div className="flex flex-col poppins">
       {/* Warehouse Management Section Header */}
       <div className="pb-6 flex flex-col items-start text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
           Warehouse Management
         </h2>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Manage warehouse locations. Add, edit, and track warehouses for
           multi-location inventory. Stock allocation and inter-warehouse
           transfers are not yet implemented—you can create and edit warehouses
@@ -163,7 +164,8 @@ export default function WarehouseList() {
                   {
                     label: "Available",
                     value:
-                      warehousesPageStats.productStatusBreakdown?.available ?? 0,
+                      warehousesPageStats.productStatusBreakdown?.available ??
+                      0,
                   },
                   {
                     label: "Stock low",
@@ -179,7 +181,9 @@ export default function WarehouseList() {
               />
               <StatisticsCard
                 title="Total Warehouses"
-                value={warehousesPageStats.warehouseAnalytics?.totalWarehouses ?? 0}
+                value={
+                  warehousesPageStats.warehouseAnalytics?.totalWarehouses ?? 0
+                }
                 description="All locations"
                 icon={WarehouseIcon}
                 variant="teal"
@@ -187,18 +191,22 @@ export default function WarehouseList() {
                   {
                     label: "Active",
                     value:
-                      warehousesPageStats.warehouseAnalytics?.activeWarehouses ?? 0,
+                      warehousesPageStats.warehouseAnalytics
+                        ?.activeWarehouses ?? 0,
                   },
                   {
                     label: "Inactive",
                     value:
-                      warehousesPageStats.warehouseAnalytics?.inactiveWarehouses ?? 0,
+                      warehousesPageStats.warehouseAnalytics
+                        ?.inactiveWarehouses ?? 0,
                   },
                 ]}
               />
               <StatisticsCard
                 title="Active Warehouses"
-                value={warehousesPageStats.warehouseAnalytics?.activeWarehouses ?? 0}
+                value={
+                  warehousesPageStats.warehouseAnalytics?.activeWarehouses ?? 0
+                }
                 description="Operational"
                 icon={WarehouseIcon}
                 variant="emerald"
@@ -206,7 +214,10 @@ export default function WarehouseList() {
               />
               <StatisticsCard
                 title="Inactive Warehouses"
-                value={warehousesPageStats.warehouseAnalytics?.inactiveWarehouses ?? 0}
+                value={
+                  warehousesPageStats.warehouseAnalytics?.inactiveWarehouses ??
+                  0
+                }
                 description="Not in use"
                 icon={WarehouseIcon}
                 variant="rose"

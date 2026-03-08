@@ -352,7 +352,7 @@ export default function ActivityLogSection({
   return (
     <article
       className={cn(
-        "rounded-[20px] border p-5 sm:p-6 backdrop-blur-sm mt-8",
+        "rounded-[20px] border p-4 sm:p-6 backdrop-blur-sm mt-8",
         "bg-white/60 dark:bg-white/5",
         variantConfig.border,
         variantConfig.gradient,
@@ -361,10 +361,10 @@ export default function ActivityLogSection({
     >
       <div className="flex flex-col gap-4 mb-4">
         <div className="flex flex-col">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
             Activity Logs
           </h2>
-          <p className="text-base text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Your actions & activities (create, update, delete). Last{" "}
             {period === "today"
               ? "24 hours"
@@ -449,7 +449,7 @@ export default function ActivityLogSection({
           ))}
         </div>
       ) : logs.length === 0 ? (
-        <p className="text-base text-gray-500 dark:text-gray-500 py-6 text-center">
+        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-500 py-6 text-center">
           {searchTerm.trim()
             ? "No matching activity."
             : "No activity in this period."}

@@ -131,7 +131,7 @@ export function ChartCard({
         className,
       )}
     >
-      <div className="flex flex-row items-center justify-between p-5 pb-3">
+      <div className="flex flex-row items-center justify-between p-4 sm:p-5 pb-3">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             {title}
@@ -148,7 +148,7 @@ export function ChartCard({
           </div>
         )}
       </div>
-      <div className="px-5 pb-5">{children}</div>
+      <div className="px-4 sm:px-5 pb-4 sm:pb-5">{children}</div>
     </article>
   );
 }

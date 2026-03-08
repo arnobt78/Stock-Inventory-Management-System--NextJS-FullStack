@@ -111,10 +111,10 @@ const CategoryList = React.memo(() => {
     <div className="flex flex-col poppins">
       {/* Category Management Section Header — same alignment as products page */}
       <div className="pb-6 flex flex-col items-start text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
           Category Management
         </h2>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Organize your inventory with a comprehensive category system. Create,
           manage, and maintain product categories to streamline your inventory
           organization and improve product discoverability.
@@ -142,7 +142,8 @@ const CategoryList = React.memo(() => {
                   {
                     label: "Available",
                     value:
-                      categoriesPageStats.productStatusBreakdown?.available ?? 0,
+                      categoriesPageStats.productStatusBreakdown?.available ??
+                      0,
                   },
                   {
                     label: "Stock low",
@@ -183,13 +184,15 @@ const CategoryList = React.memo(() => {
                   {
                     label: "Due",
                     value: formatCurrency(
-                      categoriesPageStats.invoiceAnalytics?.outstandingAmount ?? 0,
+                      categoriesPageStats.invoiceAnalytics?.outstandingAmount ??
+                        0,
                     ),
                   },
                   {
                     label: "Cancelled",
                     value: formatCurrency(
-                      categoriesPageStats.orderAnalytics?.cancelledOrderAmount ?? 0,
+                      categoriesPageStats.orderAnalytics
+                        ?.cancelledOrderAmount ?? 0,
                     ),
                   },
                 ]}
@@ -209,7 +212,8 @@ const CategoryList = React.memo(() => {
                   {
                     label: "Inactive",
                     value:
-                      categoriesPageStats.supplierStatusBreakdown?.inactive ?? 0,
+                      categoriesPageStats.supplierStatusBreakdown?.inactive ??
+                      0,
                   },
                 ]}
               />
@@ -228,7 +232,8 @@ const CategoryList = React.memo(() => {
                   {
                     label: "Inactive",
                     value:
-                      categoriesPageStats.categoryStatusBreakdown?.inactive ?? 0,
+                      categoriesPageStats.categoryStatusBreakdown?.inactive ??
+                      0,
                   },
                 ]}
               />

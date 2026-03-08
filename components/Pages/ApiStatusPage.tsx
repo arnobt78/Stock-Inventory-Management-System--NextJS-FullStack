@@ -451,10 +451,10 @@ export default function ApiStatusPage() {
           {/* Header - Always visible */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
                 API & Project Status
               </h1>
-              <p className="text-lg text-gray-600 dark:text-white/70">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-white/70">
                 Real-time monitoring of Stockly&apos;s API endpoints and system
                 health
               </p>
@@ -481,7 +481,7 @@ export default function ApiStatusPage() {
                     ["blue", "violet", "amber", "teal"][i - 1] as CardVariant
                   }
                 >
-                  <div className="p-5">
+                  <div className="p-4 sm:p-5">
                     <Skeleton className="h-4 w-24 mb-2" />
                     <Skeleton className="h-8 w-32" />
                   </div>
@@ -491,44 +491,44 @@ export default function ApiStatusPage() {
           ) : systemStatus ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <GlassCard variant="blue">
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-2">
                     Project
                   </p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                  <p className="text-md sm:text-base font-semibold text-gray-900 dark:text-white">
                     {systemStatus.project}
                   </p>
                 </div>
               </GlassCard>
 
               <GlassCard variant="violet">
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-2">
                     Environment
                   </p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-white capitalize">
+                  <p className="text-md sm:text-base font-semibold text-gray-900 dark:text-white capitalize">
                     {systemStatus.environment}
                   </p>
                 </div>
               </GlassCard>
 
               <GlassCard variant="amber">
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-2">
                     Current Time
                   </p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                  <p className="text-md sm:text-base font-semibold text-gray-900 dark:text-white">
                     {systemStatus.currentTime}
                   </p>
                 </div>
               </GlassCard>
 
               <GlassCard variant="teal">
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-2">
                     Uptime
                   </p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                  <p className="text-md sm:text-base font-semibold text-gray-900 dark:text-white">
                     {systemStatus.uptime}
                   </p>
                 </div>
@@ -538,7 +538,7 @@ export default function ApiStatusPage() {
 
           {/* API Health Status */}
           <GlassCard variant="emerald">
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <React.Fragment
                 key={isLoading ? "api-health-loading" : "api-health-content"}
               >
@@ -553,7 +553,7 @@ export default function ApiStatusPage() {
                       <FiActivity className="h-5 w-5 text-gray-900 dark:text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                         API Health
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-white/60">
@@ -578,7 +578,7 @@ export default function ApiStatusPage() {
 
           {/* Endpoints Status */}
           <GlassCard variant="sky">
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <React.Fragment
                 key={isLoading ? "endpoints-loading" : "endpoints-content"}
               >
@@ -650,7 +650,7 @@ export default function ApiStatusPage() {
 
           {/* External Services Health */}
           <GlassCard variant="violet">
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <React.Fragment
                 key={isLoading ? "services-loading" : "services-content"}
               >
@@ -665,7 +665,7 @@ export default function ApiStatusPage() {
                       <FiCloud className="h-5 w-5 text-gray-900 dark:text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                         External Services
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-white/60">
@@ -823,13 +823,13 @@ export default function ApiStatusPage() {
           {/* Performance Metrics */}
           {systemStatus?.performance && (
             <GlassCard variant="orange">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-orange-300/30 bg-orange-100/50 dark:border-white/15 dark:bg-white/10">
                     <FiTrendingUp className="h-5 w-5 text-gray-900 dark:text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                       Performance Metrics
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-white/60">
@@ -960,13 +960,13 @@ export default function ApiStatusPage() {
           {/* System Metrics */}
           {systemStatus?.systemMetrics && (
             <GlassCard variant="teal">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-teal-300/30 bg-teal-100/50 dark:border-white/15 dark:bg-white/10">
                     <FiCpu className="h-5 w-5 text-gray-900 dark:text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                       System Metrics
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-white/60">
@@ -1183,7 +1183,7 @@ export default function ApiStatusPage() {
 
           {/* Deployment Info */}
           <GlassCard variant="rose">
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               {isLoading ? (
                 <Skeleton className="h-6 w-32 mb-4" />
               ) : (
@@ -1191,7 +1191,7 @@ export default function ApiStatusPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-300/30 bg-rose-100/50 dark:border-white/15 dark:bg-white/10">
                     <FiPackage className="h-5 w-5 text-gray-900 dark:text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                     Deployment Information
                   </h3>
                 </div>
@@ -1210,18 +1210,18 @@ export default function ApiStatusPage() {
               ) : systemStatus ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-3 rounded-xl border border-gray-300/20 dark:border-white/10 bg-white/30 dark:bg-white/5 backdrop-blur-sm">
-                    <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">
+                    <h4 className="font-semibold mb-2 text-sm sm:text-base text-gray-900 dark:text-white">
                       Deployment
                     </h4>
-                    <p className="text-gray-600 dark:text-white/70">
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-white/70">
                       {systemStatus.deployment}
                     </p>
                   </div>
                   <div className="p-3 rounded-xl border border-gray-300/20 dark:border-white/10 bg-white/30 dark:bg-white/5 backdrop-blur-sm">
-                    <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">
+                    <h4 className="font-semibold mb-2 text-sm sm:text-base text-gray-900 dark:text-white">
                       Last checked
                     </h4>
-                    <p className="text-gray-600 dark:text-white/70">
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-white/70">
                       {systemStatus.lastChecked}
                     </p>
                   </div>

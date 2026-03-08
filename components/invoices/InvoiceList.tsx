@@ -27,7 +27,13 @@ import InvoiceFilters from "./InvoiceFilters";
 import InvoiceDialog from "./InvoiceDialog";
 import { StatisticsCard } from "@/components/home/StatisticsCard";
 import { StatisticsCardSkeleton } from "@/components/home/StatisticsCardSkeleton";
-import { DollarSign, CreditCard, ShoppingCart, FileText, Clock } from "lucide-react";
+import {
+  DollarSign,
+  CreditCard,
+  ShoppingCart,
+  FileText,
+  Clock,
+} from "lucide-react";
 import type { Invoice } from "@/types";
 import type { InvoiceWithSource } from "./InvoiceTableColumns";
 import type { InvoiceSourceFilterValue } from "./InvoiceSourceFilter";
@@ -204,7 +210,7 @@ const InvoiceList = React.memo(
       <div className="flex flex-col poppins">
         {/* Invoice Management Section Header */}
         <div className="pb-6 flex flex-col items-start text-left">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
             {isAdminCombined
               ? "Store Invoices Management (self + client)"
               : isClientInvoices
@@ -213,7 +219,7 @@ const InvoiceList = React.memo(
                   ? "My Invoices"
                   : "Invoice Management"}
           </h2>
-          <p className="text-base text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             {isAdminCombined
               ? "Invoices for your orders and for client orders. Filter by invoice type, status, and search."
               : isClientInvoices
@@ -262,13 +268,15 @@ const InvoiceList = React.memo(
                     {
                       label: "Due",
                       value: formatCurrency(
-                        invoicesPageStats.invoiceAnalytics?.outstandingAmount ?? 0,
+                        invoicesPageStats.invoiceAnalytics?.outstandingAmount ??
+                          0,
                       ),
                     },
                     {
                       label: "Cancelled",
                       value: formatCurrency(
-                        invoicesPageStats.orderAnalytics?.cancelledOrderAmount ?? 0,
+                        invoicesPageStats.orderAnalytics
+                          ?.cancelledOrderAmount ?? 0,
                       ),
                     },
                   ]}
@@ -294,7 +302,8 @@ const InvoiceList = React.memo(
                     {
                       label: "Due",
                       value: formatCurrency(
-                        invoicesPageStats.invoiceAnalytics?.outstandingAmount ?? 0,
+                        invoicesPageStats.invoiceAnalytics?.outstandingAmount ??
+                          0,
                       ),
                     },
                     {
@@ -306,7 +315,8 @@ const InvoiceList = React.memo(
                     {
                       label: "Pending",
                       value: formatCurrency(
-                        invoicesPageStats.orderAnalytics?.pendingOrderAmount ?? 0,
+                        invoicesPageStats.orderAnalytics?.pendingOrderAmount ??
+                          0,
                       ),
                     },
                     ...(invoicesPageStats.selfOthersBreakdown
@@ -320,7 +330,8 @@ const InvoiceList = React.memo(
                           {
                             label: "Others",
                             value: formatCurrency(
-                              invoicesPageStats.selfOthersBreakdown.revenueOthers,
+                              invoicesPageStats.selfOthersBreakdown
+                                .revenueOthers,
                             ),
                           },
                         ]
@@ -369,13 +380,15 @@ const InvoiceList = React.memo(
                       ? [
                           {
                             label: "Self",
-                            value: invoicesPageStats.selfOthersBreakdown
-                              .orderSelfCount,
+                            value:
+                              invoicesPageStats.selfOthersBreakdown
+                                .orderSelfCount,
                           },
                           {
                             label: "Others",
-                            value: invoicesPageStats.selfOthersBreakdown
-                              .orderOthersCount,
+                            value:
+                              invoicesPageStats.selfOthersBreakdown
+                                .orderOthersCount,
                           },
                         ]
                       : []),
@@ -423,13 +436,15 @@ const InvoiceList = React.memo(
                       ? [
                           {
                             label: "Self",
-                            value: invoicesPageStats.selfOthersBreakdown
-                              .invoiceSelfCount,
+                            value:
+                              invoicesPageStats.selfOthersBreakdown
+                                .invoiceSelfCount,
                           },
                           {
                             label: "Others",
-                            value: invoicesPageStats.selfOthersBreakdown
-                              .invoiceOthersCount,
+                            value:
+                              invoicesPageStats.selfOthersBreakdown
+                                .invoiceOthersCount,
                           },
                         ]
                       : []),
@@ -614,27 +629,28 @@ const InvoiceList = React.memo(
                     {
                       label: "Paid",
                       value:
-                        dashboard.invoiceAnalytics?.statusDistribution?.paid ?? 0,
+                        dashboard.invoiceAnalytics?.statusDistribution?.paid ??
+                        0,
                     },
                     {
                       label: "Pending",
                       value:
-                        (dashboard.invoiceAnalytics?.statusDistribution?.draft ??
-                          0) +
+                        (dashboard.invoiceAnalytics?.statusDistribution
+                          ?.draft ?? 0) +
                         (dashboard.invoiceAnalytics?.statusDistribution?.sent ??
                           0),
                     },
                     {
                       label: "Overdue",
                       value:
-                        dashboard.invoiceAnalytics?.statusDistribution?.overdue ??
-                        0,
+                        dashboard.invoiceAnalytics?.statusDistribution
+                          ?.overdue ?? 0,
                     },
                     {
                       label: "Cancelled",
                       value:
-                        dashboard.invoiceAnalytics?.statusDistribution?.cancelled ??
-                        0,
+                        dashboard.invoiceAnalytics?.statusDistribution
+                          ?.cancelled ?? 0,
                     },
                   ]}
                 />
@@ -688,7 +704,8 @@ const InvoiceList = React.memo(
                     {
                       label: "Orders",
                       value: formatCurrency(
-                        dashboard.orderAnalytics?.totalRevenueExcludingCancelled ??
+                        dashboard.orderAnalytics
+                          ?.totalRevenueExcludingCancelled ??
                           dashboard.revenue?.fromOrders ??
                           0,
                       ),
@@ -737,8 +754,8 @@ const InvoiceList = React.memo(
                       value:
                         (dashboard.orderAnalytics?.statusDistribution
                           ?.processing ?? 0) +
-                        (dashboard.orderAnalytics?.statusDistribution?.shipped ??
-                          0),
+                        (dashboard.orderAnalytics?.statusDistribution
+                          ?.shipped ?? 0),
                     },
                     {
                       label: "Refund",
@@ -747,8 +764,8 @@ const InvoiceList = React.memo(
                     {
                       label: "Cancel",
                       value:
-                        dashboard.orderAnalytics?.statusDistribution?.cancelled ??
-                        0,
+                        dashboard.orderAnalytics?.statusDistribution
+                          ?.cancelled ?? 0,
                     },
                   ]}
                 />

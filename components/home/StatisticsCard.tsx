@@ -160,7 +160,7 @@ export function StatisticsCard({
   return (
     <article
       className={cn(
-        "group rounded-[28px] border min-h-[210px] h-full flex flex-col p-6 backdrop-blur-sm transition min-w-0 overflow-visible",
+        "group rounded-[28px] border min-h-[210px] h-full flex flex-col p-4 sm:p-6 backdrop-blur-sm transition min-w-0 overflow-visible",
         config.border,
         config.gradient,
         config.shadow,

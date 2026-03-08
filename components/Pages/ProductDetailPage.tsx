@@ -333,13 +333,13 @@ export default function ProductDetailPage({
             {/* Product Image & QR Skeleton */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <GlassCard variant="sky">
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <div className="h-6 w-32 bg-gray-200/50 dark:bg-white/10 rounded-lg animate-pulse mb-4" />
                   <div className="h-64 w-full bg-gray-200/50 dark:bg-white/10 rounded-xl animate-pulse" />
                 </div>
               </GlassCard>
               <GlassCard variant="violet">
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <div className="h-6 w-32 bg-gray-200/50 dark:bg-white/10 rounded-lg animate-pulse mb-4" />
                   <div className="h-64 w-full bg-gray-200/50 dark:bg-white/10 rounded-xl animate-pulse" />
                 </div>
@@ -351,7 +351,7 @@ export default function ProductDetailPage({
               {(["emerald", "amber", "blue"] as CardVariant[]).map(
                 (variant) => (
                   <GlassCard key={variant} variant={variant}>
-                    <div className="p-5">
+                    <div className="p-4 sm:p-5">
                       <div className="h-4 w-20 bg-gray-200/50 dark:bg-white/10 rounded animate-pulse mb-3" />
                       <div className="h-8 w-32 bg-gray-200/50 dark:bg-white/10 rounded-xl animate-pulse" />
                     </div>
@@ -363,7 +363,7 @@ export default function ProductDetailPage({
             {/* Info and Statistics Skeleton */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GlassCard variant="teal">
-                <div className="p-5 space-y-4">
+                <div className="p-4 sm:p-5 space-y-4">
                   <div className="h-6 w-40 bg-gray-200/50 dark:bg-white/10 rounded-lg animate-pulse" />
                   {[1, 2, 3, 4].map((i) => (
                     <div
@@ -374,7 +374,7 @@ export default function ProductDetailPage({
                 </div>
               </GlassCard>
               <GlassCard variant="orange">
-                <div className="p-5 space-y-4">
+                <div className="p-4 sm:p-5 space-y-4">
                   <div className="h-6 w-40 bg-gray-200/50 dark:bg-white/10 rounded-lg animate-pulse" />
                   {[1, 2, 3].map((i) => (
                     <div
@@ -435,7 +435,7 @@ export default function ProductDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Product Image */}
             <GlassCard variant="sky">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-100/50 dark:border-white/15 dark:bg-white/10">
                     <ImageIcon className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -466,7 +466,7 @@ export default function ProductDetailPage({
 
             {/* QR Code / Barcode */}
             <GlassCard variant="violet">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-300/30 bg-violet-100/50 dark:border-white/15 dark:bg-white/10">
                     <QrCode className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -499,7 +499,7 @@ export default function ProductDetailPage({
           {/* Product Status Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <GlassCard variant="emerald">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-3">
                   Status
                 </p>
@@ -522,7 +522,7 @@ export default function ProductDetailPage({
             </GlassCard>
 
             <GlassCard variant="amber">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-3">
                   Stock
                 </p>
@@ -542,7 +542,7 @@ export default function ProductDetailPage({
             </GlassCard>
 
             <GlassCard variant="blue">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-3">
                   Price
                 </p>
@@ -557,7 +557,7 @@ export default function ProductDetailPage({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Product Information */}
             <GlassCard variant="teal">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-teal-300/30 bg-teal-100/50 dark:border-white/15 dark:bg-white/10">
                     <Package className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -704,7 +704,7 @@ export default function ProductDetailPage({
 
             {/* Sales Statistics */}
             <GlassCard variant="orange">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-orange-300/30 bg-orange-100/50 dark:border-white/15 dark:bg-white/10">
                     <BarChart3 className="h-4 w-4 text-gray-900 dark:text-white" />
@@ -762,7 +762,7 @@ export default function ProductDetailPage({
           {/* Recent Orders */}
           {product.recentOrders && product.recentOrders.length > 0 && (
             <GlassCard variant="rose">
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-300/30 bg-rose-100/50 dark:border-white/15 dark:bg-white/10">
                     <ShoppingCart className="h-4 w-4 text-gray-900 dark:text-white" />

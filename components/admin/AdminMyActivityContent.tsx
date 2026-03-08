@@ -274,10 +274,10 @@ export default function AdminMyActivityContent() {
     <PageContentWrapper>
       <div className="space-y-6">
         <div className="flex flex-col items-start text-left pb-2">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white pb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-1">
             My Activity (self-only as user)
           </h1>
-          <p className="text-base text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Your orders, products, and key metrics as the store owner as you
             placed order, created products, invoices, and more. This is
             self-only data. This is different from the Store Analytics &
@@ -297,7 +297,7 @@ export default function AdminMyActivityContent() {
               className={cn(
                 "rounded-[28px] border border-gray-300/30 dark:border-white/10",
                 "bg-gradient-to-br from-gray-100/50 via-gray-100/30 to-gray-100/20 dark:from-white/5 dark:via-white/5 dark:to-white/5",
-                "p-6 backdrop-blur-sm overflow-hidden",
+                "p-4 sm:p-6 backdrop-blur-sm overflow-hidden",
               )}
               style={{ minHeight: tableSkeletonHeight }}
             >
@@ -459,12 +459,12 @@ export default function AdminMyActivityContent() {
                 "rounded-[28px] border border-teal-400/30 dark:border-teal-400/30",
                 "bg-gradient-to-br from-teal-500/25 via-teal-500/10 to-teal-500/5 dark:from-teal-500/25 dark:via-teal-500/10 dark:to-teal-500/5",
                 "shadow-[0_30px_80px_rgba(20,184,166,0.35)] dark:shadow-[0_30px_80px_rgba(20,184,166,0.25)]",
-                "p-6 backdrop-blur-sm overflow-hidden",
+                "p-4 sm:p-6 backdrop-blur-sm overflow-hidden",
               )}
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
                     Recent Orders
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">

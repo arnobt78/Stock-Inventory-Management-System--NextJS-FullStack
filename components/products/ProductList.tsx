@@ -64,7 +64,9 @@ const ProductList = React.memo(() => {
   const allOrders = ordersQuery.data ?? [];
   const dashboard = isAdminProducts ? (dashboardQuery.data ?? null) : null;
   /** Dashboard stats for products-page cards (only when on /products) */
-  const productsPageStats = isUserProductsPage ? (dashboardQuery.data ?? null) : null;
+  const productsPageStats = isUserProductsPage
+    ? (dashboardQuery.data ?? null)
+    : null;
 
   const detailBase = isAdminProducts ? "/admin" : "";
   /** Supplier on /products: show Product Owner column instead of Supplier, and supplier header */
@@ -205,12 +207,12 @@ const ProductList = React.memo(() => {
     <div className="flex flex-col poppins">
       {/* Product Inventory Section Header — supplier sees own products + Product Owner; admin/user sees full copy */}
       <div className="pb-6 flex flex-col items-start text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
           {isSupplierProductsPage
             ? "My Products"
             : "Product Inventory Management"}
         </h2>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           {isSupplierProductsPage
             ? "Products supplied by you. View stock, categories, and which store owner manages each product. Use filters and search to find items quickly."
             : "Efficiently manage your product catalog with advanced filtering, search capabilities, and real-time stock tracking. Monitor inventory levels, organize by categories and suppliers, and maintain optimal stock control."}
@@ -269,15 +271,11 @@ const ProductList = React.memo(() => {
                     badges={[
                       {
                         label: "Orders",
-                        value: formatCurrency(
-                          d.valueBreakdown?.orders ?? 0,
-                        ),
+                        value: formatCurrency(d.valueBreakdown?.orders ?? 0),
                       },
                       {
                         label: "Invoices",
-                        value: formatCurrency(
-                          d.valueBreakdown?.invoices ?? 0,
-                        ),
+                        value: formatCurrency(d.valueBreakdown?.invoices ?? 0),
                       },
                       {
                         label: "Due",
@@ -285,15 +283,11 @@ const ProductList = React.memo(() => {
                       },
                       {
                         label: "Cancelled",
-                        value: formatCurrency(
-                          d.valueBreakdown?.cancelled ?? 0,
-                        ),
+                        value: formatCurrency(d.valueBreakdown?.cancelled ?? 0),
                       },
                       {
                         label: "Refunded",
-                        value: formatCurrency(
-                          d.valueBreakdown?.refunded ?? 0,
-                        ),
+                        value: formatCurrency(d.valueBreakdown?.refunded ?? 0),
                       },
                     ]}
                   />
@@ -339,27 +333,19 @@ const ProductList = React.memo(() => {
                     badges={[
                       {
                         label: "Paid",
-                        value: formatCurrency(
-                          d.revenueBreakdown?.paid ?? 0,
-                        ),
+                        value: formatCurrency(d.revenueBreakdown?.paid ?? 0),
                       },
                       {
                         label: "Due",
-                        value: formatCurrency(
-                          d.revenueBreakdown?.due ?? 0,
-                        ),
+                        value: formatCurrency(d.revenueBreakdown?.due ?? 0),
                       },
                       {
                         label: "Refund",
-                        value: formatCurrency(
-                          d.revenueBreakdown?.refund ?? 0,
-                        ),
+                        value: formatCurrency(d.revenueBreakdown?.refund ?? 0),
                       },
                       {
                         label: "Pending",
-                        value: formatCurrency(
-                          d.revenueBreakdown?.pending ?? 0,
-                        ),
+                        value: formatCurrency(d.revenueBreakdown?.pending ?? 0),
                       },
                       {
                         label: "Avg/Order",
@@ -416,16 +402,15 @@ const ProductList = React.memo(() => {
                   {
                     label: "Orders",
                     value: formatCurrency(
-                      dashboard.orderAnalytics?.totalRevenueExcludingCancelled ??
+                      dashboard.orderAnalytics
+                        ?.totalRevenueExcludingCancelled ??
                         dashboard.revenue?.fromOrders ??
                         0,
                     ),
                   },
                   {
                     label: "Invoices",
-                    value: formatCurrency(
-                      dashboard.revenue?.fromInvoices ?? 0,
-                    ),
+                    value: formatCurrency(dashboard.revenue?.fromInvoices ?? 0),
                   },
                   {
                     label: "Due",
@@ -542,13 +527,15 @@ const ProductList = React.memo(() => {
                   {
                     label: "Due",
                     value: formatCurrency(
-                      productsPageStats.invoiceAnalytics?.outstandingAmount ?? 0,
+                      productsPageStats.invoiceAnalytics?.outstandingAmount ??
+                        0,
                     ),
                   },
                   {
                     label: "Cancelled",
                     value: formatCurrency(
-                      productsPageStats.orderAnalytics?.cancelledOrderAmount ?? 0,
+                      productsPageStats.orderAnalytics?.cancelledOrderAmount ??
+                        0,
                     ),
                   },
                 ]}

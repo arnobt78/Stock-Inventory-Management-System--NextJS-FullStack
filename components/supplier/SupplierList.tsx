@@ -111,10 +111,10 @@ const SupplierList = React.memo(() => {
     <div className="flex flex-col poppins">
       {/* Supplier Management Section Header — same alignment as products page */}
       <div className="pb-6 flex flex-col items-start text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white pb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white pb-2">
           Supplier Management
         </h2>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Manage your supplier relationships efficiently. Track supplier
           information, status, and maintain detailed records for better
           inventory management and procurement planning.
@@ -183,13 +183,15 @@ const SupplierList = React.memo(() => {
                   {
                     label: "Due",
                     value: formatCurrency(
-                      suppliersPageStats.invoiceAnalytics?.outstandingAmount ?? 0,
+                      suppliersPageStats.invoiceAnalytics?.outstandingAmount ??
+                        0,
                     ),
                   },
                   {
                     label: "Cancelled",
                     value: formatCurrency(
-                      suppliersPageStats.orderAnalytics?.cancelledOrderAmount ?? 0,
+                      suppliersPageStats.orderAnalytics?.cancelledOrderAmount ??
+                        0,
                     ),
                   },
                 ]}

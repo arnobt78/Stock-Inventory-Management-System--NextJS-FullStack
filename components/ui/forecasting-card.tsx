@@ -269,14 +269,14 @@ export function ForecastingCard({ products, className }: ForecastingCardProps) {
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-5 pb-3">
+      <div className="flex items-center justify-between p-4 sm:p-5 pb-3">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <Target className="h-5 w-5" />
           Demand Forecasting & Insights
         </h3>
       </div>
 
-      <div className="px-5 pb-5 space-y-6">
+      <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-3 rounded-xl border border-blue-400/20 bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent">

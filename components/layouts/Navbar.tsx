@@ -68,10 +68,10 @@ function ModeToggle() {
           variant="ghost"
           size="icon"
           aria-label="Toggle theme"
-          className="focus-visible:outline-none focus:outline-none focus-visible:ring-0 focus:ring-0"
+          className="h-8 w-8 sm:h-10 sm:w-10 focus-visible:outline-none focus:outline-none focus-visible:ring-0 focus:ring-0"
         >
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <Sun className="h-4 w-4 sm:h-[1.2rem] sm:w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 sm:h-[1.2rem] sm:w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
@@ -148,7 +148,10 @@ export default function Navbar({ children }: NavbarProps) {
       // We do NOT call logout() from auth context because that would
       // setIsLoggedIn(false) → React re-renders the current page with
       // empty data → "Failed to load" flash.
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
       window.location.href = "/login";
       return;
     } catch (error) {
@@ -248,7 +251,7 @@ export default function Navbar({ children }: NavbarProps) {
       >
         Skip to main content
       </a>
-      <div className="mx-auto flex w-full h-full max-w-9xl items-center justify-between gap-4 px-2 sm:px-4 lg:px-6">
+      <div className="mx-auto flex w-full h-full max-w-9xl items-center justify-between gap-2 sm:gap-4 px-2 sm:px-4 lg:px-6 overflow-x-hidden">
         {/* Left Section - Logo and Brand */}
         <div className="flex items-center gap-3">
           <div
@@ -322,13 +325,13 @@ export default function Navbar({ children }: NavbarProps) {
         </nav>
 
         {/* Right Section - Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Notification Bell - Always render to prevent flickering during auth check */}
           {/* Show skeleton during auth check, then show bell when user is available */}
           {isCheckingAuth ? (
             // Skeleton placeholder during auth check to maintain layout - matches NotificationBell styling
-            <div className="relative h-10 w-10 rounded-full border border-rose-400/30 dark:border-rose-400/30 bg-gradient-to-r from-rose-500/25 via-rose-500/15 to-rose-500/10 dark:from-rose-500/25 dark:via-rose-500/15 dark:to-rose-500/10 shadow-[0_10px_30px_rgba(225,29,72,0.2)] backdrop-blur-sm animate-pulse flex items-center justify-center">
-              <Bell className="h-5 w-5 text-rose-400/50 dark:text-rose-300/50" />
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full border border-rose-400/30 dark:border-rose-400/30 bg-gradient-to-r from-rose-500/25 via-rose-500/15 to-rose-500/10 dark:from-rose-500/25 dark:via-rose-500/15 dark:to-rose-500/10 shadow-[0_10px_30px_rgba(225,29,72,0.2)] backdrop-blur-sm animate-pulse flex items-center justify-center">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-rose-400/50 dark:text-rose-300/50" />
             </div>
           ) : user ? (
             <NotificationBell />
@@ -438,7 +441,7 @@ export default function Navbar({ children }: NavbarProps) {
           </div>
 
           {/* Mobile: Burger Menu Only (LG and below) */}
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="flex items-center lg:hidden">
             {/* Burger Menu Button */}
             <Button
               variant="ghost"
@@ -447,12 +450,12 @@ export default function Navbar({ children }: NavbarProps) {
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-menu-panel"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-900 dark:text-foreground hover:bg-gradient-to-br hover:from-sky-500/10 hover:via-sky-500/5 hover:to-sky-500/5 dark:hover:from-white/10 dark:hover:via-white/5 dark:hover:to-white/5 hover:backdrop-blur-sm transition-all duration-300 ease-in-out"
+              className="h-8 w-8 sm:h-10 sm:w-10 text-gray-900 dark:text-foreground hover:bg-gradient-to-br hover:from-sky-500/10 hover:via-sky-500/5 hover:to-sky-500/5 dark:hover:from-white/10 dark:hover:via-white/5 dark:hover:to-white/5 hover:backdrop-blur-sm transition-all duration-300 ease-in-out"
             >
               {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               ) : (
-                <Menu className="h-5 w-5" />
+                <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
               )}
             </Button>
           </div>
@@ -465,7 +468,7 @@ export default function Navbar({ children }: NavbarProps) {
           id="mobile-menu-panel"
           role="navigation"
           aria-label="Mobile navigation"
-          className="xl:hidden border-t border-white/10 dark:border-white/10 bg-gradient-to-br from-white/95 via-white/90 to-white/85 dark:from-white/10 dark:via-white/10 dark:to-white/5 backdrop-blur-xl"
+          className="xl:hidden border-t border-white/10 dark:border-white/10 bg-gradient-to-br from-white/95 via-white/90 to-white/85 dark:from-white/10 dark:via-white/10 dark:to-white/5 backdrop-blur-xl max-h-[calc(100vh-3.5rem)] overflow-y-auto"
         >
           <div className="mx-auto w-full max-w-9xl px-2 sm:px-4 lg:px-6 sm:py-6 space-y-3">
             {/* User Email with Avatar */}
@@ -625,7 +628,7 @@ export default function Navbar({ children }: NavbarProps) {
           {navbarContent}
           <main
             id="main-content"
-            className="flex-1 overflow-y-auto flex flex-col"
+            className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col"
             tabIndex={-1}
           >
             <div className="flex-1 flex flex-col">
@@ -634,7 +637,7 @@ export default function Navbar({ children }: NavbarProps) {
                   pathname?.startsWith("/admin") ||
                   pathname?.startsWith("/business-insights")
                     ? "mx-auto w-full max-w-9xl flex-1 sm:pr-4"
-                    : "mx-auto w-full max-w-9xl p-2 sm:p-0 sm:px-4 lg:px-6 sm:py-6 flex-1"
+                    : "mx-auto w-full max-w-9xl p-1 sm:p-0 sm:px-4 lg:px-6 sm:py-6 flex-1"
                 }
               >
                 {children}

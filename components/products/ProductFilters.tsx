@@ -286,9 +286,9 @@ export default function FiltersAndActions({
       )}
 
       {/* Row 2: Left: Suppliers, Categories | Center: Search | Right: Status, Export */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 flex-wrap w-full">
         {/* Left */}
-        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 order-2 sm:order-1">
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 order-2 sm:order-1 w-full sm:w-auto">
           <SuppliersDropDown
             selectedSuppliers={selectedSuppliers}
             setSelectedSuppliers={setSelectedSuppliers}
@@ -325,7 +325,7 @@ export default function FiltersAndActions({
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-2 flex-shrink-0 order-3">
+        <div className="flex items-center gap-2 flex-shrink-0 order-3 w-full sm:w-auto flex-wrap">
           <StatusDropDown
             selectedStatuses={selectedStatuses}
             setSelectedStatuses={setSelectedStatuses}
