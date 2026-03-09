@@ -38,6 +38,10 @@ export type InvoiceForPage = {
   updatedBy: string | null;
   /** Client/customer display name (for admin list; from order shipping or placer) */
   customerDisplay?: string | null;
+  /** Invoice creator/issuer name (for client list — who issued the invoice) */
+  issuedByName?: string | null;
+  /** Invoice creator/issuer email */
+  issuedByEmail?: string | null;
 };
 
 /**
@@ -103,33 +107,79 @@ export async function getInvoicesForClientId(
   if (cached) return cached;
 
   const invoices = await getInvoicesByClientId(clientUserId, undefined);
-  const transformed: InvoiceForPage[] = invoices.map((invoice) => ({
-    id: invoice.id,
-    invoiceNumber: invoice.invoiceNumber,
-    orderId: invoice.orderId,
-    userId: invoice.userId,
-    clientId: invoice.clientId ?? null,
-    status: invoice.status,
-    subtotal: invoice.subtotal,
-    tax: invoice.tax ?? null,
-    shipping: invoice.shipping ?? null,
-    discount: invoice.discount ?? null,
-    total: invoice.total,
-    amountPaid: invoice.amountPaid,
-    amountDue: invoice.amountDue,
-    dueDate: invoice.dueDate.toISOString(),
-    issuedAt: invoice.issuedAt.toISOString(),
-    sentAt: invoice.sentAt?.toISOString() || null,
-    paidAt: invoice.paidAt?.toISOString() || null,
-    cancelledAt: invoice.cancelledAt?.toISOString() || null,
-    paymentLink: invoice.paymentLink,
-    notes: invoice.notes,
-    billingAddress: invoice.billingAddress,
-    createdAt: invoice.createdAt.toISOString(),
-    updatedAt: invoice.updatedAt?.toISOString() || null,
-    createdBy: invoice.createdBy,
-    updatedBy: invoice.updatedBy,
-  }));
+
+  // Resolve issuer (product owner) from order items for each invoice
+  const orderIds = [...new Set(invoices.map((inv) => inv.orderId))];
+  const orders = orderIds.length > 0
+    ? await prisma.order.findMany({
+        where: { id: { in: orderIds } },
+        include: { items: { include: { product: { select: { userId: true } } } } },
+      })
+    : [];
+  const orderProductOwnerMap = new Map<string, string>();
+  for (const order of orders) {
+    const ownerIds = [
+      ...new Set(
+        order.items
+          .map((item) => (item as { product?: { userId?: string } }).product?.userId)
+          .filter(Boolean),
+      ),
+    ] as string[];
+    if (ownerIds.length > 0 && ownerIds[0]) orderProductOwnerMap.set(order.id, ownerIds[0]);
+  }
+
+  // Collect all user IDs we need to look up (product owners + invoice.userId for fallback)
+  const allUserIds = [
+    ...new Set([
+      ...invoices.map((inv) => inv.userId),
+      ...invoices.map((inv) => inv.createdBy),
+      ...Array.from(orderProductOwnerMap.values()),
+    ]),
+  ].filter(Boolean);
+  const users =
+    allUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: allUserIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+  const userMap = new Map(users.map((u) => [u.id, u]));
+
+  const transformed: InvoiceForPage[] = invoices.map((invoice) => {
+    // Priority: product owner from order items > createdBy > userId
+    const productOwnerId = orderProductOwnerMap.get(invoice.orderId);
+    const issuerId = productOwnerId ?? invoice.createdBy ?? invoice.userId;
+    const issuer = userMap.get(issuerId);
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      orderId: invoice.orderId,
+      userId: invoice.userId,
+      clientId: invoice.clientId ?? null,
+      status: invoice.status,
+      subtotal: invoice.subtotal,
+      tax: invoice.tax ?? null,
+      shipping: invoice.shipping ?? null,
+      discount: invoice.discount ?? null,
+      total: invoice.total,
+      amountPaid: invoice.amountPaid,
+      amountDue: invoice.amountDue,
+      dueDate: invoice.dueDate.toISOString(),
+      issuedAt: invoice.issuedAt.toISOString(),
+      sentAt: invoice.sentAt?.toISOString() || null,
+      paidAt: invoice.paidAt?.toISOString() || null,
+      cancelledAt: invoice.cancelledAt?.toISOString() || null,
+      paymentLink: invoice.paymentLink,
+      notes: invoice.notes,
+      billingAddress: invoice.billingAddress,
+      createdAt: invoice.createdAt.toISOString(),
+      updatedAt: invoice.updatedAt?.toISOString() || null,
+      createdBy: invoice.createdBy,
+      updatedBy: invoice.updatedBy,
+      issuedByName: issuer?.name ?? issuer?.email ?? null,
+      issuedByEmail: issuer?.email ?? null,
+    };
+  });
 
   await setCache(cacheKey, transformed, 300);
   return transformed;

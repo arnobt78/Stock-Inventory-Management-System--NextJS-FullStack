@@ -175,8 +175,9 @@ const InvoiceList = React.memo(
       () =>
         createInvoiceColumns(handleEditInvoice, effectiveDetailBase, {
           showSourceBadge: dataSource === "adminCombined",
+          showIssuedBy: isClientInvoicesPage,
         }),
-      [handleEditInvoice, effectiveDetailBase, dataSource],
+      [handleEditInvoice, effectiveDetailBase, dataSource, isClientInvoicesPage],
     );
 
     // Determine loading state - FIXES HYDRATION & FLICKER (same approach as StatisticsSection)

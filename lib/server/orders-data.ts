@@ -55,6 +55,8 @@ export type OrderForPage = {
   items: OrderItemForPage[];
   /** Placer name/email when shipping has none (e.g. Google one-click checkout) */
   placedByName?: string | null;
+  /** Placer email from User */
+  placedByEmail?: string | null;
 };
 
 /**
@@ -139,43 +141,58 @@ export async function getOrdersForSupplierId(
 
   const orders = await getOrdersContainingSupplierProducts(supplierId);
 
-  const transformed: OrderForPage[] = orders.map((order) => ({
-    id: order.id,
-    orderNumber: order.orderNumber,
-    userId: order.userId,
-    clientId: order.clientId ?? null,
-    status: order.status,
-    paymentStatus: order.paymentStatus,
-    subtotal: order.subtotal,
-    tax: order.tax ?? null,
-    shipping: order.shipping ?? null,
-    discount: order.discount ?? null,
-    total: order.total,
-    shippingAddress: order.shippingAddress,
-    billingAddress: order.billingAddress,
-    notes: order.notes,
-    trackingNumber: order.trackingNumber,
-    trackingUrl: order.trackingUrl,
-    estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
-    shippedAt: order.shippedAt?.toISOString() || null,
-    deliveredAt: order.deliveredAt?.toISOString() || null,
-    cancelledAt: order.cancelledAt?.toISOString() || null,
-    createdAt: order.createdAt.toISOString(),
-    updatedAt: order.updatedAt?.toISOString() ?? null,
-    createdBy: order.createdBy,
-    updatedBy: order.updatedBy,
-    items: order.items.map((item) => ({
-      id: item.id,
-      orderId: item.orderId,
-      productId: item.productId,
-      productName: item.productName,
-      sku: item.sku ?? null,
-      quantity: item.quantity,
-      price: item.price,
-      subtotal: item.subtotal,
-      createdAt: item.createdAt.toISOString(),
-    })),
-  }));
+  const userIds = [...new Set(orders.map((o) => o.userId))];
+  const users =
+    userIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+  const userMap = new Map(users.map((u) => [u.id, u]));
+
+  const transformed: OrderForPage[] = orders.map((order) => {
+    const u = userMap.get(order.userId);
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      userId: order.userId,
+      clientId: order.clientId ?? null,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      subtotal: order.subtotal,
+      tax: order.tax ?? null,
+      shipping: order.shipping ?? null,
+      discount: order.discount ?? null,
+      total: order.total,
+      shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress,
+      notes: order.notes,
+      trackingNumber: order.trackingNumber,
+      trackingUrl: order.trackingUrl,
+      estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
+      shippedAt: order.shippedAt?.toISOString() || null,
+      deliveredAt: order.deliveredAt?.toISOString() || null,
+      cancelledAt: order.cancelledAt?.toISOString() || null,
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt?.toISOString() ?? null,
+      createdBy: order.createdBy,
+      updatedBy: order.updatedBy,
+      items: order.items.map((item) => ({
+        id: item.id,
+        orderId: item.orderId,
+        productId: item.productId,
+        productName: item.productName,
+        sku: item.sku ?? null,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+        createdAt: item.createdAt.toISOString(),
+      })),
+      placedByName: u?.name ?? u?.email ?? null,
+      placedByEmail: u?.email ?? null,
+    };
+  });
 
   await setCache(cacheKey, transformed, 300);
   return transformed;

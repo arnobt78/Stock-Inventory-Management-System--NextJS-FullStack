@@ -79,6 +79,7 @@ export async function GET(
 
     const partyUserIds = [
       invoice.userId,
+      invoice.createdBy,
       invoice.clientId,
       order?.userId,
       ...(order?.items ?? [])
@@ -95,10 +96,19 @@ export async function GET(
         : [];
     const userMap = new Map(partyUsers.map((u) => [u.id, u]));
 
-    const invoiceCreatedBy = userMap.get(invoice.userId)
+    // Resolve the actual invoice issuer: product owner from order items > createdBy > userId
+    const issuerProductOwnerIds = [
+      ...new Set(
+        (order?.items ?? [])
+          .map((item: { product?: { userId?: string } }) => item.product?.userId)
+          .filter(Boolean),
+      ),
+    ] as string[];
+    const resolvedIssuerId = issuerProductOwnerIds[0] ?? invoice.createdBy ?? invoice.userId;
+    const invoiceCreatedBy = userMap.get(resolvedIssuerId)
       ? {
-          name: userMap.get(invoice.userId)!.name ?? null,
-          email: userMap.get(invoice.userId)!.email,
+          name: userMap.get(resolvedIssuerId)!.name ?? null,
+          email: userMap.get(resolvedIssuerId)!.email,
         }
       : null;
     const orderedBy = order && userMap.get(order.userId)
@@ -218,8 +228,8 @@ export async function PUT(
       id,
     };
 
-    // Admin can update any invoice (including client invoices); other roles
-    // can only update their own invoices or invoices linked to their products.
+    // Admin can update any invoice; product owners can update invoices linked to
+    // their products (including legacy invoices where userId = client).
     const isAdmin = session.role === "admin";
     let ownerUserId = userId;
     if (isAdmin) {
@@ -228,6 +238,16 @@ export async function PUT(
         return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
       }
       ownerUserId = existing.userId;
+    } else {
+      const existingCheck = await prisma.invoice.findFirst({
+        where: { id, userId },
+      });
+      if (!existingCheck) {
+        const poInvoice = await getInvoiceByIdForProductOwner(id, userId);
+        if (poInvoice) {
+          ownerUserId = poInvoice.userId;
+        }
+      }
     }
 
     // Update invoice
@@ -319,11 +339,19 @@ export async function DELETE(
     const userId = session.id;
     const isAdmin = session.role === "admin";
 
-    // Admin can delete any invoice; other roles only their own.
+    // Admin can delete any invoice; product owners can delete invoices linked to their products.
     let ownerUserId = userId;
     if (isAdmin) {
       const existing = await prisma.invoice.findUnique({ where: { id: invoiceId } });
       if (existing) ownerUserId = existing.userId;
+    } else {
+      const existingCheck = await prisma.invoice.findFirst({
+        where: { id: invoiceId, userId },
+      });
+      if (!existingCheck) {
+        const poInvoice = await getInvoiceByIdForProductOwner(invoiceId, userId);
+        if (poInvoice) ownerUserId = poInvoice.userId;
+      }
     }
 
     const existingInvoice = await getInvoiceById(invoiceId, ownerUserId);

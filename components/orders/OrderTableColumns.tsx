@@ -153,6 +153,8 @@ export type OrderWithSource = Order & {
 type CreateOrderColumnsOptions = {
   /** When true, show (displayName) and Self/Client badge under Order # */
   showSourceBadge?: boolean;
+  /** When true, show placedByName / placedByEmail under Order # (e.g. supplier view) */
+  showPlacedBy?: boolean;
 };
 
 /**
@@ -175,6 +177,7 @@ export const createOrderColumns = (
         ? `${detailHrefBase}/${order.id}`
         : `/orders/${order.id}`;
       const showBadge = options?.showSourceBadge && order._source != null;
+      const showPlacedBy = options?.showPlacedBy && (order.placedByName || order.placedByEmail);
       return (
         <div className="flex flex-col gap-0.5">
           <Link
@@ -200,6 +203,11 @@ export const createOrderColumns = (
                 {order._source === "personal" ? "Self" : "Client"}
               </Badge>
             </div>
+          )}
+          {showPlacedBy && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {order.placedByName}{order.placedByEmail ? ` (${order.placedByEmail})` : ""}
+            </span>
           )}
         </div>
       );

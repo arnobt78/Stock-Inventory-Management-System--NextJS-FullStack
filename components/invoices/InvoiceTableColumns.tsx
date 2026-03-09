@@ -121,6 +121,8 @@ export type InvoiceWithSource = Invoice & {
 type CreateInvoiceColumnsOptions = {
   /** When true, show (displayName) and Self/Client badge under Invoice # */
   showSourceBadge?: boolean;
+  /** When true, show issuedByName / issuedByEmail under Invoice # (e.g. client view) */
+  showIssuedBy?: boolean;
 };
 
 /**
@@ -143,6 +145,7 @@ export const createInvoiceColumns = (
     cell: ({ row }) => {
       const invoice = row.original as InvoiceWithSource;
       const showBadge = options?.showSourceBadge && invoice._source != null;
+      const showIssuedBy = options?.showIssuedBy && (invoice.issuedByName || invoice.issuedByEmail);
       return (
         <div className="flex flex-col gap-0.5">
           <Link
@@ -168,6 +171,11 @@ export const createInvoiceColumns = (
                 {invoice._source === "personal" ? "Self" : "Client"}
               </Badge>
             </div>
+          )}
+          {showIssuedBy && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {invoice.issuedByName}{invoice.issuedByEmail ? ` (${invoice.issuedByEmail})` : ""}
+            </span>
           )}
         </div>
       );

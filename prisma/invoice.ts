@@ -92,9 +92,9 @@ export async function createInvoice(
     data: {
       invoiceNumber,
       orderId: data.orderId,
-      userId: order.userId, // Invoice created by same user as order
+      userId, // Invoice issued by the authenticated user (product owner / admin)
       clientId: order.clientId,
-      status: "draft", // Initial status
+      status: "draft",
       subtotal,
       tax: tax > 0 ? tax : null,
       shipping: shipping > 0 ? shipping : null,
@@ -142,12 +142,26 @@ export async function ensureInvoiceForPaidOrder(
 ): Promise<Prisma.InvoiceGetPayload<Record<string, never>>> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: true },
+    include: {
+      items: {
+        include: { product: { select: { userId: true } } },
+      },
+    },
   });
 
   if (!order) {
     throw new Error(`Order with ID ${orderId} not found`);
   }
+
+  // Resolve the product owner (issuer) from order items; fall back to order.userId
+  const productOwnerIds = [
+    ...new Set(
+      order.items
+        .map((item) => (item as { product?: { userId?: string } }).product?.userId)
+        .filter(Boolean),
+    ),
+  ] as string[];
+  const issuerId = productOwnerIds[0] ?? order.userId;
 
   const existingInvoice = await prisma.invoice.findUnique({
     where: { orderId },
@@ -165,7 +179,7 @@ export async function ensureInvoiceForPaidOrder(
         amountDue: 0,
         paidAt: now,
         updatedAt: now,
-        updatedBy: order.userId,
+        updatedBy: issuerId,
       },
     });
     logger.info("Invoice marked as paid (order payment)", {
@@ -188,7 +202,7 @@ export async function ensureInvoiceForPaidOrder(
     data: {
       invoiceNumber,
       orderId,
-      userId: order.userId,
+      userId: issuerId,
       clientId: order.clientId,
       status: "paid",
       subtotal,
@@ -206,7 +220,7 @@ export async function ensureInvoiceForPaidOrder(
       paymentLink: null,
       notes: "Auto-generated when order was paid via Stripe.",
       billingAddress,
-      createdBy: order.userId,
+      createdBy: issuerId,
       updatedBy: null,
       createdAt: now,
       updatedAt: null,

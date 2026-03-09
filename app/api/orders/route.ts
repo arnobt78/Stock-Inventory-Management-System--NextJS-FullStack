@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
     const transformedOrders = orders.map((order) => {
       const u = userMap.get(order.userId);
       const placedByName = u?.name ?? u?.email ?? null;
+      const placedByEmail = u?.email ?? null;
       return {
       id: order.id,
       orderNumber: order.orderNumber,
@@ -124,6 +125,7 @@ export async function GET(request: NextRequest) {
         createdAt: item.createdAt.toISOString(),
       })),
       placedByName,
+      placedByEmail,
     };
     });
 
