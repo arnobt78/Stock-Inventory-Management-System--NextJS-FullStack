@@ -187,8 +187,9 @@ const OrderList = React.memo(
         createOrderColumns(handleEditOrder, effectiveDetailBase, {
           showSourceBadge: dataSource === "adminCombined",
           showPlacedBy: isSupplierOrdersPage,
+          showProductOwner: isClientOrdersPage,
         }),
-      [handleEditOrder, effectiveDetailBase, dataSource, isSupplierOrdersPage],
+      [handleEditOrder, effectiveDetailBase, dataSource, isSupplierOrdersPage, isClientOrdersPage],
     );
 
     // Determine loading state - FIXES HYDRATION & FLICKER (same approach as StatisticsSection)

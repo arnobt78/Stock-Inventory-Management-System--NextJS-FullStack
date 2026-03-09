@@ -81,11 +81,43 @@ export async function GET(request: NextRequest) {
         : [];
     const userMap = new Map(users.map((u) => [u.id, u]));
 
+    // For client role, resolve product owner from order items
+    let orderProductOwnerMap = new Map<string, { name: string | null; email: string }>();
+    if (isClient && orders.length > 0) {
+      const allProductIds = [
+        ...new Set(orders.flatMap((o) => o.items.map((item) => item.productId))),
+      ];
+      const products = allProductIds.length > 0
+        ? await prisma.product.findMany({
+            where: { id: { in: allProductIds } },
+            select: { id: true, userId: true },
+          })
+        : [];
+      const productOwnerIdMap = new Map(products.map((p) => [p.id, p.userId]));
+      const ownerIds = [...new Set(products.map((p) => p.userId))];
+      const ownerUsers = ownerIds.length > 0
+        ? await prisma.user.findMany({
+            where: { id: { in: ownerIds } },
+            select: { id: true, name: true, email: true },
+          })
+        : [];
+      const ownerUserMap = new Map(ownerUsers.map((u) => [u.id, u]));
+      for (const order of orders) {
+        const firstProductId = order.items[0]?.productId;
+        const ownerId = firstProductId ? productOwnerIdMap.get(firstProductId) : undefined;
+        const owner = ownerId ? ownerUserMap.get(ownerId) : undefined;
+        if (owner) {
+          orderProductOwnerMap.set(order.id, { name: owner.name, email: owner.email });
+        }
+      }
+    }
+
     // Transform orders for response
     const transformedOrders = orders.map((order) => {
       const u = userMap.get(order.userId);
       const placedByName = u?.name ?? u?.email ?? null;
       const placedByEmail = u?.email ?? null;
+      const po = isClient ? orderProductOwnerMap.get(order.id) : undefined;
       return {
       id: order.id,
       orderNumber: order.orderNumber,
@@ -126,6 +158,7 @@ export async function GET(request: NextRequest) {
       })),
       placedByName,
       placedByEmail,
+      ...(po ? { productOwnerName: po.name ?? po.email, productOwnerEmail: po.email } : {}),
     };
     });
 

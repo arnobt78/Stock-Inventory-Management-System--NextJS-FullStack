@@ -57,6 +57,10 @@ export type OrderForPage = {
   placedByName?: string | null;
   /** Placer email from User */
   placedByEmail?: string | null;
+  /** Product owner name (for client view) */
+  productOwnerName?: string | null;
+  /** Product owner email (for client view) */
+  productOwnerEmail?: string | null;
 };
 
 /**
@@ -284,43 +288,70 @@ export async function getOrdersForClientId(
 
   const orders = await getOrdersByClientId(clientId);
 
-  const transformed: OrderForPage[] = orders.map((order) => ({
-    id: order.id,
-    orderNumber: order.orderNumber,
-    userId: order.userId,
-    clientId: order.clientId ?? null,
-    status: order.status,
-    paymentStatus: order.paymentStatus,
-    subtotal: order.subtotal,
-    tax: order.tax ?? null,
-    shipping: order.shipping ?? null,
-    discount: order.discount ?? null,
-    total: order.total,
-    shippingAddress: order.shippingAddress,
-    billingAddress: order.billingAddress,
-    notes: order.notes,
-    trackingNumber: order.trackingNumber,
-    trackingUrl: order.trackingUrl,
-    estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
-    shippedAt: order.shippedAt?.toISOString() || null,
-    deliveredAt: order.deliveredAt?.toISOString() || null,
-    cancelledAt: order.cancelledAt?.toISOString() || null,
-    createdAt: order.createdAt.toISOString(),
-    updatedAt: order.updatedAt?.toISOString() || null,
-    createdBy: order.createdBy,
-    updatedBy: order.updatedBy,
-    items: order.items.map((item) => ({
-      id: item.id,
-      orderId: item.orderId,
-      productId: item.productId,
-      productName: item.productName,
-      sku: item.sku ?? null,
-      quantity: item.quantity,
-      price: item.price,
-      subtotal: item.subtotal,
-      createdAt: item.createdAt.toISOString(),
-    })),
-  }));
+  // Resolve product owners for each order
+  const allProductIds = [
+    ...new Set(orders.flatMap((o) => o.items.map((item) => item.productId))),
+  ];
+  const products = allProductIds.length > 0
+    ? await prisma.product.findMany({
+        where: { id: { in: allProductIds } },
+        select: { id: true, userId: true },
+      })
+    : [];
+  const productOwnerIdMap = new Map(products.map((p) => [p.id, p.userId]));
+  const ownerIds = [...new Set(products.map((p) => p.userId))];
+  const ownerUsers = ownerIds.length > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: ownerIds } },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+  const ownerUserMap = new Map(ownerUsers.map((u) => [u.id, u]));
+
+  const transformed: OrderForPage[] = orders.map((order) => {
+    const firstProductId = order.items[0]?.productId;
+    const ownerId = firstProductId ? productOwnerIdMap.get(firstProductId) : undefined;
+    const owner = ownerId ? ownerUserMap.get(ownerId) : undefined;
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      userId: order.userId,
+      clientId: order.clientId ?? null,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      subtotal: order.subtotal,
+      tax: order.tax ?? null,
+      shipping: order.shipping ?? null,
+      discount: order.discount ?? null,
+      total: order.total,
+      shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress,
+      notes: order.notes,
+      trackingNumber: order.trackingNumber,
+      trackingUrl: order.trackingUrl,
+      estimatedDelivery: order.estimatedDelivery?.toISOString() || null,
+      shippedAt: order.shippedAt?.toISOString() || null,
+      deliveredAt: order.deliveredAt?.toISOString() || null,
+      cancelledAt: order.cancelledAt?.toISOString() || null,
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt?.toISOString() || null,
+      createdBy: order.createdBy,
+      updatedBy: order.updatedBy,
+      items: order.items.map((item) => ({
+        id: item.id,
+        orderId: item.orderId,
+        productId: item.productId,
+        productName: item.productName,
+        sku: item.sku ?? null,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+        createdAt: item.createdAt.toISOString(),
+      })),
+      productOwnerName: owner?.name ?? owner?.email ?? null,
+      productOwnerEmail: owner?.email ?? null,
+    };
+  });
 
   await setCache(cacheKey, transformed, 300);
   return transformed;

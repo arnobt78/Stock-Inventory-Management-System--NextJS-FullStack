@@ -96,6 +96,10 @@ export interface Order {
   placedByName?: string | null;
   /** Placer email from User (for detail page when shipping has no email) */
   placedByEmail?: string | null;
+  /** Product owner name (for client view — who owns the products) */
+  productOwnerName?: string | null;
+  /** Product owner email (for client view) */
+  productOwnerEmail?: string | null;
   /** Product owner(s) for items in this order (for Parties section) */
   orderProductOwners?: { userId: string; name: string | null; email: string }[];
   /** Linked invoice when order has an invoice (for admin detail link) */

@@ -155,6 +155,8 @@ type CreateOrderColumnsOptions = {
   showSourceBadge?: boolean;
   /** When true, show placedByName / placedByEmail under Order # (e.g. supplier view) */
   showPlacedBy?: boolean;
+  /** When true, show productOwnerName / productOwnerEmail under Order # (e.g. client view) */
+  showProductOwner?: boolean;
 };
 
 /**
@@ -178,6 +180,7 @@ export const createOrderColumns = (
         : `/orders/${order.id}`;
       const showBadge = options?.showSourceBadge && order._source != null;
       const showPlacedBy = options?.showPlacedBy && (order.placedByName || order.placedByEmail);
+      const showProductOwner = options?.showProductOwner && (order.productOwnerName || order.productOwnerEmail);
       return (
         <div className="flex flex-col gap-0.5">
           <Link
@@ -207,6 +210,11 @@ export const createOrderColumns = (
           {showPlacedBy && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {order.placedByName}{order.placedByEmail ? ` (${order.placedByEmail})` : ""}
+            </span>
+          )}
+          {showProductOwner && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {order.productOwnerName}{order.productOwnerEmail ? ` (${order.productOwnerEmail})` : ""}
             </span>
           )}
         </div>
