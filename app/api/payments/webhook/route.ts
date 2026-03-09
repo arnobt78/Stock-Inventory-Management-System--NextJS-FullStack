@@ -194,20 +194,49 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       },
     });
 
-    // Also update the related order if exists
+    // Also update the related order: mark paid AND confirm (same as order checkout flow)
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceIdToUpdate },
       select: { orderId: true },
     });
 
     if (invoice?.orderId) {
-      await prisma.order.update({
+      const order = await prisma.order.findUnique({
         where: { id: invoice.orderId },
-        data: {
-          paymentStatus: "paid",
-          updatedAt: new Date(),
-        },
+        include: { items: true },
       });
+
+      if (order && order.paymentStatus !== "paid") {
+        await prisma.order.update({
+          where: { id: invoice.orderId },
+          data: {
+            paymentStatus: "paid",
+            status: order.status === "pending" ? "confirmed" : order.status,
+            updatedAt: new Date(),
+          },
+        });
+
+        // Deduct stock and release reservation for pending orders (same as order checkout)
+        if (order.status === "pending") {
+          for (const item of order.items) {
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: {
+                quantity: { decrement: item.quantity },
+                reservedQuantity: { decrement: item.quantity },
+              },
+            });
+          }
+        }
+      } else if (order && order.paymentStatus === "paid" && order.status === "pending") {
+        await prisma.order.update({
+          where: { id: invoice.orderId },
+          data: {
+            status: "confirmed",
+            updatedAt: new Date(),
+          },
+        });
+      }
     }
 
     // Global invalidation: invoice payment updates order, affects all related caches

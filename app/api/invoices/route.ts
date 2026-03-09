@@ -112,9 +112,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // For admin/user role, resolve the client name/email for each invoice
+    let clientMap = new Map<string, { name: string | null; email: string }>();
+    if (!isClient && invoices.length > 0) {
+      const clientIds = [...new Set(invoices.map((inv) => inv.clientId).filter(Boolean))] as string[];
+      if (clientIds.length > 0) {
+        const clients = await prisma.user.findMany({
+          where: { id: { in: clientIds } },
+          select: { id: true, name: true, email: true },
+        });
+        clientMap = new Map(clients.map((c) => [c.id, { name: c.name, email: c.email }]));
+      }
+    }
+
     // Transform invoices for response (convert Dates to ISO strings)
     const transformedInvoices = invoices.map((invoice) => {
       const issuer = isClient ? issuerMap.get(invoice.id) : undefined;
+      const clientInfo = !isClient && invoice.clientId ? clientMap.get(invoice.clientId) : undefined;
       return {
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
@@ -142,6 +156,7 @@ export async function GET(request: NextRequest) {
         createdBy: invoice.createdBy,
         updatedBy: invoice.updatedBy,
         ...(issuer ? { issuedByName: issuer.name ?? issuer.email, issuedByEmail: issuer.email } : {}),
+        ...(clientInfo ? { clientName: clientInfo.name ?? clientInfo.email, clientEmail: clientInfo.email } : {}),
       };
     });
 

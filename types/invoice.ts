@@ -45,6 +45,10 @@ export interface Invoice {
   updatedBy?: string | null;
   /** Client/customer display name (for admin combined list; from order) */
   customerDisplay?: string | null;
+  /** Client name the invoice is billed to (for admin personal invoices) */
+  clientName?: string | null;
+  /** Client email the invoice is billed to (for admin personal invoices) */
+  clientEmail?: string | null;
   /** Invoice issuer/creator name (for client list table) */
   issuedByName?: string | null;
   /** Invoice issuer/creator email (for client list table) */

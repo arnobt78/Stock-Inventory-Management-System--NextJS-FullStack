@@ -95,15 +95,18 @@ const InvoiceList = React.memo(
       useState<InvoiceSourceFilterValue>("both");
 
     const mergedInvoicesForAdmin = useMemo((): InvoiceWithSource[] => {
-      if (dataSource !== "adminCombined") return [];
+      if (dataSource !== "adminCombined" || !user) return [];
       const personal = invoicesQueryDefault.data ?? [];
       const client = invoicesQueryClient.data ?? [];
       const byId = new Map<string, InvoiceWithSource>();
       personal.forEach((inv) => {
+        const isSelf = !inv.clientId || inv.clientId === user.id;
         byId.set(inv.id, {
           ...inv,
-          _source: "personal",
-          _displayName: user?.name ?? "You",
+          _source: isSelf ? "personal" : "client",
+          _displayName: isSelf
+            ? (user.name ?? "You")
+            : (inv.clientName ?? inv.clientEmail ?? "Client"),
         });
       });
       client.forEach((inv) => {
@@ -111,14 +114,14 @@ const InvoiceList = React.memo(
           byId.set(inv.id, {
             ...inv,
             _source: "client",
-            _displayName: inv.customerDisplay ?? "Client",
+            _displayName: inv.customerDisplay ?? inv.clientName ?? "Client",
           });
         }
       });
       return Array.from(byId.values());
     }, [
       dataSource,
-      user?.name,
+      user,
       invoicesQueryDefault.data,
       invoicesQueryClient.data,
     ]);

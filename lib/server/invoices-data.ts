@@ -38,6 +38,10 @@ export type InvoiceForPage = {
   updatedBy: string | null;
   /** Client/customer display name (for admin list; from order shipping or placer) */
   customerDisplay?: string | null;
+  /** Client name the invoice is billed to (for admin personal invoices) */
+  clientName?: string | null;
+  /** Client email the invoice is billed to (for admin personal invoices) */
+  clientEmail?: string | null;
   /** Invoice creator/issuer name (for client list — who issued the invoice) */
   issuedByName?: string | null;
   /** Invoice creator/issuer email */
@@ -60,33 +64,48 @@ export async function getInvoicesForUser(
 
   const invoices = await getInvoicesByUser(userId, undefined);
 
-  const transformed: InvoiceForPage[] = invoices.map((invoice) => ({
-    id: invoice.id,
-    invoiceNumber: invoice.invoiceNumber,
-    orderId: invoice.orderId,
-    userId: invoice.userId,
-    clientId: invoice.clientId ?? null,
-    status: invoice.status,
-    subtotal: invoice.subtotal,
-    tax: invoice.tax ?? null,
-    shipping: invoice.shipping ?? null,
-    discount: invoice.discount ?? null,
-    total: invoice.total,
-    amountPaid: invoice.amountPaid,
-    amountDue: invoice.amountDue,
-    dueDate: invoice.dueDate.toISOString(),
-    issuedAt: invoice.issuedAt.toISOString(),
-    sentAt: invoice.sentAt?.toISOString() || null,
-    paidAt: invoice.paidAt?.toISOString() || null,
-    cancelledAt: invoice.cancelledAt?.toISOString() || null,
-    paymentLink: invoice.paymentLink,
-    notes: invoice.notes,
-    billingAddress: invoice.billingAddress,
-    createdAt: invoice.createdAt.toISOString(),
-    updatedAt: invoice.updatedAt?.toISOString() || null,
-    createdBy: invoice.createdBy,
-    updatedBy: invoice.updatedBy,
-  }));
+  // Resolve client names for admin display
+  const clientIds = [...new Set(invoices.map((inv) => inv.clientId).filter(Boolean))] as string[];
+  const clients = clientIds.length > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: clientIds } },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+  const clientMap = new Map(clients.map((c) => [c.id, { name: c.name, email: c.email }]));
+
+  const transformed: InvoiceForPage[] = invoices.map((invoice) => {
+    const clientInfo = invoice.clientId ? clientMap.get(invoice.clientId) : undefined;
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      orderId: invoice.orderId,
+      userId: invoice.userId,
+      clientId: invoice.clientId ?? null,
+      status: invoice.status,
+      subtotal: invoice.subtotal,
+      tax: invoice.tax ?? null,
+      shipping: invoice.shipping ?? null,
+      discount: invoice.discount ?? null,
+      total: invoice.total,
+      amountPaid: invoice.amountPaid,
+      amountDue: invoice.amountDue,
+      dueDate: invoice.dueDate.toISOString(),
+      issuedAt: invoice.issuedAt.toISOString(),
+      sentAt: invoice.sentAt?.toISOString() || null,
+      paidAt: invoice.paidAt?.toISOString() || null,
+      cancelledAt: invoice.cancelledAt?.toISOString() || null,
+      paymentLink: invoice.paymentLink,
+      notes: invoice.notes,
+      billingAddress: invoice.billingAddress,
+      createdAt: invoice.createdAt.toISOString(),
+      updatedAt: invoice.updatedAt?.toISOString() || null,
+      createdBy: invoice.createdBy,
+      updatedBy: invoice.updatedBy,
+      clientName: clientInfo?.name ?? clientInfo?.email ?? null,
+      clientEmail: clientInfo?.email ?? null,
+    };
+  });
 
   await setCache(cacheKey, transformed, 300);
   return transformed;

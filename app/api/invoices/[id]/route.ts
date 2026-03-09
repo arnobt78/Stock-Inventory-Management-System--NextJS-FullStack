@@ -253,6 +253,40 @@ export async function PUT(
     // Update invoice
     const invoice = await updateInvoice(id, updateData, ownerUserId);
 
+    // When invoice is marked as paid, also confirm the associated order + deduct stock
+    if (invoice.status === "paid" && invoice.orderId) {
+      const linkedOrder = await prisma.order.findUnique({
+        where: { id: invoice.orderId },
+        include: { items: true },
+      });
+      if (linkedOrder && linkedOrder.paymentStatus !== "paid") {
+        await prisma.order.update({
+          where: { id: invoice.orderId },
+          data: {
+            paymentStatus: "paid",
+            status: linkedOrder.status === "pending" ? "confirmed" : linkedOrder.status,
+            updatedAt: new Date(),
+          },
+        });
+        if (linkedOrder.status === "pending") {
+          for (const item of linkedOrder.items) {
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: {
+                quantity: { decrement: item.quantity },
+                reservedQuantity: { decrement: item.quantity },
+              },
+            });
+          }
+        }
+      } else if (linkedOrder && linkedOrder.paymentStatus === "paid" && linkedOrder.status === "pending") {
+        await prisma.order.update({
+          where: { id: invoice.orderId },
+          data: { status: "confirmed", updatedAt: new Date() },
+        });
+      }
+    }
+
     createAuditLog({
       userId,
       action: "update",
