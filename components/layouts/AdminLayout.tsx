@@ -13,8 +13,11 @@ import { PageContentWrapper } from "@/components/shared";
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <Navbar>
-      <PageWithSidebar sidebarContent={<AdminSidebar />}>
-        <div className="min-w-0 flex-1">{children}</div>
+      <PageWithSidebar
+        sidebarContent={<AdminSidebar />}
+        sidebarCollapsed={<AdminSidebar collapsed />}
+      >
+        <div className="min-w-0 flex-1 px-1 sm:px-0">{children}</div>
       </PageWithSidebar>
     </Navbar>
   );

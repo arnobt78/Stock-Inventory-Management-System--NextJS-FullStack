@@ -269,9 +269,9 @@ export function ForecastingCard({ products, className }: ForecastingCardProps) {
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 sm:p-5 pb-3">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Target className="h-5 w-5" />
+      <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <Target className="h-4 w-4 sm:h-5 sm:w-5" />
           Demand Forecasting & Insights
         </h3>
       </div>
@@ -403,7 +403,7 @@ export function ForecastingCard({ products, className }: ForecastingCardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button
             variant="outline"
             className="flex-1 rounded-xl border-emerald-400/30 bg-gradient-to-r from-emerald-500/10 to-transparent hover:from-emerald-500/20 hover:border-emerald-300/50"

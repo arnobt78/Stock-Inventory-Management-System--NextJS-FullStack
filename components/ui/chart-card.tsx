@@ -131,9 +131,9 @@ export function ChartCard({
         className,
       )}
     >
-      <div className="flex flex-row items-center justify-between p-4 sm:p-5 pb-3">
+      <div className="flex flex-row items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             {title}
           </h3>
           {description && (

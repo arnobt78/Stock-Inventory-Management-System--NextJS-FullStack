@@ -253,14 +253,14 @@ export default function FiltersAndActions({
     <div className="flex flex-col gap-4">
       {/* Row 1: Select Product Owner (when client) - centered */}
       {productOwnerOptions && onOwnerChange && (
-        <div className="flex items-center justify-center gap-3 w-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 w-full">
           <span className="text-sm font-medium text-gray-700 dark:text-white/80 flex items-center gap-2">
             <Users className="h-4 w-4 text-gray-600 dark:text-white/60 flex-shrink-0" />
             Select Product Owner
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className={exportButtonClass}>
+              <Button variant="outline" className={exportButtonClass + " w-full sm:w-auto"}>
                 {selectedOwnerId
                   ? productOwnerOptions.find((a) => a.id === selectedOwnerId)?.name ?? "Product Owner"
                   : "Product Owner"}
@@ -288,7 +288,7 @@ export default function FiltersAndActions({
       {/* Row 2: Left: Suppliers, Categories | Center: Search | Right: Status, Export */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 flex-wrap w-full">
         {/* Left */}
-        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 order-2 sm:order-1 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 flex-shrink-0 order-2 sm:order-1 w-full sm:w-auto">
           <SuppliersDropDown
             selectedSuppliers={selectedSuppliers}
             setSelectedSuppliers={setSelectedSuppliers}
@@ -325,7 +325,7 @@ export default function FiltersAndActions({
         </div>
 
         {/* Right */}
-        <div className="flex items-center gap-2 flex-shrink-0 order-3 w-full sm:w-auto flex-wrap">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0 order-3 w-full sm:w-auto sm:flex-wrap">
           <StatusDropDown
             selectedStatuses={selectedStatuses}
             setSelectedStatuses={setSelectedStatuses}
@@ -333,7 +333,7 @@ export default function FiltersAndActions({
           {!hideImport && <ProductImportDialog />}
           <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className={exportButtonClass}>
+                <Button variant="outline" className={exportButtonClass + " w-full sm:w-auto"}>
                   <Download className="h-4 w-4" />
                   Export Products
                   <ChevronDown className="h-4 w-4" />

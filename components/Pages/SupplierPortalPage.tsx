@@ -87,7 +87,7 @@ export default function SupplierPortalPage() {
         <PageContentWrapper>
           <div className="space-y-6">
             <Skeleton className="h-12 w-64 rounded-md" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <StatisticsCardSkeleton key={i} />
               ))}
@@ -106,7 +106,7 @@ export default function SupplierPortalPage() {
         <PageContentWrapper>
           <div className="space-y-6">
             <Skeleton className="h-12 w-64 rounded-md" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <StatisticsCardSkeleton key={i} />
               ))}
@@ -153,16 +153,16 @@ export default function SupplierPortalPage() {
       <PageContentWrapper>
         <div className="space-y-6">
           <div className="">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
               Supplier Portal
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Welcome, {dashboard.supplierName}
             </p>
           </div>
 
           {/* Summary Cards — supplier's products/orders/revenue only */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <StatisticsCard
               title="Total Products"
               value={dashboard.totalProducts}
@@ -259,31 +259,40 @@ export default function SupplierPortalPage() {
               badges={[
                 {
                   label: "Paid",
-                  value: `$${(dashboard.revenueBreakdown?.paid ?? dashboard.paidRevenue).toLocaleString(
-                    undefined,
-                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                  )}`,
+                  value: `$${(
+                    dashboard.revenueBreakdown?.paid ?? dashboard.paidRevenue
+                  ).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`,
                 },
                 {
                   label: "Due",
-                  value: `$${(dashboard.revenueBreakdown?.due ?? 0).toLocaleString(
-                    undefined,
-                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                  )}`,
+                  value: `$${(
+                    dashboard.revenueBreakdown?.due ?? 0
+                  ).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`,
                 },
                 {
                   label: "Refund",
-                  value: `$${(dashboard.revenueBreakdown?.refund ?? 0).toLocaleString(
-                    undefined,
-                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                  )}`,
+                  value: `$${(
+                    dashboard.revenueBreakdown?.refund ?? 0
+                  ).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`,
                 },
                 {
                   label: "Pending",
-                  value: `$${(dashboard.revenueBreakdown?.pending ?? dashboard.unpaidRevenue).toLocaleString(
-                    undefined,
-                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                  )}`,
+                  value: `$${(
+                    dashboard.revenueBreakdown?.pending ??
+                    dashboard.unpaidRevenue
+                  ).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`,
                 },
                 ...(dashboard.totalOrders > 0
                   ? [

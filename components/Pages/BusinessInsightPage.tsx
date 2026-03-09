@@ -795,8 +795,15 @@ export default function BusinessInsightPage({
             onValueChange={setInsightsTab}
           />
         }
+        sidebarCollapsed={
+          <BusinessInsightsSidebar
+            value={insightsTab}
+            onValueChange={setInsightsTab}
+            collapsed
+          />
+        }
       >
-        <PageContentWrapper>
+        <PageContentWrapper className="px-1 sm:px-0">
           {/* Header */}
           <div className="pb-6 flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex flex-col">
@@ -830,11 +837,11 @@ export default function BusinessInsightPage({
                     Filter by Date:
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 flex-1">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 flex-1">
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="start-date"
-                      className="text-sm text-gray-600 dark:text-white/60 whitespace-nowrap"
+                      className="text-sm text-gray-600 dark:text-white/60 whitespace-nowrap w-10 sm:w-auto"
                     >
                       From:
                     </label>
@@ -848,14 +855,14 @@ export default function BusinessInsightPage({
                           startDate: e.target.value,
                         }))
                       }
-                      className="px-3 py-2 text-sm rounded-xl border border-gray-300/30 bg-white/50 dark:bg-white/5 dark:border-white/10 text-gray-900 dark:text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-violet-400/50 focus:border-transparent transition"
+                      className="flex-1 sm:flex-none px-3 py-2 text-sm rounded-xl border border-gray-300/30 bg-white/50 dark:bg-white/5 dark:border-white/10 text-gray-900 dark:text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-violet-400/50 focus:border-transparent transition"
                       max={dateRange.endDate || undefined}
                     />
                   </div>
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="end-date"
-                      className="text-sm text-gray-600 dark:text-white/60 whitespace-nowrap"
+                      className="text-sm text-gray-600 dark:text-white/60 whitespace-nowrap w-10 sm:w-auto"
                     >
                       To:
                     </label>
@@ -869,7 +876,7 @@ export default function BusinessInsightPage({
                           endDate: e.target.value,
                         }))
                       }
-                      className="px-3 py-2 text-sm rounded-xl border border-gray-300/30 bg-white/50 dark:bg-white/5 dark:border-white/10 text-gray-900 dark:text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-violet-400/50 focus:border-transparent transition"
+                      className="flex-1 sm:flex-none px-3 py-2 text-sm rounded-xl border border-gray-300/30 bg-white/50 dark:bg-white/5 dark:border-white/10 text-gray-900 dark:text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-violet-400/50 focus:border-transparent transition"
                       min={dateRange.startDate || undefined}
                     />
                   </div>
@@ -955,7 +962,7 @@ export default function BusinessInsightPage({
               </>
             ) : (
               <Tabs value={insightsTab} onValueChange={setInsightsTab}>
-                <TabsList className="grid w-full grid-cols-4 mb-4">
+                <TabsList className="hidden sm:grid w-full grid-cols-4 mb-4">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="distribution">Distribution</TabsTrigger>
                   <TabsTrigger value="trends">Trends</TabsTrigger>
@@ -963,7 +970,7 @@ export default function BusinessInsightPage({
                 </TabsList>
 
                 <TabsContent value="overview">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm sm:text-base">
                     {showSkeleton ? (
                       // Show skeleton loading while data is fetching - matches ChartCard dimensions
                       <>
@@ -985,10 +992,26 @@ export default function BusinessInsightPage({
                                 cx="50%"
                                 cy="50%"
                                 labelLine={false}
-                                label={({ name, percent }) =>
-                                  `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                                }
-                                outerRadius={80}
+                                label={({
+                                  name,
+                                  percent,
+                                  x,
+                                  y,
+                                  textAnchor,
+                                  index,
+                                }) => (
+                                  <text
+                                    x={x}
+                                    y={y}
+                                    textAnchor={textAnchor}
+                                    dominantBaseline="central"
+                                    className="text-xs sm:text-sm"
+                                    fill={COLORS[(index ?? 0) % COLORS.length]}
+                                  >
+                                    {`${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                                  </text>
+                                )}
+                                outerRadius="100%"
                                 fill="#8884d8"
                                 dataKey="value"
                               >
@@ -1032,7 +1055,7 @@ export default function BusinessInsightPage({
                   </div>
                   {/* Sales / Order value trend — only when orders exist */}
                   {!showSkeleton && allOrders.length > 0 && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4 text-sm sm:text-base">
                       <ChartCard
                         title="Sales / Order Value Trend"
                         icon={DollarSign}
@@ -1080,7 +1103,7 @@ export default function BusinessInsightPage({
                 </TabsContent>
 
                 <TabsContent value="distribution">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm sm:text-base">
                     {/* Status Distribution */}
                     <ChartCard
                       title="Status Distribution"
@@ -1172,7 +1195,7 @@ export default function BusinessInsightPage({
                 </TabsContent>
 
                 <TabsContent value="trends">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm sm:text-base">
                     {/* Top Products by Value */}
                     <ChartCard
                       title="Top Products by Value"
@@ -1234,7 +1257,7 @@ export default function BusinessInsightPage({
                   >
                     <div>
                       {analyticsData.lowStockProducts.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4 text-sm sm:text-base">
                           {analyticsData.lowStockProducts.map(
                             (product, index) => (
                               <div
@@ -1284,7 +1307,7 @@ export default function BusinessInsightPage({
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-100/50 dark:border-white/15 dark:bg-white/10">
                   <Eye className="h-4 w-4 text-gray-900 dark:text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                   Quick Insights
                 </h3>
               </div>
@@ -1322,7 +1345,7 @@ export default function BusinessInsightPage({
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-300/30 bg-emerald-100/50 dark:border-white/15 dark:bg-white/10">
                   <Users className="h-4 w-4 text-gray-900 dark:text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                   Performance
                 </h3>
               </div>
@@ -1347,7 +1370,7 @@ export default function BusinessInsightPage({
                   <span className="text-sm text-gray-600 dark:text-white/70">
                     Stock Coverage
                   </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                  <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
                     {analyticsData.stockCoverage.toFixed(1)} units avg
                   </span>
                 </div>
@@ -1355,7 +1378,7 @@ export default function BusinessInsightPage({
                   <span className="text-sm text-gray-600 dark:text-white/70">
                     Value Density
                   </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                  <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
                     ${analyticsData.valueDensity.toFixed(2)} per product
                   </span>
                 </div>
@@ -1368,7 +1391,7 @@ export default function BusinessInsightPage({
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-300/30 bg-violet-100/50 dark:border-white/15 dark:bg-white/10">
                   <QrCode className="h-4 w-4 text-gray-900 dark:text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                   Quick QR Code
                 </h3>
               </div>
@@ -1386,7 +1409,7 @@ export default function BusinessInsightPage({
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-100/50 dark:border-white/15 dark:bg-white/10">
                   <Sparkles className="h-4 w-4 text-gray-900 dark:text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                   AI Insights
                 </h3>
               </div>

@@ -242,13 +242,13 @@ export default function EmailPreferencesPage({
                     return (
                       <div
                         key={item.key}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                        className="flex items-center justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
                       >
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="mt-1">
+                        <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                          <div className="mt-0.5 shrink-0">
                             <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <Label
                               htmlFor={item.key}
                               className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white cursor-pointer"
@@ -265,7 +265,7 @@ export default function EmailPreferencesPage({
                           checked={isEnabled}
                           onCheckedChange={() => handleToggle(item.key)}
                           disabled={updateMutation.isPending}
-                          className="ml-4"
+                          className="shrink-0"
                         />
                       </div>
                     );
@@ -275,7 +275,7 @@ export default function EmailPreferencesPage({
 
               {/* Action Buttons */}
               {!showSkeleton && localPreferences && (
-                <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 mt-6 pt-6 border-t">
                   <Button
                     variant="outline"
                     onClick={handleReset}

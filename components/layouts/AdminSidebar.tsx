@@ -126,7 +126,7 @@ const MY_ACTIVITY_ITEMS: NavItem[] = [
   },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ collapsed = false }: { collapsed?: boolean } = {}) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { data: counts } = useAdminCounts();
@@ -139,7 +139,8 @@ export default function AdminSidebar() {
   const linkClass = (href: string, isSub = false) =>
     cn(
       "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-      isSub ? "pl-8" : "",
+      isSub && !collapsed ? "pl-8" : "",
+      collapsed ? "justify-center px-0 w-9 h-9 mx-auto" : "",
       pathname === href || (href !== "/admin" && pathname.startsWith(href))
         ? "bg-sky-500/15 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300"
         : "hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300",
@@ -160,10 +161,11 @@ export default function AdminSidebar() {
           key={item.href}
           href={item.href}
           className={linkClass(item.href, isSub)}
+          title={collapsed ? item.label : undefined}
         >
           <Icon className="h-4 w-4 flex-shrink-0" />
-          <span className="min-w-0 flex-1 truncate">{item.label}</span>
-          {showBadge && (
+          {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+          {!collapsed && showBadge && (
             <span
               className={cn(
                 "flex-shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium",
@@ -177,6 +179,26 @@ export default function AdminSidebar() {
         </Link>
       );
     });
+
+  if (collapsed) {
+    return (
+      <nav className="flex min-h-0 flex-col items-center py-3 gap-1" aria-label="Admin navigation">
+        {renderNavItems(MY_STORE_ITEMS)}
+        <div className="w-6 border-t border-gray-200/50 dark:border-white/10 my-1" />
+        {renderNavItems(MANAGEMENT_ITEMS)}
+        <div className="w-6 border-t border-gray-200/50 dark:border-white/10 my-1" />
+        {renderNavItems(MY_ACTIVITY_ITEMS)}
+        <div className="w-6 border-t border-gray-200/50 dark:border-white/10 my-1" />
+        <Link
+          href="/admin/settings/email-preferences"
+          className={linkClass("/admin/settings/email-preferences", true)}
+          title="Email Preferences"
+        >
+          <Mail className="h-4 w-4 flex-shrink-0" />
+        </Link>
+      </nav>
+    );
+  }
 
   return (
     <nav className="flex min-h-0 flex-col p-2 gap-1">

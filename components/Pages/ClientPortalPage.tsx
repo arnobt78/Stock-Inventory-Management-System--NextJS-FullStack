@@ -87,19 +87,27 @@ function ProductStatusBadge({ status }: { status: string }) {
 
 /** Order status badge colors — match admin/OrderTableColumns (soft bg + text) */
 const ORDER_STATUS_STYLE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300/30",
-  confirmed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300/30",
-  processing: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-300/30",
-  shipped: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-300/30",
-  delivered: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-300/30",
-  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-300/30",
+  pending:
+    "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300/30",
+  confirmed:
+    "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300/30",
+  processing:
+    "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-300/30",
+  shipped:
+    "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-300/30",
+  delivered:
+    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-300/30",
+  cancelled:
+    "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-300/30",
 };
 
 /**
  * Get order status badge variant (matches admin order table colors)
  */
 function getOrderStatusBadge(status: string) {
-  const style = ORDER_STATUS_STYLE[status] ?? "bg-muted text-muted-foreground border-border";
+  const style =
+    ORDER_STATUS_STYLE[status] ??
+    "bg-muted text-muted-foreground border-border";
   return (
     <Badge variant="outline" className={style}>
       {status ? status.charAt(0).toUpperCase() + status.slice(1) : "—"}
@@ -109,18 +117,23 @@ function getOrderStatusBadge(status: string) {
 
 /** Invoice status badge colors — match admin/InvoiceTableColumns */
 const INVOICE_STATUS_STYLE: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-300/30",
+  draft:
+    "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-300/30",
   sent: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300/30",
   paid: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-300/30",
-  overdue: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-300/30",
-  cancelled: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-300/30",
+  overdue:
+    "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-300/30",
+  cancelled:
+    "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-300/30",
 };
 
 /**
  * Get invoice status badge variant (matches admin invoice table colors)
  */
 function getInvoiceStatusBadge(status: string) {
-  const style = INVOICE_STATUS_STYLE[status] ?? "bg-muted text-muted-foreground border-border";
+  const style =
+    INVOICE_STATUS_STYLE[status] ??
+    "bg-muted text-muted-foreground border-border";
   return (
     <Badge variant="outline" className={style}>
       {status ? status.charAt(0).toUpperCase() + status.slice(1) : "—"}
@@ -144,7 +157,7 @@ export default function ClientPortalPage() {
         <PageContentWrapper>
           <div className="space-y-6">
             <Skeleton className="h-12 w-64" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <StatisticsCardSkeleton key={i} />
               ))}
@@ -189,16 +202,16 @@ export default function ClientPortalPage() {
       <PageContentWrapper>
         <div className="space-y-6">
           <div className="">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
               Client Portal
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Welcome, {dashboard.clientName}
             </p>
           </div>
 
           {/* Summary Cards — glassmorphic round-28px, same style as business-insights / homepage */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <StatisticsCard
               title="Total Orders"
               value={dashboard.totalOrders}
@@ -206,12 +219,18 @@ export default function ClientPortalPage() {
               icon={ShoppingCart}
               variant="sky"
               badges={[
-                { label: "Pending", value: dashboard.orderStatusCounts?.pending ?? 0 },
+                {
+                  label: "Pending",
+                  value: dashboard.orderStatusCounts?.pending ?? 0,
+                },
                 {
                   label: "In progress",
                   value: dashboard.orderStatusCounts?.inProgress ?? 0,
                 },
-                { label: "Shipped", value: dashboard.orderStatusCounts?.shipped ?? 0 },
+                {
+                  label: "Shipped",
+                  value: dashboard.orderStatusCounts?.shipped ?? 0,
+                },
                 {
                   label: "Delivered",
                   value: dashboard.orderStatusCounts?.delivered ?? 0,
@@ -256,35 +275,45 @@ export default function ClientPortalPage() {
               badges={[
                 {
                   label: "Paid",
-                  value: `$${(dashboard.paymentBreakdown?.paid ?? 0).toLocaleString(undefined, {
+                  value: `$${(
+                    dashboard.paymentBreakdown?.paid ?? 0
+                  ).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`,
                 },
                 {
                   label: "Due",
-                  value: `$${(dashboard.paymentBreakdown?.due ?? 0).toLocaleString(undefined, {
+                  value: `$${(
+                    dashboard.paymentBreakdown?.due ?? 0
+                  ).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`,
                 },
                 {
                   label: "Refund",
-                  value: `$${(dashboard.paymentBreakdown?.refund ?? 0).toLocaleString(undefined, {
+                  value: `$${(
+                    dashboard.paymentBreakdown?.refund ?? 0
+                  ).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`,
                 },
                 {
                   label: "Pending",
-                  value: `$${(dashboard.paymentBreakdown?.pending ?? 0).toLocaleString(undefined, {
+                  value: `$${(
+                    dashboard.paymentBreakdown?.pending ?? 0
+                  ).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`,
                 },
                 {
                   label: "Cancelled",
-                  value: `$${(dashboard.paymentBreakdown?.cancelled ?? 0).toLocaleString(undefined, {
+                  value: `$${(
+                    dashboard.paymentBreakdown?.cancelled ?? 0
+                  ).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`,
