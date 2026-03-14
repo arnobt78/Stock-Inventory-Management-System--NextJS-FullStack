@@ -147,9 +147,9 @@ export default function AdminMyActivityContent() {
     const supplierActive = suppliers.filter((s) => s.status === true).length;
     const supplierInactive = suppliers.filter((s) => s.status === false).length;
 
-    const warehouseActive = warehouses.filter((w) => w.status === true).length;
+    const warehouseActive = warehouses.filter((w) => w.isActive === true).length;
     const warehouseInactive = warehouses.filter(
-      (w) => w.status === false,
+      (w) => w.isActive === false,
     ).length;
 
     const invoicePaid = invoices.filter((i) => i.status === "paid").length;

@@ -8,9 +8,10 @@
 export interface Warehouse {
   id: string;
   name: string;
-  address?: string | null;
-  type?: string | null;
-  status: boolean;
+  code: string;
+  location?: string | null;
+  description?: string | null;
+  isActive: boolean;
   userId: string;
   createdAt: Date;
   updatedAt?: Date | null;
@@ -23,9 +24,10 @@ export interface Warehouse {
  */
 export interface CreateWarehouseInput {
   name: string;
-  address?: string | null;
-  type?: string | null;
-  status?: boolean;
+  code: string;
+  location?: string | null;
+  description?: string | null;
+  isActive?: boolean;
 }
 
 /**
@@ -34,7 +36,8 @@ export interface CreateWarehouseInput {
 export interface UpdateWarehouseInput {
   id: string;
   name: string;
-  address?: string | null;
-  type?: string | null;
-  status?: boolean;
+  code: string;
+  location?: string | null;
+  description?: string | null;
+  isActive?: boolean;
 }

@@ -86,43 +86,43 @@ export const createWarehouseColumns = (
     size: 15,
   },
   {
-    accessorKey: "address",
-    header: ({ column }) => <SortableHeader column={column} label="Address" />,
+    accessorKey: "code",
+    header: ({ column }) => <SortableHeader column={column} label="Code" />,
+    cell: ({ row }) => (
+      <span className="text-gray-900 dark:text-white font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+        {row.original.code || "-"}
+      </span>
+    ),
+    size: 15,
+  },
+  {
+    accessorKey: "location",
+    header: ({ column }) => <SortableHeader column={column} label="Location" />,
     cell: ({ row }) => (
       <span
         className="text-gray-900 dark:text-white"
-        title={row.original.address || undefined}
+        title={row.original.location || undefined}
       >
-        {truncateText(row.original.address, 40)}
+        {truncateText(row.original.location, 40)}
       </span>
     ),
     size: 25,
   },
   {
-    accessorKey: "type",
-    header: ({ column }) => <SortableHeader column={column} label="Type" />,
-    cell: ({ row }) => (
-      <span className="text-gray-900 dark:text-white">
-        {row.original.type || "-"}
-      </span>
-    ),
-    size: 12,
-  },
-  {
-    accessorKey: "status",
+    accessorKey: "isActive",
     header: ({ column }) => <SortableHeader column={column} label="Status" />,
     cell: ({ row }) => {
-      const status = row.original.status ?? true;
+      const isActive = row.original.isActive ?? true;
       return (
         <Badge
-          variant={status ? "default" : "secondary"}
+          variant={isActive ? "default" : "secondary"}
           className={
-            status
+            isActive
               ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
               : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
           }
         >
-          {status ? "Active" : "Inactive"}
+          {isActive ? "Active" : "Inactive"}
         </Badge>
       );
     },

@@ -139,6 +139,8 @@ model Product {
   imageFileId      String? // ImageKit file ID for cleanup when updating/deleting
   expirationDate   DateTime?   @db.Date // Product expiration date (optional, for perishable items)
   orderItems       OrderItem[] // Orders containing this product (one-to-many relationship)
+  stocks           Stock[]
+  movements        StockMovement[]
 }
 
 model Session {
@@ -151,12 +153,14 @@ model StockAlert {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
-model StockAllocation {
+model Stock {
   id               String    @id @default(auto()) @map("_id") @db.ObjectId
   productId        String    @db.ObjectId // Product this allocation is for
   warehouseId      String    @db.ObjectId // Warehouse where stock is located
-  quantity         BigInt    @default(0)  // Quantity in this warehouse
-  reservedQuantity BigInt    @default(0)  // Reserved stock in this warehouse
+  product          Product   @relation(fields: [productId], references: [id])
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id])
+  quantity         Int       @default(0)  // Quantity in this warehouse
+  reservedQuantity Int       @default(0)  // Reserved stock in this warehouse
   userId           String    @db.ObjectId // User who created this allocation
   createdAt        DateTime  @default(now()) @db.Date
   updatedAt        DateTime? @db.Date
@@ -187,15 +191,19 @@ model StockTransfer {
 
 model Warehouse {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  address     String?   // Optional address (e.g. full address or location name)
-  type        String?   // Optional type: main, secondary, storage, etc.
-  status      Boolean   @default(true) // Active/Inactive
+  name        String    @unique
+  code        String    @unique
+  location    String?   // Optional address (e.g. full address or location name)
+  description String?   // Optional description
+  isActive    Boolean   @default(true) // Active/Inactive
   userId      String    @db.ObjectId // Created by user ID
   createdAt   DateTime  @default(now()) @db.Date
   updatedAt   DateTime? @db.Date
   createdBy   String    @db.ObjectId
   updatedBy   String?   @db.ObjectId
+  stocks      Stock[]
+  sourceMovements      StockMovement[] @relation("SourceMovements")
+  destinationMovements StockMovement[] @relation("DestinationMovements")
 
   @@index([userId])
 }
@@ -375,3 +383,35 @@ model AuditLog {
   @@index([entityType])
   @@index([createdAt])
 }
+
+enum StockMovementType {
+  RECEIPT
+  DELIVERY
+  TRANSFER
+  ADJUSTMENT
+}
+
+// Stock Movement Ledger - for tracking every change in stock
+model StockMovement {
+  id                     String            @id @default(auto()) @map("_id") @db.ObjectId
+  productId              String            @db.ObjectId
+  movementType           StockMovementType
+  quantity               Int               // Positive for receipts/transfers-in, negative for deliveries/adjustments-down
+  sourceWarehouseId      String?           @db.ObjectId
+  destinationWarehouseId String?           @db.ObjectId
+  referenceType          String            // e.g., "Receipt", "Order", "Transfer", "Adjustment"
+  referenceId            String?           // ID of the reference document
+  notes                  String?
+  userId                 String            @db.ObjectId // User who performed the movement
+  createdAt              DateTime          @default(now()) @db.Date
+  
+  product                Product           @relation(fields: [productId], references: [id])
+  sourceWarehouse        Warehouse?        @relation("SourceMovements", fields: [sourceWarehouseId], references: [id])
+  destinationWarehouse   Warehouse?        @relation("DestinationMovements", fields: [destinationWarehouseId], references: [id])
+
+  @@index([productId])
+  @@index([sourceWarehouseId])
+  @@index([destinationWarehouseId])
+  @@index([createdAt])
+}
+

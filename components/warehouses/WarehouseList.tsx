@@ -41,52 +41,14 @@ export default function WarehouseList() {
   const isAdmin = pathname?.startsWith("/admin") ?? false;
   const dashboard = isAdmin ? (dashboardQuery.data ?? null) : null;
   /** Show store-wide state cards only on the user warehouses page (/warehouses), not admin or homepage */
-  const isUserWarehousesPage = pathname === "/warehouses";
+  const isUserWarehousesPage = pathname === "/settings/warehouses";
   const warehousesPageStats = isUserWarehousesPage
     ? (dashboardQuery.data ?? null)
     : null;
 
-  const warehouseTypeBadges = useMemo(() => {
-    const dist = dashboard?.warehouseAnalytics?.typeDistribution ?? [];
-    const typeMap = new Map(
-      dist.map((t) => [(t.type ?? "").toLowerCase().trim(), t.count]),
-    );
-    const knownTypes = ["main", "secondary", "storage", "hub", "store"];
-    const othersCount = [...typeMap.entries()].reduce(
-      (sum, [k, v]) => (knownTypes.includes(k) ? sum : sum + v),
-      0,
-    );
-    return [
-      { label: "Main", value: typeMap.get("main") ?? 0 },
-      { label: "Secondary", value: typeMap.get("secondary") ?? 0 },
-      { label: "Storage", value: typeMap.get("storage") ?? 0 },
-      { label: "Hub", value: typeMap.get("hub") ?? 0 },
-      { label: "Store", value: typeMap.get("store") ?? 0 },
-      { label: "Others", value: othersCount },
-    ];
-  }, [dashboard?.warehouseAnalytics?.typeDistribution]);
+  const warehouseTypeBadges: any[] = [];
 
-  /** Type badges for user /warehouses page cards (from dashboard stats) */
-  const warehousesPageTypeBadges = useMemo(() => {
-    const dist =
-      warehousesPageStats?.warehouseAnalytics?.typeDistribution ?? [];
-    const typeMap = new Map(
-      dist.map((t) => [(t.type ?? "").toLowerCase().trim(), t.count]),
-    );
-    const knownTypes = ["main", "secondary", "storage", "hub", "store"];
-    const othersCount = [...typeMap.entries()].reduce(
-      (sum, [k, v]) => (knownTypes.includes(k) ? sum : sum + v),
-      0,
-    );
-    return [
-      { label: "Main", value: typeMap.get("main") ?? 0 },
-      { label: "Secondary", value: typeMap.get("secondary") ?? 0 },
-      { label: "Storage", value: typeMap.get("storage") ?? 0 },
-      { label: "Hub", value: typeMap.get("hub") ?? 0 },
-      { label: "Store", value: typeMap.get("store") ?? 0 },
-      { label: "Others", value: othersCount },
-    ];
-  }, [warehousesPageStats?.warehouseAnalytics?.typeDistribution]);
+  const warehousesPageTypeBadges: any[] = [];
 
   useEffect(() => {
     if (!isMountedRef.current) {

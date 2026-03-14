@@ -218,7 +218,7 @@ export default function WarehouseDetailPage({
 
   const PageWrapper = embedInAdmin ? React.Fragment : Navbar;
 
-  const warehousesListHref = embedInAdmin ? "/admin/warehouses" : "/warehouses";
+  const warehousesListHref = embedInAdmin ? "/admin/warehouses" : "/settings/warehouses";
 
   const {
     data: warehouse,
@@ -403,7 +403,7 @@ export default function WarehouseDetailPage({
           </div>
 
           {/* Status Card */}
-          <GlassCard variant={warehouse.status ? "emerald" : "rose"}>
+          <GlassCard variant={warehouse.isActive ? "emerald" : "rose"}>
             <p className="text-xs uppercase tracking-[0.25em] text-gray-600 dark:text-white/60 mb-3">
               Warehouse Status
             </p>
@@ -411,10 +411,10 @@ export default function WarehouseDetailPage({
               variant="outline"
               className={cn(
                 "text-sm px-3 py-1.5 rounded-full flex items-center gap-2 w-fit font-medium",
-                getWarehouseStatusBadgeClasses(Boolean(warehouse.status)),
+                getWarehouseStatusBadgeClasses(Boolean(warehouse.isActive)),
               )}
             >
-              {warehouse.status ? (
+              {warehouse.isActive ? (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
                   Active
@@ -533,35 +533,29 @@ export default function WarehouseDetailPage({
                   </div>
                 </div>
 
-                {warehouse.address && (
+                {warehouse.location && (
                   <div className="flex items-start gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-teal-100/50 via-teal-50/30 to-transparent dark:from-teal-500/10 dark:via-teal-500/5 dark:to-transparent border border-teal-200/30 dark:border-teal-400/10">
                     <MapPin className="h-4 w-4 text-teal-500 dark:text-teal-400 mt-0.5 shrink-0" />
                     <div className="flex-1">
                       <span className="text-gray-600 dark:text-gray-400">
-                        Address:
+                        Location:
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white block mt-1">
-                        {warehouse.address}
+                        {warehouse.location}
                       </span>
                     </div>
                   </div>
                 )}
 
-                {warehouse.type && (
+                {warehouse.description && (
                   <div className="flex items-center gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-blue-100/50 via-blue-50/30 to-transparent dark:from-blue-500/10 dark:via-blue-500/5 dark:to-transparent border border-blue-200/30 dark:border-blue-400/10">
                     <Tag className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
                     <span className="text-gray-600 dark:text-gray-400">
-                      Type:
+                      Description:
                     </span>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "capitalize font-medium text-sm px-3 py-1 rounded-full",
-                        getWarehouseTypeBadgeClasses(warehouse.type),
-                      )}
-                    >
-                      {warehouse.type}
-                    </Badge>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {warehouse.description}
+                    </span>
                   </div>
                 )}
 

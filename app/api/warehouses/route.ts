@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const userId = session.id;
     const body = await request.json();
-    const { name, address, type, status } = body;
+    const { name, code, location, description, isActive } = body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
@@ -58,16 +58,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!code || typeof code !== "string" || code.trim() === "") {
+      return NextResponse.json(
+        { error: "Warehouse code is required" },
+        { status: 400 },
+      );
+    }
+
+    // Check for unique name or code
+    const existingWarehouse = await prisma.warehouse.findFirst({
+      where: {
+        OR: [{ name: name.trim() }, { code: code.trim() }]
+      }
+    });
+
+    if (existingWarehouse) {
+      return NextResponse.json(
+        { error: "Warehouse with this name or code already exists" },
+        { status: 400 },
+      );
+    }
+
     const warehouse = await prisma.warehouse.create({
       data: {
         name: name.trim(),
+        code: code.trim(),
         userId,
-        address:
-          address && typeof address === "string"
-            ? address.trim() || null
+        location:
+          location && typeof location === "string"
+            ? location.trim() || null
             : null,
-        type: type && typeof type === "string" ? type.trim() || null : null,
-        status: status !== undefined ? Boolean(status) : true,
+        description: description && typeof description === "string" ? description.trim() || null : null,
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
         createdBy: userId,
         createdAt: new Date(),
         updatedAt: null,
@@ -108,11 +130,11 @@ export async function PUT(request: NextRequest) {
 
     const userId = session.id;
     const body = await request.json();
-    const { id, name, address, type, status } = body;
+    const { id, name, code, location, description, isActive } = body;
 
-    if (!id || !name || typeof name !== "string" || name.trim() === "") {
+    if (!id || !name || typeof name !== "string" || name.trim() === "" || !code || typeof code !== "string" || code.trim() === "") {
       return NextResponse.json(
-        { error: "Warehouse ID and name are required" },
+        { error: "Warehouse ID, name, and code are required" },
         { status: 400 },
       );
     }
@@ -128,28 +150,45 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Check unique constraints avoiding the current warehouse
+    const duplicateCheck = await prisma.warehouse.findFirst({
+      where: {
+        id: { not: id },
+        OR: [{ name: name.trim() }, { code: code.trim() }]
+      }
+    });
+
+    if (duplicateCheck) {
+      return NextResponse.json(
+        { error: "Another warehouse with this name or code already exists" },
+        { status: 400 },
+      );
+    }
+
     const updateData: {
       name: string;
+      code: string;
       updatedBy: string;
       updatedAt: Date;
-      address?: string | null;
-      type?: string | null;
-      status?: boolean;
+      location?: string | null;
+      description?: string | null;
+      isActive?: boolean;
     } = {
       name: name.trim(),
+      code: code.trim(),
       updatedBy: userId,
       updatedAt: new Date(),
     };
-    if (address !== undefined) {
-      updateData.address =
-        address && typeof address === "string" ? address.trim() || null : null;
+    if (location !== undefined) {
+      updateData.location =
+        location && typeof location === "string" ? location.trim() || null : null;
     }
-    if (type !== undefined) {
-      updateData.type =
-        type && typeof type === "string" ? type.trim() || null : null;
+    if (description !== undefined) {
+      updateData.description =
+        description && typeof description === "string" ? description.trim() || null : null;
     }
-    if (status !== undefined) {
-      updateData.status = Boolean(status);
+    if (isActive !== undefined) {
+      updateData.isActive = Boolean(isActive);
     }
 
     const warehouse = await prisma.warehouse.update({
@@ -211,8 +250,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.warehouse.delete({
+    await prisma.warehouse.update({
       where: { id },
+      data: {
+        isActive: false,
+        updatedBy: userId,
+        updatedAt: new Date(),
+      }
     });
 
     createAuditLog({

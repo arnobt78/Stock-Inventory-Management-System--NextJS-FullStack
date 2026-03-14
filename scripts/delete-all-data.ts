@@ -35,8 +35,8 @@ async function main() {
   const product = await prisma.product.deleteMany({});
   console.log(`   Product: ${product.count}`);
 
-  const stockAllocation = await prisma.stockAllocation.deleteMany({});
-  console.log(`   StockAllocation: ${stockAllocation.count}`);
+  const stock = await prisma.stock.deleteMany({});
+  console.log(`   Stock: ${stock.count}`);
 
   const stockTransfer = await prisma.stockTransfer.deleteMany({});
   console.log(`   StockTransfer: ${stockTransfer.count}`);

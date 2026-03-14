@@ -61,13 +61,14 @@ export const WarehouseTable = React.memo(function WarehouseTable({
       const searchMatch =
         !searchTerm ||
         warehouse.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (warehouse.address &&
-          warehouse.address.toLowerCase().includes(searchTerm.toLowerCase()));
+        warehouse.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (warehouse.location &&
+          warehouse.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const statusMatch =
         statusFilter === "all" ||
-        (statusFilter === "active" && warehouse.status === true) ||
-        (statusFilter === "inactive" && warehouse.status === false);
+        (statusFilter === "active" && warehouse.isActive === true) ||
+        (statusFilter === "inactive" && warehouse.isActive === false);
 
       return searchMatch && statusMatch;
     });

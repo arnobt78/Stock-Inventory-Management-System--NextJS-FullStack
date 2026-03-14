@@ -228,15 +228,15 @@ export const queryKeys = {
     overview: () => [...queryKeys.supplierPortal.all, "overview"] as const,
   },
 
-  // Stock Allocation queries
-  stockAllocation: {
-    all: ["stockAllocation"] as const,
-    lists: () => [...queryKeys.stockAllocation.all, "list"] as const,
-    summary: () => [...queryKeys.stockAllocation.all, "summary"] as const,
+  // Stock queries
+  stocks: {
+    all: ["stocks"] as const,
+    lists: () => [...queryKeys.stocks.all, "list"] as const,
+    summary: () => [...queryKeys.stocks.all, "summary"] as const,
     byProduct: (productId: string) =>
-      [...queryKeys.stockAllocation.all, "product", productId] as const,
+      [...queryKeys.stocks.all, "product", productId] as const,
     byWarehouse: (warehouseId: string) =>
-      [...queryKeys.stockAllocation.all, "warehouse", warehouseId] as const,
+      [...queryKeys.stocks.all, "warehouse", warehouseId] as const,
   },
 
   // Forecasting queries
