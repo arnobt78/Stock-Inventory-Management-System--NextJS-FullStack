@@ -285,10 +285,10 @@ export async function getDashboardForAdmin(userId: string): Promise<DashboardSta
       _count: { id: true },
       _sum: { total: true, amountPaid: true, amountDue: true },
     }),
-    prisma.warehouse.count({ where: { ...whereUser, status: true } }),
-    prisma.warehouse.count({ where: { ...whereUser, status: false } }),
+    prisma.warehouse.count({ where: { ...whereUser, isActive: true } }),
+    prisma.warehouse.count({ where: { ...whereUser, isActive: false } }),
     prisma.warehouse.groupBy({
-      by: ["type"],
+      by: ["description"],
       where: whereUser,
       _count: { id: true },
     }),
@@ -613,7 +613,7 @@ export async function getDashboardForAdmin(userId: string): Promise<DashboardSta
 
   // Build warehouse analytics
   const warehouseTypeDistribution = warehouseTypeGroups.map((g) => ({
-    type: g.type || "(Unspecified)",
+    type: g.description || "(Unspecified)",
     count: g._count.id,
   }));
 

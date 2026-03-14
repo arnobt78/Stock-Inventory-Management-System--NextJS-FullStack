@@ -19,8 +19,12 @@ import {
   User,
   FileText,
   UserCircle,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Navbar from "@/components/layouts/Navbar";
+import { PageContentWrapper } from "@/components/shared";
+import { MoveHistory } from "@/modules/stock-movement/components/MoveHistory";
 import { useAuth } from "@/contexts";
 import { Button } from "@/components/ui/button";
 import { useAdminCounts } from "@/hooks/queries";
@@ -115,6 +119,11 @@ const MANAGEMENT_ITEMS: NavItem[] = [
     href: "/admin/activity-history",
     label: "Activity History",
     icon: History,
+  },
+  {
+    href: "/inventory/move-history",
+    label: "Move History",
+    icon: Activity,
   },
 ];
 

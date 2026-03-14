@@ -17,7 +17,7 @@ import type {
  */
 export function useStockAllocations() {
   return useQuery({
-    queryKey: queryKeys.stockAllocation.lists(),
+    queryKey: queryKeys.stocks.lists(),
     queryFn: async () => {
       const response = await apiClient.stockAllocations.getAll();
       return response.data;
@@ -30,7 +30,7 @@ export function useStockAllocations() {
  */
 export function useWarehouseStockSummary() {
   return useQuery({
-    queryKey: queryKeys.stockAllocation.summary(),
+    queryKey: queryKeys.stocks.summary(),
     queryFn: async () => {
       const response = await apiClient.stockAllocations.getSummary();
       return response.data;
@@ -43,7 +43,7 @@ export function useWarehouseStockSummary() {
  */
 export function useStockByWarehouse(warehouseId: string) {
   return useQuery({
-    queryKey: queryKeys.stockAllocation.byWarehouse(warehouseId),
+    queryKey: queryKeys.stocks.byWarehouse(warehouseId),
     queryFn: async () => {
       const response =
         await apiClient.stockAllocations.getByWarehouse(warehouseId);

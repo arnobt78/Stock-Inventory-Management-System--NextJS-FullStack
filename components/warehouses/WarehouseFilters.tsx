@@ -65,13 +65,13 @@ export default function WarehouseFilters({
       const searchMatch =
         !searchTerm ||
         warehouse.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (warehouse.address &&
-          warehouse.address.toLowerCase().includes(searchTerm.toLowerCase()));
+        (warehouse.location &&
+          warehouse.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const statusMatch =
         statusFilter === "all" ||
-        (statusFilter === "active" && warehouse.status === true) ||
-        (statusFilter === "inactive" && warehouse.status === false);
+        (statusFilter === "active" && warehouse.isActive === true) ||
+        (statusFilter === "inactive" && warehouse.isActive === false);
 
       return searchMatch && statusMatch;
     });
@@ -94,9 +94,10 @@ export default function WarehouseFilters({
 
       const csvData = filteredWarehouses.map((warehouse) => ({
         Name: warehouse.name,
-        Status: warehouse.status ? "Active" : "Inactive",
-        Address: warehouse.address || "-",
-        Type: warehouse.type || "-",
+        Code: warehouse.code,
+        Status: warehouse.isActive ? "Active" : "Inactive",
+        Location: warehouse.location || "-",
+        Description: warehouse.description || "-",
         "Created At": warehouse.createdAt
           ? new Date(warehouse.createdAt).toLocaleDateString()
           : "-",
@@ -149,9 +150,10 @@ export default function WarehouseFilters({
 
       const excelData = filteredWarehouses.map((warehouse) => ({
         Name: warehouse.name,
-        Status: warehouse.status ? "Active" : "Inactive",
-        Address: warehouse.address || "-",
-        Type: warehouse.type || "-",
+        Code: warehouse.code,
+        Status: warehouse.isActive ? "Active" : "Inactive",
+        Location: warehouse.location || "-",
+        Description: warehouse.description || "-",
         "Created At": warehouse.createdAt
           ? new Date(warehouse.createdAt).toLocaleDateString()
           : "-",
@@ -165,9 +167,10 @@ export default function WarehouseFilters({
 
       worksheet.columns = [
         { header: "Name", key: "Name", width: 25 },
+        { header: "Code", key: "Code", width: 15 },
         { header: "Status", key: "Status", width: 12 },
-        { header: "Address", key: "Address", width: 40 },
-        { header: "Type", key: "Type", width: 15 },
+        { header: "Location", key: "Location", width: 40 },
+        { header: "Description", key: "Description", width: 30 },
         { header: "Created At", key: "Created At", width: 12 },
         { header: "Updated At", key: "Updated At", width: 12 },
       ];
@@ -218,7 +221,7 @@ export default function WarehouseFilters({
         <div className="relative flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600 dark:text-white/60 z-10" />
           <Input
-            placeholder="Search by name or address..."
+            placeholder="Search by name, code, or location..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);

@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
       prisma.supplier.count({ where: { status: false } }),
       prisma.category.count({ where: { status: true } }),
       prisma.category.count({ where: { status: false } }),
-      prisma.warehouse.count({ where: { status: true } }),
-      prisma.warehouse.count({ where: { status: false } }),
+      prisma.warehouse.count({ where: { isActive: true } }),
+      prisma.warehouse.count({ where: { isActive: false } }),
     ]);
 
     const meta: ClientBrowseMeta = {

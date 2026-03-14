@@ -9,9 +9,10 @@ import { prisma } from "@/prisma/client";
 export type WarehouseForPage = {
   id: string;
   name: string;
-  address: string | null;
-  type: string | null;
-  status: boolean;
+  code: string;
+  location: string | null;
+  description: string | null;
+  isActive: boolean;
   userId: string;
   createdAt: string;
   updatedAt: string | null;
@@ -32,9 +33,10 @@ export async function getWarehousesForUser(
   return warehouses.map((w) => ({
     id: w.id,
     name: w.name,
-    address: w.address ?? null,
-    type: w.type ?? null,
-    status: w.status,
+    code: w.code,
+    location: w.location ?? null,
+    description: w.description ?? null,
+    isActive: w.isActive,
     userId: w.userId,
     createdAt: w.createdAt.toISOString(),
     updatedAt: w.updatedAt?.toISOString() ?? null,

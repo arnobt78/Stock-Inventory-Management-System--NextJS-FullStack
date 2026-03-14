@@ -56,9 +56,10 @@ export default function WarehouseDialog({
   );
 
   const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [type, setType] = useState("");
-  const [status, setStatus] = useState(true);
+  const [code, setCode] = useState("");
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
   const [internalEditing, setInternalEditing] = useState<Warehouse | null>(
     null,
@@ -76,16 +77,18 @@ export default function WarehouseDialog({
     if (externalEditingWarehouse) {
       queueMicrotask(() => {
         setName(externalEditingWarehouse.name);
-        setAddress(externalEditingWarehouse.address || "");
-        setType(externalEditingWarehouse.type || "");
-        setStatus(externalEditingWarehouse.status ?? true);
+        setCode(externalEditingWarehouse.code);
+        setLocation(externalEditingWarehouse.location || "");
+        setDescription(externalEditingWarehouse.description || "");
+        setIsActive(externalEditingWarehouse.isActive ?? true);
       });
     } else if (externalEditingWarehouse === null) {
       queueMicrotask(() => {
         setName("");
-        setAddress("");
-        setType("");
-        setStatus(true);
+        setCode("");
+        setLocation("");
+        setDescription("");
+        setIsActive(true);
       });
     }
   }, [externalEditingWarehouse]);
@@ -94,9 +97,10 @@ export default function WarehouseDialog({
     if (!open && !editingWarehouse) {
       queueMicrotask(() => {
         setName("");
-        setAddress("");
-        setType("");
-        setStatus(true);
+        setCode("");
+        setLocation("");
+        setDescription("");
+        setIsActive(true);
       });
     }
   }, [open, editingWarehouse]);
@@ -113,18 +117,20 @@ export default function WarehouseDialog({
       await updateMutation.mutateAsync({
         id: editingWarehouse.id,
         name: name.trim(),
-        address: address.trim() || null,
-        type: type.trim() || null,
-        status,
+        code: code.trim(),
+        location: location.trim() || null,
+        description: description.trim() || null,
+        isActive,
       });
       setOpen(false);
       setEditingWarehouse(null as unknown as Warehouse);
     } else {
       await createMutation.mutateAsync({
         name: name.trim(),
-        address: address.trim() || null,
-        type: type.trim() || null,
-        status,
+        code: code.trim(),
+        location: location.trim() || null,
+        description: description.trim() || null,
+        isActive,
       });
       setOpen(false);
     }
@@ -176,65 +182,67 @@ export default function WarehouseDialog({
           </div>
           <div className="space-y-2">
             <Label
-              htmlFor="warehouse-address"
+              htmlFor="warehouse-code"
               className="text-sm font-medium text-white/80"
             >
-              Address
+              Warehouse Code *
             </Label>
-            <Textarea
-              id="warehouse-address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Full street address, city, state, ZIP code"
-              rows={3}
-              className="border-teal-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-teal-400 focus:ring-teal-500/50 shadow-[0_10px_30px_rgba(20,184,166,0.15)] resize-none"
+            <Input
+              id="warehouse-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="e.g. WH-001, MAIN"
+              required
+              className="h-11 border-teal-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-teal-400 focus:ring-teal-500/50 shadow-[0_10px_30px_rgba(20,184,166,0.15)]"
             />
           </div>
           <div className="space-y-2">
             <Label
-              htmlFor="warehouse-type"
+              htmlFor="warehouse-location"
               className="text-sm font-medium text-white/80"
             >
-              Warehouse Type
+              Location
             </Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="h-11 w-full border-teal-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-teal-400 focus:ring-teal-500/50 shadow-[0_10px_30px_rgba(20,184,166,0.15)]">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent
-                className="border-teal-400/20 dark:border-white/10 bg-white/80 dark:bg-popover/50 backdrop-blur-sm z-[100]"
-                position="popper"
-                sideOffset={5}
-                align="start"
-              >
-                {warehouseTypes.map((wt) => (
-                  <SelectItem
-                    key={wt.value}
-                    value={wt.value}
-                    className="cursor-pointer text-gray-900 dark:text-white focus:bg-teal-100 dark:focus:bg-white/10 focus:text-gray-900 dark:focus:text-white"
-                  >
-                    {wt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="warehouse-location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="City or physical location"
+              className="h-11 border-teal-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-teal-400 focus:ring-teal-500/50 shadow-[0_10px_30px_rgba(20,184,166,0.15)]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="warehouse-description"
+              className="text-sm font-medium text-white/80"
+            >
+              Description
+            </Label>
+            <Textarea
+              id="warehouse-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional description"
+              rows={3}
+              className="border-teal-400/30 dark:border-white/20 bg-white/10 dark:bg-white/5 backdrop-blur-sm text-white placeholder:text-white/40 focus:border-teal-400 focus:ring-teal-500/50 shadow-[0_10px_30px_rgba(20,184,166,0.15)] resize-none"
+            />
           </div>
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-teal-400/20">
             <Switch
-              id="warehouse-status"
-              checked={status}
-              onCheckedChange={setStatus}
+              id="warehouse-isActive"
+              checked={isActive}
+              onCheckedChange={setIsActive}
               className="data-[state=checked]:bg-teal-500"
             />
             <div className="flex flex-col">
               <Label
-                htmlFor="warehouse-status"
+                htmlFor="warehouse-isActive"
                 className="text-sm font-medium text-white/80 cursor-pointer"
               >
                 Active Status
               </Label>
               <span className="text-xs text-white/50">
-                {status
+                {isActive
                   ? "Warehouse is currently active"
                   : "Warehouse is inactive"}
               </span>

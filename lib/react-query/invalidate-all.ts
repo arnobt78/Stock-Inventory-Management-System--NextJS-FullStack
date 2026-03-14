@@ -30,7 +30,7 @@ export function invalidateAllRelatedQueries(queryClient: QueryClient): void {
   queryClient.invalidateQueries({ queryKey: queryKeys.userManagement.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.clientPortal.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.supplierPortal.all });
-  queryClient.invalidateQueries({ queryKey: queryKeys.stockAllocation.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.stocks.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.forecasting.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.portal.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs.all });

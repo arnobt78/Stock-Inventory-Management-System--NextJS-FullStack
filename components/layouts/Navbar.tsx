@@ -189,7 +189,8 @@ export default function Navbar({ children }: NavbarProps) {
     { label: "Invoices", path: "/invoices", hasDropdown: false },
     { label: "Categories", path: "/categories", hasDropdown: false },
     { label: "Suppliers", path: "/suppliers", hasDropdown: false },
-    { label: "Warehouses", path: "/warehouses", hasDropdown: false },
+    { label: "Warehouses", path: "/settings/warehouses", hasDropdown: false },
+    { label: "Stock", path: "/inventory/stock", hasDropdown: false },
     {
       label: "Business Insights",
       path: "/business-insights",
