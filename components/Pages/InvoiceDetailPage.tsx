@@ -1,0 +1,1047 @@
+/**
+ * Invoice Detail Page
+ * Displays detailed information about a single invoice
+ */
+
+"use client";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  FileText,
+  Calendar,
+  MapPin,
+  CreditCard,
+  DollarSign,
+  Send,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Edit,
+  Trash2,
+  Download,
+  ExternalLink,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useQueryClient } from "@tanstack/react-query";
+import { useInvoice, useDeleteInvoice, useSendInvoice } from "@/hooks/queries";
+import { useBackWithRefresh } from "@/hooks/use-back-with-refresh";
+import { queryKeys, invalidateAllRelatedQueries } from "@/lib/react-query";
+import { useAuth } from "@/contexts";
+import Navbar from "@/components/layouts/Navbar";
+import { PageContentWrapper } from "@/components/shared";
+import { formatDistanceToNow } from "date-fns";
+import type { InvoiceStatus } from "@/types";
+import type { Invoice } from "@/types";
+import { cn } from "@/lib/utils";
+import InvoiceDialog from "@/components/invoices/InvoiceDialog";
+import { AlertDialogWrapper } from "@/components/dialogs";
+import { PaymentDialog } from "@/components/payments";
+
+/**
+ * Color variants for glassmorphic cards
+ */
+type CardVariant =
+  | "sky"
+  | "emerald"
+  | "amber"
+  | "rose"
+  | "violet"
+  | "blue"
+  | "orange"
+  | "teal";
+
+const variantConfig: Record<
+  CardVariant,
+  {
+    border: string;
+    gradient: string;
+    shadow: string;
+    hoverBorder: string;
+    iconBg: string;
+  }
+> = {
+  sky: {
+    border: "border-sky-400/20",
+    gradient: "bg-gradient-to-br from-sky-500/15 via-sky-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(2,132,199,0.15)] dark:shadow-[0_15px_40px_rgba(2,132,199,0.1)]",
+    hoverBorder: "hover:border-sky-300/40",
+    iconBg: "border-sky-300/30 bg-sky-100/50",
+  },
+  emerald: {
+    border: "border-emerald-400/20",
+    gradient:
+      "bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(16,185,129,0.15)] dark:shadow-[0_15px_40px_rgba(16,185,129,0.1)]",
+    hoverBorder: "hover:border-emerald-300/40",
+    iconBg: "border-emerald-300/30 bg-emerald-100/50",
+  },
+  amber: {
+    border: "border-amber-400/20",
+    gradient:
+      "bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(245,158,11,0.12)] dark:shadow-[0_15px_40px_rgba(245,158,11,0.08)]",
+    hoverBorder: "hover:border-amber-300/40",
+    iconBg: "border-amber-300/30 bg-amber-100/50",
+  },
+  rose: {
+    border: "border-rose-400/20",
+    gradient:
+      "bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(225,29,72,0.15)] dark:shadow-[0_15px_40px_rgba(225,29,72,0.1)]",
+    hoverBorder: "hover:border-rose-300/40",
+    iconBg: "border-rose-300/30 bg-rose-100/50",
+  },
+  violet: {
+    border: "border-violet-400/20",
+    gradient:
+      "bg-gradient-to-br from-violet-500/15 via-violet-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(139,92,246,0.15)] dark:shadow-[0_15px_40px_rgba(139,92,246,0.1)]",
+    hoverBorder: "hover:border-violet-300/40",
+    iconBg: "border-violet-300/30 bg-violet-100/50",
+  },
+  blue: {
+    border: "border-blue-400/20",
+    gradient:
+      "bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(59,130,246,0.15)] dark:shadow-[0_15px_40px_rgba(59,130,246,0.1)]",
+    hoverBorder: "hover:border-blue-300/40",
+    iconBg: "border-blue-300/30 bg-blue-100/50",
+  },
+  orange: {
+    border: "border-orange-400/20",
+    gradient:
+      "bg-gradient-to-br from-orange-500/15 via-orange-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(249,115,22,0.15)] dark:shadow-[0_15px_40px_rgba(249,115,22,0.1)]",
+    hoverBorder: "hover:border-orange-300/40",
+    iconBg: "border-orange-300/30 bg-orange-100/50",
+  },
+  teal: {
+    border: "border-teal-400/20",
+    gradient:
+      "bg-gradient-to-br from-teal-500/15 via-teal-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(20,184,166,0.15)] dark:shadow-[0_15px_40px_rgba(20,184,166,0.1)]",
+    hoverBorder: "hover:border-teal-300/40",
+    iconBg: "border-teal-300/30 bg-teal-100/50",
+  },
+};
+
+/**
+ * Glassmorphic Card component
+ */
+function GlassCard({
+  children,
+  variant = "blue",
+  className,
+}: {
+  children: React.ReactNode;
+  variant?: CardVariant;
+  className?: string;
+}) {
+  const config = variantConfig[variant];
+  return (
+    <article
+      className={cn(
+        "group rounded-[20px] border p-4 sm:p-5 backdrop-blur-sm transition-all duration-300",
+        "bg-white/60 dark:bg-white/5",
+        config.border,
+        config.gradient,
+        config.shadow,
+        config.hoverBorder,
+        className,
+      )}
+    >
+      {children}
+    </article>
+  );
+}
+
+/**
+ * Get badge classes for invoice status — same style as supplier/category detail (solid border, no gradient)
+ */
+function getStatusBadgeClasses(status: InvoiceStatus): string {
+  switch (status) {
+    case "draft":
+      return "bg-gray-500/20 text-gray-700 dark:text-gray-300 border-gray-400/30";
+    case "sent":
+      return "bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-400/30";
+    case "paid":
+      return "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-400/30";
+    case "overdue":
+      return "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-400/30";
+    case "cancelled":
+      return "bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-400/30";
+    default:
+      return "bg-gray-500/20 text-gray-700 dark:text-gray-300 border-gray-400/30";
+  }
+}
+
+/**
+ * Get status icon — h-3 w-3 to match supplier/category detail
+ */
+function getStatusIcon(status: InvoiceStatus) {
+  switch (status) {
+    case "draft":
+      return <FileText className="h-3 w-3" />;
+    case "sent":
+      return <Send className="h-3 w-3" />;
+    case "paid":
+      return <CheckCircle className="h-3 w-3" />;
+    case "overdue":
+      return <AlertTriangle className="h-3 w-3" />;
+    case "cancelled":
+      return <XCircle className="h-3 w-3" />;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Format address for display
+ */
+function formatAddress(address: unknown): string {
+  if (!address || typeof address !== "object") return "N/A";
+  const addr = address as Record<string, unknown>;
+  const parts: string[] = [];
+  if (addr.street) parts.push(String(addr.street));
+  if (addr.city) parts.push(String(addr.city));
+  if (addr.state) parts.push(String(addr.state));
+  if (addr.zipCode) parts.push(String(addr.zipCode));
+  if (addr.country) parts.push(String(addr.country));
+  return parts.length > 0 ? parts.join(", ") : "N/A";
+}
+
+export type InvoiceDetailPageProps = {
+  /** When set (e.g. "/admin/client-invoices"), Back button navigates here */
+  backHref?: string;
+  /** When true, do not wrap in Navbar (e.g. when embedded in admin layout) */
+  embedInAdmin?: boolean;
+};
+
+export default function InvoiceDetailPage({
+  backHref,
+  embedInAdmin,
+}: InvoiceDetailPageProps = {}) {
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const { handleBack, navigateTo } = useBackWithRefresh("invoice");
+  const invoiceId = params?.id as string;
+  const onBack = backHref
+    ? () => {
+        invalidateAllRelatedQueries(queryClient);
+        navigateTo(backHref);
+      }
+    : handleBack;
+  const Wrapper = embedInAdmin ? React.Fragment : Navbar;
+  const { user, isCheckingAuth } = useAuth();
+  const isMountedRef = useRef(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Fetch invoice details
+  const { data: invoice, isLoading, isError, error } = useInvoice(invoiceId);
+
+  // When returning from Stripe (payment=success or payment=cancelled), refetch invoice so UI shows Paid without manual refresh.
+  // The webhook updates invoice asynchronously, so we poll a few times to catch the update.
+  // NOTE: searchParams omitted from deps - router.replace clears it, which would re-run effect and cancel polling.
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    if (
+      !invoiceId ||
+      !payment ||
+      (payment !== "success" && payment !== "cancelled")
+    )
+      return;
+
+    const detailKey = queryKeys.invoices.detail(invoiceId);
+    invalidateAllRelatedQueries(queryClient);
+    queryClient.refetchQueries({ queryKey: detailKey });
+
+    // Poll: webhook may not have run yet
+    const runInvalidations = () => {
+      invalidateAllRelatedQueries(queryClient);
+      queryClient.refetchQueries({ queryKey: detailKey });
+    };
+    const delays = [500, 1500, 3000, 5000, 8000];
+    const timeouts = delays.map((delay) => setTimeout(runInvalidations, delay));
+
+    const cleanupUrlTimer = setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      next.delete("payment");
+      next.delete("session_id");
+      const path =
+        window.location.pathname +
+        (next.toString() ? `?${next.toString()}` : "");
+      router.replace(path, { scroll: false });
+    }, 1500);
+
+    return () => {
+      clearTimeout(cleanupUrlTimer);
+      timeouts.forEach((t) => clearTimeout(t));
+    };
+  }, [invoiceId, queryClient, router]);
+  const deleteInvoiceMutation = useDeleteInvoice();
+  const sendInvoiceMutation = useSendInvoice();
+  const isDeleting = deleteInvoiceMutation.isPending;
+  const isSending = sendInvoiceMutation.isPending;
+  const isClientRole = user?.role === "client";
+
+  // Edit Invoice: open InvoiceDialog in edit mode (same as InvoiceList/InvoiceActions)
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+
+  const handleEditInvoice = useCallback(() => {
+    if (!invoice) return;
+    setEditingInvoice(invoice);
+    setEditDialogOpen(true);
+  }, [invoice]);
+
+  const handleConfirmDeleteInvoice = useCallback(() => {
+    if (!invoice) return;
+    deleteInvoiceMutation.mutate(invoice.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        router.push("/invoices");
+      },
+      onError: () => {
+        setDeleteDialogOpen(false);
+      },
+    });
+  }, [invoice, deleteInvoiceMutation, router]);
+
+  const handleConfirmSendInvoice = useCallback(() => {
+    if (!invoice) return;
+    sendInvoiceMutation.mutate(invoice.id, {
+      onSuccess: () => {
+        setSendDialogOpen(false);
+      },
+      onError: () => {
+        setSendDialogOpen(false);
+      },
+    });
+  }, [invoice, sendInvoiceMutation]);
+
+  // Mark component as mounted after client-side hydration
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      queueMicrotask(() => setIsMounted(true));
+    }
+  }, []);
+
+  // Determine loading state - prevents hydration mismatch
+  const showSkeleton = !isMounted || isCheckingAuth || isLoading;
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isCheckingAuth && !user) {
+      router.push("/login");
+    }
+  }, [user, isCheckingAuth, router]);
+
+  // Show error state
+  if (isError) {
+    return (
+      <Wrapper>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <GlassCard variant="rose" className="max-w-md text-center">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+              Invoice Not Found
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {error instanceof Error
+                ? error.message
+                : "Failed to load invoice details"}
+            </p>
+            <Button
+              onClick={() => navigateTo("/")}
+              className="rounded-xl border border-gray-300/30 bg-white/50 dark:bg-white/5 dark:border-white/10 hover:bg-gray-100/50 dark:hover:bg-white/10 text-gray-900 dark:text-white"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </GlassCard>
+        </div>
+      </Wrapper>
+    );
+  }
+
+  // Show loading skeleton
+  if (showSkeleton || !invoice) {
+    return (
+      <Wrapper>
+        <PageContentWrapper>
+          <div className="max-w-9xl mx-auto space-y-6">
+            {/* Header Skeleton */}
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 bg-white/50 dark:bg-white/5 rounded-xl border border-gray-300/30 dark:border-white/10 animate-pulse" />
+              <div className="flex-1">
+                <div className="h-8 w-48 bg-white/50 dark:bg-white/5 rounded-lg border border-gray-300/30 dark:border-white/10 animate-pulse" />
+                <div className="h-4 w-32 mt-2 bg-white/50 dark:bg-white/5 rounded-lg border border-gray-300/30 dark:border-white/10 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Status Cards Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <GlassCard variant="violet" className="animate-pulse">
+                <div className="h-4 w-28 bg-white/50 dark:bg-white/10 rounded mb-3" />
+                <div className="h-6 w-20 bg-white/50 dark:bg-white/10 rounded-full" />
+              </GlassCard>
+              <GlassCard variant="emerald" className="animate-pulse">
+                <div className="h-4 w-24 bg-white/50 dark:bg-white/10 rounded mb-3" />
+                <div className="h-8 w-28 bg-white/50 dark:bg-white/10 rounded" />
+              </GlassCard>
+            </div>
+
+            {/* Invoice Information Skeleton */}
+            <GlassCard variant="orange" className="animate-pulse">
+              <div className="h-6 w-40 bg-white/50 dark:bg-white/10 rounded mb-4" />
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="h-4 w-full bg-white/50 dark:bg-white/10 rounded"
+                  />
+                ))}
+              </div>
+            </GlassCard>
+
+            {/* Billing Address & Totals Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <GlassCard variant="sky" className="animate-pulse">
+                <div className="h-6 w-36 bg-white/50 dark:bg-white/10 rounded mb-4" />
+                <div className="h-4 w-full bg-white/50 dark:bg-white/10 rounded" />
+              </GlassCard>
+              <GlassCard variant="teal" className="animate-pulse">
+                <div className="h-6 w-32 bg-white/50 dark:bg-white/10 rounded mb-4" />
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex justify-between">
+                      <div className="h-4 w-20 bg-white/50 dark:bg-white/10 rounded" />
+                      <div className="h-4 w-16 bg-white/50 dark:bg-white/10 rounded" />
+                    </div>
+                  ))}
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Action Buttons Skeleton */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="h-10 w-full sm:w-32 bg-white/50 dark:bg-white/5 rounded-xl border border-gray-300/30 dark:border-white/10 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
+        </PageContentWrapper>
+      </Wrapper>
+    );
+  }
+
+  // Format dates
+  const createdAt = new Date(invoice.createdAt);
+  const updatedAt = invoice.updatedAt ? new Date(invoice.updatedAt) : null;
+  const issuedAt = new Date(invoice.issuedAt);
+  const dueDate = new Date(invoice.dueDate);
+  const sentAt = invoice.sentAt ? new Date(invoice.sentAt) : null;
+  const paidAt = invoice.paidAt ? new Date(invoice.paidAt) : null;
+  const cancelledAt = invoice.cancelledAt
+    ? new Date(invoice.cancelledAt)
+    : null;
+
+  // Check if invoice is overdue
+  const isOverdue =
+    invoice.status !== "paid" &&
+    invoice.status !== "cancelled" &&
+    dueDate < new Date();
+
+  return (
+    <Wrapper>
+      <PageContentWrapper>
+        <div className="max-w-9xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-10 w-10 rounded-xl border border-gray-300/30 bg-white/50 dark:bg-white/5 dark:border-white/10 hover:bg-gray-100/50 dark:hover:bg-white/10"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Invoice {invoice.invoiceNumber}
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Created {formatDistanceToNow(createdAt, { addSuffix: true })}
+              </p>
+            </div>
+          </div>
+
+          {/* Invoice Status Cards — badge style matches supplier/category detail */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GlassCard variant="violet">
+              <div className="">
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-3">
+                  Invoice Status
+                </p>
+                <Badge
+                  className={cn(
+                    "text-sm border flex items-center gap-2 w-fit",
+                    getStatusBadgeClasses(invoice.status),
+                  )}
+                >
+                  {getStatusIcon(invoice.status)}
+                  {invoice.status.charAt(0).toUpperCase() +
+                    invoice.status.slice(1)}
+                </Badge>
+              </div>
+            </GlassCard>
+
+            <GlassCard
+              variant={
+                invoice.amountDue > 0 && isOverdue
+                  ? "rose"
+                  : invoice.amountDue > 0
+                    ? "amber"
+                    : "emerald"
+              }
+            >
+              <p className="text-xs uppercase tracking-[0.25em] text-gray-600 dark:text-white/60 mb-3">
+                Amount Due
+              </p>
+              <div
+                className={cn(
+                  "text-2xl font-semibold",
+                  invoice.amountDue > 0 && !isOverdue
+                    ? "text-amber-600 dark:text-amber-400"
+                    : invoice.amountDue > 0 && isOverdue
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-emerald-600 dark:text-emerald-400",
+                )}
+              >
+                ${invoice.amountDue.toFixed(2)}
+              </div>
+              {invoice.amountPaid > 0 && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Paid: ${invoice.amountPaid.toFixed(2)} / $
+                  {invoice.total.toFixed(2)}
+                </p>
+              )}
+            </GlassCard>
+          </div>
+
+          {/* Invoice Information */}
+          <GlassCard variant="orange">
+            <div className="flex items-center gap-3 mb-2">
+              <div
+                className={cn(
+                  "p-2.5 rounded-xl border",
+                  variantConfig.orange.iconBg,
+                  "dark:border-orange-400/30 dark:bg-orange-500/20",
+                )}
+              >
+                <FileText className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Invoice Information
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Invoice #{invoice.invoiceNumber} -{" "}
+                  {invoice.status.charAt(0).toUpperCase() +
+                    invoice.status.slice(1)}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 mt-4">
+              <div className="flex items-center gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-500/10 dark:via-orange-500/5 dark:to-transparent border border-orange-200/30 dark:border-orange-400/10">
+                <Calendar className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  Issued:
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {issuedAt.toLocaleDateString()}{" "}
+                  {issuedAt.toLocaleTimeString()}
+                </span>
+              </div>
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-sm p-3 rounded-xl border",
+                  isOverdue
+                    ? "bg-gradient-to-r from-rose-100/50 via-rose-50/30 to-transparent dark:from-rose-500/10 dark:via-rose-500/5 dark:to-transparent border-rose-200/30 dark:border-rose-400/10"
+                    : "bg-gradient-to-r from-amber-100/50 via-amber-50/30 to-transparent dark:from-amber-500/10 dark:via-amber-500/5 dark:to-transparent border-amber-200/30 dark:border-amber-400/10",
+                )}
+              >
+                <Calendar
+                  className={cn(
+                    "h-4 w-4",
+                    isOverdue
+                      ? "text-rose-500 dark:text-rose-400"
+                      : "text-amber-500 dark:text-amber-400",
+                  )}
+                />
+                <span className="text-gray-600 dark:text-gray-400">
+                  Due Date:
+                </span>
+                <span
+                  className={cn(
+                    "font-medium",
+                    isOverdue
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-gray-900 dark:text-white",
+                  )}
+                >
+                  {dueDate.toLocaleDateString()} {dueDate.toLocaleTimeString()}
+                  {isOverdue && " (Overdue)"}
+                </span>
+              </div>
+              {sentAt && (
+                <div className="flex items-center gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-blue-100/50 via-blue-50/30 to-transparent dark:from-blue-500/10 dark:via-blue-500/5 dark:to-transparent border border-blue-200/30 dark:border-blue-400/10">
+                  <Send className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Sent:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {sentAt.toLocaleDateString()} {sentAt.toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+              {paidAt && (
+                <div className="flex items-center gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-emerald-100/50 via-emerald-50/30 to-transparent dark:from-emerald-500/10 dark:via-emerald-500/5 dark:to-transparent border border-emerald-200/30 dark:border-emerald-400/10">
+                  <CheckCircle className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Paid:
+                  </span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                    {paidAt.toLocaleDateString()} {paidAt.toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+              {cancelledAt && (
+                <div className="flex items-center gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-gray-100/50 via-gray-50/30 to-transparent dark:from-gray-500/10 dark:via-gray-500/5 dark:to-transparent border border-gray-200/30 dark:border-gray-400/10">
+                  <XCircle className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Cancelled:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {cancelledAt.toLocaleDateString()}{" "}
+                    {cancelledAt.toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+              {invoice.orderId && (
+                <div className="flex items-center gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-violet-100/50 via-violet-50/30 to-transparent dark:from-violet-500/10 dark:via-violet-500/5 dark:to-transparent border border-violet-200/30 dark:border-violet-400/10">
+                  <FileText className="h-4 w-4 text-violet-500 dark:text-violet-400" />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Related Order:
+                  </span>
+                  <Link
+                    href={`/orders/${invoice.orderId}`}
+                    className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300 flex items-center gap-1"
+                  >
+                    View Order <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+              )}
+              {invoice.paymentLink && (
+                <div className="flex items-center gap-2 text-sm p-3 rounded-xl bg-gradient-to-r from-sky-100/50 via-sky-50/30 to-transparent dark:from-sky-500/10 dark:via-sky-500/5 dark:to-transparent border border-sky-200/30 dark:border-sky-400/10">
+                  <CreditCard className="h-4 w-4 text-sky-500 dark:text-sky-400" />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Payment Link:
+                  </span>
+                  <a
+                    href={invoice.paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300 flex items-center gap-1"
+                  >
+                    Pay Invoice <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
+              {invoice.notes && (
+                <div className="p-3 rounded-xl bg-gradient-to-r from-teal-100/50 via-teal-50/30 to-transparent dark:from-teal-500/10 dark:via-teal-500/5 dark:to-transparent border border-teal-200/30 dark:border-teal-400/10">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    Notes:
+                  </p>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {invoice.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          </GlassCard>
+
+          {/* Parties & roles */}
+          {(invoice.invoiceCreatedBy != null ||
+            invoice.orderedBy != null ||
+            invoice.client != null ||
+            (invoice.invoiceProductOwners &&
+              invoice.invoiceProductOwners.length > 0)) && (
+            <GlassCard variant="teal">
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={cn(
+                    "p-2.5 rounded-xl border",
+                    variantConfig.teal.iconBg,
+                    "dark:border-teal-400/30 dark:bg-teal-500/20",
+                  )}
+                >
+                  <FileText className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Parties &amp; roles
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                {invoice.invoiceCreatedBy && (
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-teal-100/50 via-teal-50/30 to-transparent dark:from-teal-500/10 dark:via-teal-500/5 dark:to-transparent border border-teal-200/30 dark:border-teal-400/10">
+                    <p className="text-gray-600 dark:text-gray-400 font-medium mb-0.5">
+                      Invoice created by
+                    </p>
+                    <p className="text-gray-900 dark:text-white">
+                      {invoice.invoiceCreatedBy.name ??
+                        invoice.invoiceCreatedBy.email}
+                    </p>
+                    {invoice.invoiceCreatedBy.name && (
+                      <p className="text-gray-500 dark:text-gray-400 text-xs">
+                        {invoice.invoiceCreatedBy.email}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {invoice.orderedBy && (
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-teal-100/50 via-teal-50/30 to-transparent dark:from-teal-500/10 dark:via-teal-500/5 dark:to-transparent border border-teal-200/30 dark:border-teal-400/10">
+                    <p className="text-gray-600 dark:text-gray-400 font-medium mb-0.5">
+                      Ordered by
+                    </p>
+                    <p className="text-gray-900 dark:text-white">
+                      {invoice.orderedBy.name ?? invoice.orderedBy.email}
+                    </p>
+                    {invoice.orderedBy.name && (
+                      <p className="text-gray-500 dark:text-gray-400 text-xs">
+                        {invoice.orderedBy.email}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {invoice.client && (
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-teal-100/50 via-teal-50/30 to-transparent dark:from-teal-500/10 dark:via-teal-500/5 dark:to-transparent border border-teal-200/30 dark:border-teal-400/10">
+                    <p className="text-gray-600 dark:text-gray-400 font-medium mb-0.5">
+                      Customer / Bill to
+                    </p>
+                    <p className="text-gray-900 dark:text-white">
+                      {invoice.client.name ?? invoice.client.email}
+                    </p>
+                    {invoice.client.name && (
+                      <p className="text-gray-500 dark:text-gray-400 text-xs">
+                        {invoice.client.email}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {invoice.invoiceProductOwners &&
+                  invoice.invoiceProductOwners.length > 0 && (
+                    <div className="sm:col-span-2 p-3 rounded-xl bg-gradient-to-r from-teal-100/50 via-teal-50/30 to-transparent dark:from-teal-500/10 dark:via-teal-500/5 dark:to-transparent border border-teal-200/30 dark:border-teal-400/10">
+                      <p className="text-gray-600 dark:text-gray-400 font-medium mb-2">
+                        Product owner(s)
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {invoice.invoiceProductOwners.map((owner) => (
+                          <span
+                            key={owner.userId}
+                            className="inline-flex items-center gap-1 rounded-md bg-white/50 dark:bg-white/10 px-2 py-1 text-xs border border-teal-200/30 dark:border-teal-400/20"
+                          >
+                            {owner.name ?? owner.email}
+                            {owner.name && (
+                              <span className="text-gray-500 dark:text-gray-400">
+                                ({owner.email})
+                              </span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Billing Address & Totals */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Billing Address */}
+            {invoice.billingAddress && (
+              <GlassCard variant="sky">
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className={cn(
+                      "p-2.5 rounded-xl border",
+                      variantConfig.sky.iconBg,
+                      "dark:border-sky-400/30 dark:bg-sky-500/20",
+                    )}
+                  >
+                    <MapPin className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Billing Address
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-900 dark:text-white p-3 rounded-xl bg-gradient-to-r from-sky-100/40 via-sky-50/20 to-transparent dark:from-sky-500/10 dark:via-sky-500/5 dark:to-transparent border border-sky-200/30 dark:border-sky-400/10">
+                  {formatAddress(invoice.billingAddress)}
+                </p>
+              </GlassCard>
+            )}
+
+            {/* Invoice Totals */}
+            <GlassCard variant="teal">
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={cn(
+                    "p-2.5 rounded-xl border",
+                    variantConfig.teal.iconBg,
+                    "dark:border-teal-400/30 dark:bg-teal-500/20",
+                  )}
+                >
+                  <DollarSign className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Invoice Summary
+                </h3>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm p-2 rounded-lg bg-gradient-to-r from-sky-100/40 via-sky-50/20 to-transparent dark:from-sky-500/10 dark:via-sky-500/5 dark:to-transparent">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Subtotal:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    ${invoice.subtotal.toFixed(2)}
+                  </span>
+                </div>
+                {invoice.tax && invoice.tax > 0 && (
+                  <div className="flex justify-between text-sm p-2 rounded-lg bg-gradient-to-r from-amber-100/40 via-amber-50/20 to-transparent dark:from-amber-500/10 dark:via-amber-500/5 dark:to-transparent">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Tax:
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      ${invoice.tax.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {invoice.shipping != null && invoice.shipping > 0 && (
+                  <div className="flex justify-between text-sm p-2 rounded-lg bg-gradient-to-r from-violet-100/40 via-violet-50/20 to-transparent dark:from-violet-500/10 dark:via-violet-500/5 dark:to-transparent">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Shipping:
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      ${invoice.shipping.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {invoice.discount && invoice.discount > 0 && (
+                  <div className="flex justify-between text-sm p-2 rounded-lg bg-gradient-to-r from-rose-100/40 via-rose-50/20 to-transparent dark:from-rose-500/10 dark:via-rose-500/5 dark:to-transparent">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Discount:
+                    </span>
+                    <span className="font-medium text-rose-600 dark:text-rose-400">
+                      -${invoice.discount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <Separator className="my-2 bg-teal-200/50 dark:bg-teal-400/20" />
+                <div className="flex justify-between text-lg font-semibold p-3 rounded-xl bg-gradient-to-r from-blue-100/50 via-blue-50/30 to-transparent dark:from-blue-500/15 dark:via-blue-500/10 dark:to-transparent border border-blue-200/30 dark:border-blue-400/20">
+                  <span className="text-gray-900 dark:text-white">Total:</span>
+                  <span className="text-blue-600 dark:text-blue-400">
+                    ${invoice.total.toFixed(2)}
+                  </span>
+                </div>
+                {invoice.amountPaid > 0 && (
+                  <>
+                    <Separator className="my-2 bg-teal-200/50 dark:bg-teal-400/20" />
+                    <div className="flex justify-between text-sm p-2 rounded-lg bg-gradient-to-r from-emerald-100/40 via-emerald-50/20 to-transparent dark:from-emerald-500/10 dark:via-emerald-500/5 dark:to-transparent">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Amount Paid:
+                      </span>
+                      <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                        ${invoice.amountPaid.toFixed(2)}
+                      </span>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex justify-between text-lg font-semibold p-3 rounded-xl border",
+                        invoice.amountDue > 0 && isOverdue
+                          ? "bg-gradient-to-r from-rose-100/50 via-rose-50/30 to-transparent dark:from-rose-500/15 dark:via-rose-500/10 dark:to-transparent border-rose-200/30 dark:border-rose-400/20"
+                          : invoice.amountDue > 0
+                            ? "bg-gradient-to-r from-amber-100/50 via-amber-50/30 to-transparent dark:from-amber-500/15 dark:via-amber-500/10 dark:to-transparent border-amber-200/30 dark:border-amber-400/20"
+                            : "bg-gradient-to-r from-emerald-100/50 via-emerald-50/30 to-transparent dark:from-emerald-500/15 dark:via-emerald-500/10 dark:to-transparent border-emerald-200/30 dark:border-emerald-400/20",
+                      )}
+                    >
+                      <span className="text-gray-900 dark:text-white">
+                        Amount Due:
+                      </span>
+                      <span
+                        className={cn(
+                          invoice.amountDue > 0 && isOverdue
+                            ? "text-rose-600 dark:text-rose-400"
+                            : invoice.amountDue > 0
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-emerald-600 dark:text-emerald-400",
+                        )}
+                      >
+                        ${invoice.amountDue.toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </GlassCard>
+          </div>
+
+          {/* Actions — Back, Edit Invoice, Send Invoice, Delete Invoice; same layout as order detail */}
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="w-full sm:w-auto gap-2 rounded-xl border border-gray-300/30 bg-white/50 dark:bg-white/5 dark:border-white/10 hover:bg-gray-100/50 dark:hover:bg-white/10 text-gray-900 dark:text-white transition-all duration-300"
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" />
+              Back
+            </Button>
+            <Button
+              onClick={handleEditInvoice}
+              disabled={isClientRole}
+              className="w-full sm:w-auto gap-2 rounded-xl border border-blue-400/30 bg-gradient-to-r from-blue-500/70 via-blue-500/50 to-blue-500/30 text-white shadow-[0_10px_25px_rgba(59,130,246,0.35)] backdrop-blur-sm hover:border-blue-300/50 hover:from-blue-500/80 hover:via-blue-500/60 hover:to-blue-500/40 transition-all duration-300 disabled:opacity-50"
+            >
+              <Edit className="h-4 w-4 shrink-0" />
+              Edit Invoice
+            </Button>
+            <Button
+              asChild
+              className="w-full sm:w-auto gap-2 rounded-xl border border-teal-400/30 bg-gradient-to-r from-teal-500/70 via-teal-500/50 to-teal-500/30 text-white shadow-[0_10px_25px_rgba(20,184,166,0.35)] backdrop-blur-sm hover:border-teal-300/50 hover:from-teal-500/80 hover:via-teal-500/60 hover:to-teal-500/40 transition-all duration-300"
+            >
+              <a
+                href={`/api/invoices/${invoice.id}/pdf`}
+                download={`invoice-${invoice.invoiceNumber}.pdf`}
+              >
+                <Download className="h-4 w-4 shrink-0" />
+                Download PDF
+              </a>
+            </Button>
+            {invoice.status === "draft" && (
+              <Button
+                onClick={() => setSendDialogOpen(true)}
+                disabled={isSending}
+                className="w-full sm:w-auto gap-2 rounded-xl border border-sky-400/30 bg-gradient-to-r from-sky-500/70 via-sky-500/50 to-sky-500/30 text-white shadow-[0_10px_25px_rgba(2,132,199,0.35)] backdrop-blur-sm hover:border-sky-300/50 hover:from-sky-500/80 hover:via-sky-500/60 hover:to-sky-500/40 transition-all duration-300 disabled:opacity-50"
+              >
+                <Send className="h-4 w-4 shrink-0" />
+                {isSending ? "Sending..." : "Send Invoice"}
+              </Button>
+            )}
+            {invoice.status !== "cancelled" && (
+              <Button
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={isDeleting}
+                className="w-full sm:w-auto gap-2 rounded-xl border border-rose-400/30 bg-gradient-to-r from-rose-500/70 via-rose-500/50 to-rose-500/30 text-white shadow-[0_10px_25px_rgba(225,29,72,0.35)] backdrop-blur-sm hover:border-rose-300/50 hover:from-rose-500/80 hover:via-rose-500/60 hover:to-rose-500/40 transition-all duration-300 disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4 shrink-0" />
+                {isDeleting ? "Deleting..." : "Delete Invoice"}
+              </Button>
+            )}
+            {invoice.orderId && (
+              <Button
+                asChild
+                className="w-full sm:w-auto gap-2 rounded-xl border border-violet-400/30 bg-gradient-to-r from-violet-500/70 via-violet-500/50 to-violet-500/30 text-white shadow-[0_10px_25px_rgba(139,92,246,0.35)] backdrop-blur-sm hover:border-violet-300/50 hover:from-violet-500/80 hover:via-violet-500/60 hover:to-violet-500/40 transition-all duration-300"
+              >
+                <Link href={`/orders/${invoice.orderId}`}>
+                  <FileText className="h-4 w-4 shrink-0" />
+                  View Related Order
+                </Link>
+              </Button>
+            )}
+            {invoice.status !== "paid" &&
+              invoice.status !== "cancelled" &&
+              invoice.amountDue > 0 && (
+                <PaymentDialog
+                  type="invoice"
+                  id={invoice.id}
+                  referenceNumber={invoice.invoiceNumber}
+                  amount={invoice.amountDue}
+                  tax={invoice.tax ?? undefined}
+                  shipping={invoice.shipping ?? undefined}
+                  discount={invoice.discount ?? undefined}
+                  trigger={
+                    <Button className="w-full sm:w-auto gap-2 rounded-xl border border-emerald-400/30 bg-gradient-to-r from-emerald-500/70 via-emerald-500/50 to-emerald-500/30 text-white shadow-[0_10px_25px_rgba(16,185,129,0.35)] backdrop-blur-sm hover:border-emerald-300/50 hover:from-emerald-500/80 hover:via-emerald-500/60 hover:to-emerald-500/40 transition-all duration-300">
+                      <CreditCard className="h-4 w-4 shrink-0" />
+                      Pay ${invoice.amountDue.toFixed(2)}
+                    </Button>
+                  }
+                />
+              )}
+          </div>
+
+          {/* Delete Invoice confirmation — same pattern as InvoiceActions */}
+          <AlertDialogWrapper
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            title="Delete Invoice"
+            description={`Are you sure you want to delete invoice ${invoice.invoiceNumber}? This action cannot be undone.`}
+            actionLabel="Delete"
+            actionLoadingLabel="Deleting..."
+            isLoading={isDeleting}
+            onAction={handleConfirmDeleteInvoice}
+            onCancel={() => setDeleteDialogOpen(false)}
+          />
+
+          {/* Send Invoice confirmation — same pattern as InvoiceActions */}
+          <AlertDialogWrapper
+            open={sendDialogOpen}
+            onOpenChange={setSendDialogOpen}
+            title="Send Invoice"
+            description={`Are you sure you want to send invoice ${invoice.invoiceNumber} via email?`}
+            actionLabel="Send"
+            actionLoadingLabel="Sending..."
+            isLoading={isSending}
+            onAction={handleConfirmSendInvoice}
+            onCancel={() => setSendDialogOpen(false)}
+            actionVariant="default"
+          />
+
+          {/* Edit Invoice dialog — opened by "Edit Invoice"; controlled as in InvoiceList */}
+          <InvoiceDialog
+            open={editDialogOpen}
+            onOpenChange={(open) => {
+              setEditDialogOpen(open);
+              if (!open) {
+                setEditingInvoice(null);
+              }
+            }}
+            editingInvoice={editingInvoice}
+            onEditInvoice={(inv) => {
+              setEditingInvoice(inv ?? null);
+            }}
+          />
+        </div>
+      </PageContentWrapper>
+    </Wrapper>
+  );
+}

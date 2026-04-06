@@ -1,0 +1,461 @@
+"use client";
+
+import React, { useLayoutEffect } from "react";
+import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AnalyticsCard } from "@/components/ui/analytics-card";
+import { AnalyticsCardSkeleton } from "@/components/ui/analytics-card-skeleton";
+import { PageContentWrapper } from "@/components/shared";
+import { useSupplierPortal } from "@/hooks/queries";
+import { queryKeys } from "@/lib/react-query";
+import { useAuth } from "@/contexts";
+import {
+  Truck,
+  Package,
+  ShoppingCart,
+  DollarSign,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { SupplierPortalStats } from "@/types";
+
+type CardVariant = "sky" | "emerald" | "amber" | "violet" | "blue" | "teal";
+
+const variantConfig: Record<
+  CardVariant,
+  {
+    border: string;
+    gradient: string;
+    shadow: string;
+    hoverBorder: string;
+    iconBg: string;
+  }
+> = {
+  sky: {
+    border: "border-sky-400/20",
+    gradient: "bg-gradient-to-br from-sky-500/15 via-sky-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(2,132,199,0.15)] dark:shadow-[0_15px_40px_rgba(2,132,199,0.1)]",
+    hoverBorder: "hover:border-sky-300/40",
+    iconBg: "border-sky-300/30 bg-sky-100/50",
+  },
+  emerald: {
+    border: "border-emerald-400/20",
+    gradient:
+      "bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(16,185,129,0.15)] dark:shadow-[0_15px_40px_rgba(16,185,129,0.1)]",
+    hoverBorder: "hover:border-emerald-300/40",
+    iconBg: "border-emerald-300/30 bg-emerald-100/50",
+  },
+  amber: {
+    border: "border-amber-400/20",
+    gradient:
+      "bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(245,158,11,0.12)] dark:shadow-[0_15px_40px_rgba(245,158,11,0.08)]",
+    hoverBorder: "hover:border-amber-300/40",
+    iconBg: "border-amber-300/30 bg-amber-100/50",
+  },
+  violet: {
+    border: "border-violet-400/20",
+    gradient:
+      "bg-gradient-to-br from-violet-500/15 via-violet-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(139,92,246,0.15)] dark:shadow-[0_15px_40px_rgba(139,92,246,0.1)]",
+    hoverBorder: "hover:border-violet-300/40",
+    iconBg: "border-violet-300/30 bg-violet-100/50",
+  },
+  blue: {
+    border: "border-blue-400/20",
+    gradient:
+      "bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(59,130,246,0.15)] dark:shadow-[0_15px_40px_rgba(59,130,246,0.1)]",
+    hoverBorder: "hover:border-blue-300/40",
+    iconBg: "border-blue-300/30 bg-blue-100/50",
+  },
+  teal: {
+    border: "border-teal-400/20",
+    gradient:
+      "bg-gradient-to-br from-teal-500/15 via-teal-500/5 to-transparent",
+    shadow:
+      "shadow-[0_15px_40px_rgba(20,184,166,0.15)] dark:shadow-[0_15px_40px_rgba(20,184,166,0.1)]",
+    hoverBorder: "hover:border-teal-300/40",
+    iconBg: "border-teal-300/30 bg-teal-100/50",
+  },
+};
+
+function GlassCard({
+  children,
+  variant = "blue",
+  className,
+}: {
+  children: React.ReactNode;
+  variant?: CardVariant;
+  className?: string;
+}) {
+  const config = variantConfig[variant];
+  return (
+    <article
+      className={cn(
+        "group rounded-[20px] border p-4 sm:p-5 backdrop-blur-sm transition-all duration-300 bg-white/60 dark:bg-white/5",
+        config.border,
+        config.gradient,
+        config.shadow,
+        config.hoverBorder,
+        className,
+      )}
+    >
+      {children}
+    </article>
+  );
+}
+
+export type AdminSupplierPortalContentProps = {
+  initialStats?: SupplierPortalStats | null;
+};
+
+function getStatusColor(status: string): string {
+  switch (status) {
+    case "in_stock":
+      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+    case "low_stock":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+    case "out_of_stock":
+      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+    case "pending":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+    case "confirmed":
+    case "completed":
+      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+    case "processing":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+    case "cancelled":
+      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
+  }
+}
+
+export default function AdminSupplierPortalContent({
+  initialStats,
+}: AdminSupplierPortalContentProps = {}) {
+  const queryClient = useQueryClient();
+  const { isCheckingAuth } = useAuth();
+  const portalQuery = useSupplierPortal();
+  const stats = portalQuery.data ?? initialStats ?? null;
+
+  useLayoutEffect(() => {
+    if (initialStats != null) {
+      queryClient.setQueryData(
+        queryKeys.supplierPortal.overview(),
+        initialStats,
+      );
+    }
+  }, [queryClient, initialStats]);
+
+  const loading = isCheckingAuth || portalQuery.isPending;
+
+  return (
+    <PageContentWrapper>
+      <div className="mx-auto space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+            Supplier Portal
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            Overview of supplier entities, their products, orders, and activity.
+          </p>
+        </div>
+
+        {/* Summary cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 items-stretch">
+          {loading || !stats ? (
+            <>
+              <AnalyticsCardSkeleton />
+              <AnalyticsCardSkeleton />
+              <AnalyticsCardSkeleton />
+              <AnalyticsCardSkeleton />
+            </>
+          ) : (
+            <>
+              <AnalyticsCard
+                title="Suppliers"
+                value={stats.counts?.suppliers}
+                icon={Truck}
+                description="Supplier entities"
+                variant="violet"
+              />
+              <AnalyticsCard
+                title="Products"
+                value={stats.counts?.products}
+                icon={Package}
+                description="From all suppliers"
+                variant="sky"
+              />
+              <AnalyticsCard
+                title="Orders"
+                value={stats.counts?.orders}
+                icon={ShoppingCart}
+                description="Containing supplier products"
+                variant="emerald"
+              />
+              <AnalyticsCard
+                title="Inventory Value"
+                value={`$${stats.counts?.totalValue.toLocaleString()}`}
+                icon={DollarSign}
+                description="Total product value"
+                variant="amber"
+              />
+            </>
+          )}
+        </div>
+
+        {/* Recent products & orders — glassmorphic cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent products */}
+          <GlassCard variant="sky">
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={cn(
+                  "p-2.5 rounded-xl border",
+                  variantConfig.sky.iconBg,
+                  "dark:border-sky-400/30 dark:bg-sky-500/20",
+                )}
+              >
+                <Package className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+              </div>
+              <div>
+                <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
+                  Recent Supplier Products
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Last 10 products from suppliers
+                </p>
+              </div>
+            </div>
+            {loading || !stats ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : stats.recentProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No supplier products yet.
+              </p>
+            ) : (
+              <ul className="divide-y divide-sky-200/40 dark:divide-white/10">
+                {stats.recentProducts.map((p) => (
+                  <li
+                    key={p.id}
+                    className="py-3 flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/products/${p.id}`}
+                        className="font-medium text-sm text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300 truncate block"
+                      >
+                        {p.name}
+                      </Link>
+                      <span className="text-xs text-muted-foreground truncate block">
+                        {p.supplierName} · {p.sku ?? "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge className={getStatusColor(p.status)}>
+                        {p.status.replace("_", " ")}
+                      </Badge>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        ${p.price.toLocaleString()}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {stats && stats.recentProducts.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="mt-3 w-full rounded-xl border border-sky-200/40 dark:border-white/10"
+              >
+                <Link href="/admin/products" className="gap-1">
+                  View all products <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </GlassCard>
+
+          {/* Recent orders */}
+          <GlassCard variant="emerald">
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={cn(
+                  "p-2.5 rounded-xl border",
+                  variantConfig.emerald.iconBg,
+                  "dark:border-emerald-400/30 dark:bg-emerald-500/20",
+                )}
+              >
+                <ShoppingCart className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
+                  Recent Supplier Orders
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Last 10 orders containing supplier products
+                </p>
+              </div>
+            </div>
+            {loading || !stats ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : stats.recentOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No supplier orders yet.
+              </p>
+            ) : (
+              <ul className="divide-y divide-emerald-200/40 dark:divide-white/10">
+                {stats.recentOrders.map((o) => (
+                  <li
+                    key={o.id}
+                    className="py-3 flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/orders/${o.id}`}
+                        className="font-medium text-sm text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300 truncate block"
+                      >
+                        {o.orderNumber}
+                      </Link>
+                      <span className="text-xs text-muted-foreground truncate block">
+                        {o.supplierName} ·{" "}
+                        {format(new Date(o.createdAt), "MMM d, yyyy")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge className={getStatusColor(o.status)}>
+                        {o.status}
+                      </Badge>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        ${o.total.toLocaleString()}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {stats && stats.recentOrders.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="mt-3 w-full rounded-xl border border-emerald-200/40 dark:border-white/10"
+              >
+                <Link href="/admin/orders" className="gap-1">
+                  View all orders <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </GlassCard>
+        </div>
+
+        {/* Suppliers table — glassmorphic card */}
+        <GlassCard variant="violet">
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className={cn(
+                "p-2.5 rounded-xl border",
+                variantConfig.violet.iconBg,
+                "dark:border-violet-400/30 dark:bg-violet-500/20",
+              )}
+            >
+              <Truck className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <h3 className="text-md sm:text-lg font-semibold text-gray-900 dark:text-white">
+                Suppliers
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Supplier entities and their product/order summary
+              </p>
+            </div>
+          </div>
+          {loading || !stats ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : stats.suppliers.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No suppliers yet. Add suppliers from the Suppliers page.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-violet-200/40 dark:border-white/10 text-left text-gray-600 dark:text-gray-400">
+                    <th className="py-3 pr-4 font-medium">Name</th>
+                    <th className="py-3 pr-4 hidden sm:table-cell font-medium">
+                      Email
+                    </th>
+                    <th className="py-3 pr-4 text-right font-medium">
+                      Products
+                    </th>
+                    <th className="py-3 pr-4 text-right font-medium">Orders</th>
+                    <th className="py-3 text-right font-medium">
+                      Inventory Value
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-violet-200/40 dark:divide-white/10">
+                  {stats.suppliers.map((s) => (
+                    <tr key={s.id}>
+                      <td className="py-3 pr-4">
+                        <Link
+                          href={`/admin/suppliers/${s.id}`}
+                          className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300"
+                        >
+                          {s.name}
+                        </Link>
+                      </td>
+                      <td className="py-3 pr-4 hidden sm:table-cell text-muted-foreground truncate max-w-[200px]">
+                        {s.email}
+                      </td>
+                      <td className="py-3 pr-4 text-right text-gray-900 dark:text-white">
+                        {s.productCount}
+                      </td>
+                      <td className="py-3 pr-4 text-right text-gray-900 dark:text-white">
+                        {s.orderCount}
+                      </td>
+                      <td className="py-3 text-right font-medium text-gray-900 dark:text-white">
+                        ${s.totalValue.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {stats && stats.suppliers.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="mt-4 w-full rounded-xl border border-violet-200/40 dark:border-white/10"
+            >
+              <Link href="/suppliers" className="gap-1">
+                Manage suppliers <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+        </GlassCard>
+      </div>
+    </PageContentWrapper>
+  );
+}

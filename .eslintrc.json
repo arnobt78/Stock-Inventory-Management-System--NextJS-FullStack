@@ -1,0 +1,32 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "react/no-unknown-property": "off", // Example: Add rules to suppress specific errors
+
+    // "@typescript-eslint/no-unused-vars": [
+    //   "error",
+    //   {
+    //     "varsIgnorePattern": "^handleLogin$|^params$|^searchParams$",
+    //     "argsIgnorePattern": "^handleLogin$|^params$|^searchParams$|^_"
+    //   }
+    // ],
+    "@typescript-eslint/no-empty-interface": [
+      "error",
+      {
+        "allowSingleExtends": true
+      }
+    ],
+    "@typescript-eslint/no-empty-object-type": "error" // Removed invalid "allow" property
+  },
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "./tsconfig.json"
+      }
+    }
+  }
+}

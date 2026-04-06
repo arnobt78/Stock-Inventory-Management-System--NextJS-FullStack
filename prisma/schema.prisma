@@ -1,0 +1,377 @@
+// Prisma schema for Stockly: MongoDB models for users, products, orders, invoices,
+// categories, suppliers, warehouses, support tickets, reviews, notifications, etc.
+// Run: npx prisma generate (after schema changes); use prisma/client for DB access.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  userId      String    @db.ObjectId // Created by user ID
+  status      Boolean   @default(true) // Active/Inactive status (default: active)
+  description String? // Optional description field
+  notes       String? // Optional notes field
+  createdAt   DateTime  @default(now()) @db.Date
+  updatedAt   DateTime? @db.Date // Manually managed - null on create, set on update
+  createdBy   String    @db.ObjectId // Same as userId, for clarity
+  updatedBy   String?   @db.ObjectId // Last updated by user ID
+}
+
+model Department {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model Invoice {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceNumber String   @unique // Unique invoice number (e.g., INV-2024-001)
+  orderId       String   @db.ObjectId @unique // Reference to Order (one-to-one relationship)
+  userId        String   @db.ObjectId // User who created the invoice (admin/warehouse user)
+  clientId      String?  @db.ObjectId // Client who the invoice is for (optional)
+  status        String   @default("draft") // Invoice status: draft, sent, paid, overdue, cancelled
+  subtotal      Float    @default(0) // Invoice subtotal (before tax, shipping, discount)
+  tax           Float? // Tax amount (optional)
+  shipping      Float? // Shipping amount (optional), same as order for transparency
+  discount      Float? // Discount amount (optional)
+  total         Float    @default(0) // Total amount (subtotal + tax + shipping - discount)
+  amountPaid    Float    @default(0) // Amount paid so far (for partial payments)
+  amountDue     Float    @default(0) // Amount due (total - amountPaid)
+  dueDate       DateTime // Invoice due date
+  issuedAt      DateTime @default(now()) @db.Date // Invoice issue date
+  sentAt        DateTime? @db.Date // When invoice was sent to client
+  paidAt        DateTime? @db.Date // When invoice was paid
+  cancelledAt   DateTime? @db.Date // Cancellation date (if cancelled)
+  paymentLink   String? // Stripe payment link (optional)
+  stripePaymentIntentId String? // Stripe PaymentIntent ID for refunds
+  notes         String? // Invoice notes (optional)
+  billingAddress Json? // Billing address (JSON object with street, city, state, zipCode, country)
+  createdAt     DateTime @default(now()) @db.Date
+  updatedAt     DateTime? @db.Date // Manually managed - null on create, set on update
+  createdBy     String   @db.ObjectId // Same as userId, for clarity
+  updatedBy     String?  @db.ObjectId // Last updated by user ID
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade) // Relation to Order (one-to-one)
+
+  @@index([userId, status, dueDate]) // Index for efficient querying by user, status, and due date
+  // orderId already has @unique, so it's automatically indexed
+}
+
+model Order {
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber       String      @unique // Unique order number (e.g., ORD-2024-001)
+  userId            String      @db.ObjectId // User who created the order (admin/warehouse user)
+  clientId          String?     @db.ObjectId // Client who placed the order (optional for now, will be used when client portal is implemented)
+  status            String      @default("pending") // Order status: pending, confirmed, processing, shipped, delivered, cancelled
+  paymentStatus     String      @default("unpaid") // Payment status: unpaid, paid, refunded, partial
+  subtotal          Float       @default(0) // Order subtotal (before tax and shipping)
+  tax               Float? // Tax amount (optional)
+  shipping          Float? // Shipping cost (optional)
+  discount          Float? // Discount amount (optional)
+  total             Float       @default(0) // Total amount (subtotal + tax + shipping - discount)
+  shippingAddress   Json? // Shipping address (JSON object with street, city, state, zipCode, country)
+  billingAddress    Json? // Billing address (JSON object, same structure as shippingAddress)
+  notes             String? // Order notes (optional)
+  trackingNumber    String? // Shipping tracking number (from Shippo)
+  trackingCarrier   String? // Shipping carrier (usps, ups, fedex, dhl, other)
+  trackingUrl       String? // Shipping tracking URL (from Shippo)
+  labelUrl          String? // Shipping label PDF URL (from Shippo)
+  estimatedDelivery DateTime? // Estimated delivery date
+  shippedAt         DateTime? // Actual shipping date
+  deliveredAt       DateTime? // Actual delivery date
+  cancelledAt       DateTime? // Cancellation date (if cancelled)
+  stripePaymentIntentId String? // Stripe PaymentIntent ID for refunds
+  createdAt         DateTime    @default(now()) @db.Date
+  updatedAt         DateTime?   @db.Date // Manually managed - null on create, set on update
+  createdBy         String      @db.ObjectId // Same as userId, for clarity
+  updatedBy         String?     @db.ObjectId // Last updated by user ID
+  items             OrderItem[] // Order items (one-to-many relationship)
+  invoice           Invoice? // Invoice for this order (one-to-one relationship)
+}
+
+model OrderItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId     String   @db.ObjectId // Reference to Order
+  productId   String   @db.ObjectId // Reference to Product
+  productName String // Product name at time of order (snapshot)
+  sku         String? // Product SKU at time of order (snapshot)
+  quantity    Int // Quantity ordered
+  price       Float // Unit price at time of order (snapshot)
+  subtotal    Float // Line item subtotal (quantity * price)
+  createdAt   DateTime @default(now()) @db.Date
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade) // Cascade delete when order is deleted
+  product     Product  @relation(fields: [productId], references: [id]) // Reference to product
+}
+
+model Permission {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  resource Json?
+  /// Field referred in an index, but found no data to define the type.
+  userId   Json?
+
+  @@unique([userId, resource])
+}
+
+model Product {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId       String      @db.ObjectId
+  createdAt        DateTime    @default(now()) @db.Date
+  updatedAt        DateTime?   @db.Date // Manually managed - null on create, set on update
+  name             String
+  price            Float
+  quantity         BigInt
+  reservedQuantity BigInt      @default(0) // Stock reserved by pending orders (not yet confirmed)
+  sku              String      @unique
+  status           String
+  supplierId       String      @db.ObjectId
+  userId           String      @db.ObjectId // Created by user ID
+  createdBy        String      @db.ObjectId // Same as userId, for clarity
+  updatedBy        String?     @db.ObjectId // Last updated by user ID
+  qrCodeUrl        String? // ImageKit URL for QR code image
+  qrCodeFileId     String? // ImageKit file ID for cleanup when regenerating
+  imageUrl         String? // ImageKit URL for product image
+  imageFileId      String? // ImageKit file ID for cleanup when updating/deleting
+  expirationDate   DateTime?   @db.Date // Product expiration date (optional, for perishable items)
+  orderItems       OrderItem[] // Orders containing this product (one-to-many relationship)
+}
+
+model Session {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  sessionToken Json?  @unique
+}
+
+model StockAlert {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model StockAllocation {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  productId        String    @db.ObjectId // Product this allocation is for
+  warehouseId      String    @db.ObjectId // Warehouse where stock is located
+  quantity         BigInt    @default(0)  // Quantity in this warehouse
+  reservedQuantity BigInt    @default(0)  // Reserved stock in this warehouse
+  userId           String    @db.ObjectId // User who created this allocation
+  createdAt        DateTime  @default(now()) @db.Date
+  updatedAt        DateTime? @db.Date
+
+  @@unique([productId, warehouseId])
+  @@index([productId])
+  @@index([warehouseId])
+}
+
+// Stock transfer between warehouses
+model StockTransfer {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  productId         String    @db.ObjectId // Product being transferred
+  fromWarehouseId   String    @db.ObjectId // Source warehouse
+  toWarehouseId     String    @db.ObjectId // Destination warehouse
+  quantity          BigInt                  // Quantity transferred
+  status            String    @default("pending") // pending, completed, cancelled
+  notes             String?                 // Optional notes
+  userId            String    @db.ObjectId // User who initiated transfer
+  createdAt         DateTime  @default(now()) @db.Date
+  completedAt       DateTime? @db.Date
+
+  @@index([productId])
+  @@index([fromWarehouseId])
+  @@index([toWarehouseId])
+  @@index([status])
+}
+
+model Warehouse {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  address     String?   // Optional address (e.g. full address or location name)
+  type        String?   // Optional type: main, secondary, storage, etc.
+  status      Boolean   @default(true) // Active/Inactive
+  userId      String    @db.ObjectId // Created by user ID
+  createdAt   DateTime  @default(now()) @db.Date
+  updatedAt   DateTime? @db.Date
+  createdBy   String    @db.ObjectId
+  updatedBy   String?   @db.ObjectId
+
+  @@index([userId])
+}
+
+model Supplier {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  userId      String    @db.ObjectId // Created by user ID
+  status      Boolean   @default(true) // Active/Inactive status (default: active)
+  description String? // Optional description field
+  notes       String? // Optional notes field
+  createdAt   DateTime  @default(now()) @db.Date
+  updatedAt   DateTime? @db.Date // Manually managed - null on create, set on update
+  createdBy   String    @db.ObjectId // Same as userId, for clarity
+  updatedBy   String?   @db.ObjectId // Last updated by user ID
+}
+
+model User {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt        DateTime  @db.Date
+  email            String    @unique
+  name             String
+  password         String
+  updatedAt        DateTime? @db.Date
+  username         String?   @unique
+  googleId         String? // Google OAuth ID (uniqueness enforced in app logic; @unique removed to avoid non-sparse index blocking null values)
+  image            String? // User profile image URL (from Google OAuth or other sources)
+  // Role for access control: user, admin, supplier, client, retailer. Optional for backward compatibility; treat null as "user".
+  role             String? // user | admin | supplier | client | retailer
+  // Email notification preferences
+  emailPreferences Json? // Email notification preferences stored as JSON
+  // Structure: {
+  //   lowStockAlerts: boolean,
+  //   stockOutNotifications: boolean,
+  //   inventoryReports: boolean,
+  //   productExpirationWarnings: boolean,
+  //   orderConfirmations: boolean,
+  //   invoiceEmails: boolean,
+  //   shippingNotifications: boolean,
+  //   orderStatusUpdates: boolean
+  // }
+  notifications Notification[] // In-app notifications (one-to-many relationship)
+}
+
+model UserAction {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model VerificationToken {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  token Json?  @unique
+}
+
+model ImportHistory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId // User who performed the import
+  importType  String   // Type of import: "products", "orders", "suppliers", "categories"
+  fileName    String   // Original file name
+  fileSize    Int      // File size in bytes
+  totalRows   Int      // Total rows in the file
+  successRows Int      // Number of successfully imported rows
+  failedRows  Int      // Number of failed rows
+  errors      Json?    // Array of error messages for failed rows
+  status      String   @default("completed") // Import status: "processing", "completed", "failed"
+  createdAt   DateTime @default(now()) @db.Date
+  completedAt DateTime? @db.Date // When import was completed
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId // User who receives the notification
+  type      String   // Notification type: "low_stock", "stock_out", "order_confirmation", "order_status_update", etc.
+  title     String   // Notification title
+  message   String   // Notification message/content
+  link      String?  // Optional link to related resource (e.g., /products/:id, /orders/:id)
+  read      Boolean  @default(false) // Whether notification has been read
+  createdAt DateTime @default(now()) @db.Date
+  readAt    DateTime? @db.Date // When notification was marked as read
+  metadata  Json?    // Optional metadata (productId, orderId, etc.)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade) // Relation to User model
+
+  @@index([userId, read, createdAt]) // Index for efficient querying by user, read status, and date
+}
+
+model SupportTicket {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  subject       String    // Ticket subject
+  description   String    // Ticket description/details
+  status        String    @default("open") // open, in_progress, resolved, closed
+  priority      String    @default("medium") // low, medium, high, urgent
+  userId        String    @db.ObjectId // Creator (user who opened the ticket)
+  assignedToId  String?   @db.ObjectId // Product owner / admin to handle (set on create by user)
+  productId     String?   @db.ObjectId // Optional link to product
+  orderId       String?   @db.ObjectId // Optional link to order
+  supplierId    String?   @db.ObjectId // Optional link to supplier
+  notes         String?   // Internal admin notes
+  createdAt     DateTime  @default(now()) @db.Date
+  updatedAt     DateTime? @db.Date // Manually managed
+  replies       SupportTicketReply[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([assignedToId])
+  @@index([createdAt])
+}
+
+model SupportTicketReply {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ticketId  String   @db.ObjectId
+  userId    String   @db.ObjectId // Who wrote the reply
+  body      String   // Reply text
+  createdAt DateTime @default(now()) @db.Date
+
+  supportTicket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ProductReview {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  productId    String    @db.ObjectId // Product being reviewed
+  userId       String    @db.ObjectId // User who wrote the review
+  orderId      String?   @db.ObjectId // Order this review relates to (for one-review-per-purchase)
+  orderItemId  String?   @db.ObjectId // Optional: specific order line (one review per order line)
+  productName  String    // Snapshot at review time (for list display)
+  productSku   String?   // Snapshot at review time
+  rating       Int       // 1–5
+  comment      String    // Review text
+  status       String    @default("pending") // pending, approved, rejected
+  createdAt    DateTime  @default(now()) @db.Date
+  updatedAt    DateTime? @db.Date // Manually managed
+
+  @@index([productId])
+  @@index([orderId, productId, userId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([status])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+// System Configuration - for app-wide settings managed by admin
+model SystemConfig {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  key         String    @unique // Configuration key (e.g., "company_name", "low_stock_threshold")
+  value       String    // Configuration value (stored as string, parsed by app)
+  type        String    @default("string") // Value type: string, number, boolean, json
+  label       String    // Human-readable label
+  description String?   // Description of the setting
+  category    String    @default("general") // Setting category: general, email, shipping, payment, notifications
+  isPublic    Boolean   @default(false) // Whether this setting can be exposed to client
+  createdAt   DateTime  @default(now()) @db.Date
+  updatedAt   DateTime? @db.Date
+  updatedBy   String?   @db.ObjectId // Last updated by user ID
+
+  @@index([category])
+  @@index([isPublic])
+}
+
+// Audit Log - for tracking user activities and system changes
+model AuditLog {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String    @db.ObjectId // User who performed the action
+  action      String    // Action type: create, update, delete, login, logout, etc.
+  entityType  String    // Entity type: product, order, invoice, user, etc.
+  entityId    String?   @db.ObjectId // Entity ID (if applicable)
+  details     Json?     // Additional details (JSON object with changes)
+  ipAddress   String?   // IP address of the user
+  userAgent   String?   // User agent string
+  createdAt   DateTime  @default(now()) @db.Date
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
